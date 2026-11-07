@@ -29,27 +29,39 @@ def test_contrast_rules(result):
     assert result.passed, f"Lc {result.lc:.1f} < {result.target}"
 
 
-@pytest.mark.parametrize("scheme", C.SCHEMES)
-def test_categorical_palette_passes_six_checks(scheme):
+PRESET_CASES = [(s, n) for s in C.SCHEMES for n in C.preset_names()]
+
+
+@pytest.mark.parametrize(("scheme", "name"), PRESET_CASES)
+def test_categorical_palette_passes_six_checks(scheme, name):
     surface = C.to_hex(C.role_colour("neutral", "surface", scheme))
-    checks = C.categorical_checks(C.categorical(scheme), scheme, surface)
+    checks = C.categorical_checks(C.categorical(scheme, name), scheme, surface)
     assert checks["ok"], checks
     assert checks["cvd"] >= C.CVD_TARGET, checks  # target, not just the floor
 
 
-@pytest.mark.parametrize("scheme", C.SCHEMES)
-def test_story_palette_is_cvd_separable_and_visible(scheme):
+@pytest.mark.parametrize(("scheme", "name"), PRESET_CASES)
+def test_story_palette_is_cvd_separable_and_visible(scheme, name):
     surface = C.to_hex(C.role_colour("neutral", "surface", scheme))
-    audit = C.palette_audit(C.story(scheme), surface)
+    audit = C.palette_audit(C.story(scheme, name), surface)
     assert audit["min_cvd_delta_e"] >= 0.06, audit
     assert audit["min_lc_on_background"] >= 30, audit
 
 
-@pytest.mark.parametrize("scheme", C.SCHEMES)
-def test_context_and_highlight_are_visible(scheme):
+@pytest.mark.parametrize(("scheme", "name"), PRESET_CASES)
+def test_context_and_highlight_are_visible(scheme, name):
     surface = C.role_colour("neutral", "surface", scheme)
-    assert C.apca(C.data_role("context", scheme), surface) >= 30
-    assert C.apca(C.data_role("highlight", scheme), surface) >= 45
+    assert C.apca(C.context(scheme), surface) >= 30
+    assert C.apca(C.highlight(scheme, name), surface) >= 45
+
+
+def test_presets_reference_defined_ramps():
+    cfg = C.load_config()
+    for name in C.preset_names():
+        p = C.preset(name)
+        assert p["sequential"] in cfg["data"]["sequential"]
+        assert p["diverging"] in cfg["data"]["diverging"]
+        assert 3 <= len(p["categorical"]) <= 5
 
 
 @pytest.mark.parametrize("scheme", C.SCHEMES)
@@ -63,8 +75,9 @@ def test_sequential_is_monotonic_in_lightness(scheme):
 @pytest.mark.parametrize("scheme", C.SCHEMES)
 def test_diverging_is_symmetric_in_lightness(scheme):
     # gamut mapping may shift lightness slightly (< 0.01, below a JND)
-    ls = [C.Color(h).convert("oklch")["lightness"] for h in C.diverging("default", scheme)]
-    assert all(abs(a - b) < 0.01 for a, b in zip(ls, ls[::-1], strict=True))
+    for name in C.load_config()["data"]["diverging"]:
+        ls = [C.Color(h).convert("oklch")["lightness"] for h in C.diverging(name, scheme)]
+        assert all(abs(a - b) < 0.01 for a, b in zip(ls, ls[::-1], strict=True)), name
 
 
 def test_adding_a_hue_needs_only_an_anchor():
@@ -84,3 +97,5 @@ def test_tokens_css_has_both_schemes_and_aliases():
     assert css.count("--ss-canvas:") == 3  # light, media-dark, forced-dark
     assert ':root[data-colour-scheme="dark"]' in css
     assert "--ss-data-story-4:" in css and "--ss-data-cat-5:" in css and "--ss-data-div-9:" in css
+    for name in C.preset_names():
+        assert f'[data-palette="{name}"]' in css

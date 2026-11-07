@@ -54,6 +54,7 @@ function pref(key, attr, fallback, onApply) {
 
 export const theme = pref("theme", "data-colour-scheme", "system");
 export const typePairing = pref("type", "data-type", "ledger");
+export const palettePreset = pref("palette", "data-palette", "tide");
 
 // Re-render charts when the effective colour scheme changes (system or manual).
 const schemeSubs = new Set();

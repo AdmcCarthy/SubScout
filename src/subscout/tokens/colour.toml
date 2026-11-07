@@ -129,41 +129,60 @@ tones = "all"
 # ---------------------------------------------------------------- data colours
 # Journalistic default: context in grey, the story in colour.
 [data]
-context = { hue = "slate", light = 6, dark = 6 }      # background series (Lc >= 30)
-highlight = { hue = "ochre", light = 8, dark = 8 }    # the one thing to look at
+# Shared by every preset.
+context = { hue = "slate", light = 6, dark = 6 }   # background/context series (Lc >= 30)
+default_preset = "tide"
 
-# Two palettes for two jobs:
-#
-# story       - the journalistic default: grey context + 1-3 core colours. Quiet,
-#               on-identity, low chroma, so it MUST be direct-labelled (never
-#               colour alone). Checked: worst-case CVD OK deltaE >= 0.06, Lc >= 30.
-# categorical - identity of 3-5 entities (e.g. operators). High chroma, checked
-#               with the dataviz six checks: lightness band, chroma floor >= 0.10,
-#               adjacent CVD deltaE >= 8 (Machado 2009), normal-vision >= 15,
-#               contrast >= 3:1. Order found by exhaustive search; keep it fixed.
-#               More than 5 entities: fold the rest into "Other" (context grey)
-#               or use small multiples; never generate extra hues.
-# Each entry is [hue, step_light, step_dark].
-story = [
-  ["fjord", 9, 8],
-  ["cobalt", 7, 10],
-  ["shale", 11, 6],
-  ["fjord", 6, 11],
-]
-
-categorical = [
-  ["ochre", 8, 7],
-  ["cobalt", 8, 6],
-  ["haematite", 9, 7],
-  ["amethyst", 9, 7],
-  ["malachite", 10, 6],
-]
-
+# Sequential and diverging ramp definitions; presets pick one of each.
 [data.sequential]
 fjord = { hue = "fjord", steps = 7, range_light = [0.96, 0.34], range_dark = [0.30, 0.92], chroma_peak = 0.09 }
 cobalt = { hue = "cobalt", steps = 7, range_light = [0.96, 0.34], range_dark = [0.30, 0.92], chroma_peak = 0.13 }
 shale = { hue = "shale", steps = 7, range_light = [0.96, 0.30], range_dark = [0.30, 0.94], chroma_peak = 0.05 }
 
 [data.diverging]
-# blue <-> orange is CVD-safe; never red <-> green.
+# Two hue ends through a neutral; never red <-> green.
 default = { low = "cobalt", high = "ochre", steps = 9, neutral_light = 0.95, neutral_dark = 0.22, end_light = 0.50, end_dark = 0.68, chroma = 0.14 }
+fjord_ochre = { low = "fjord", high = "ochre", steps = 9, neutral_light = 0.95, neutral_dark = 0.22, end_light = 0.50, end_dark = 0.68, chroma = 0.12 }
+
+# ---------------------------------------------------------------- data presets
+# A preset bundles the data-colour choices. Pages switch with
+# data-palette="<name>" on <html> or any container. Every preset is tested:
+#
+# story       - quiet, on-identity series beside grey context (1-3 used at once).
+#               Low chroma, so ALWAYS direct-label. Checked: worst-case CVD OK
+#               deltaE >= 0.06 and Lc >= 30 vs surface.
+# highlight   - the one thing to look at. Checked: Lc >= 45 vs surface.
+# categorical - identity of entities (operators, basins), fixed order. Checked
+#               with the six dataviz checks (lightness band, chroma >= 0.10,
+#               adjacent CVD deltaE >= 8 Machado 2009, normal-vision >= 15,
+#               contrast >= 3:1). Orders found by exhaustive search; keep them.
+#               More entities than slots: fold into "Other" (context grey) or
+#               use small multiples; never generate extra hues.
+# Entries are [hue, step_light, step_dark].
+
+[presets.tide]
+label = "Tide"
+note = "Fjord story colour, ochre highlight, ochre-led identity palette."
+highlight = ["ochre", 8, 8]
+story = [["fjord", 9, 8], ["cobalt", 7, 10], ["shale", 11, 6], ["fjord", 6, 11]]
+categorical = [["ochre", 8, 7], ["cobalt", 8, 6], ["haematite", 9, 7], ["amethyst", 9, 7], ["malachite", 10, 6]]
+sequential = "fjord"
+diverging = "default"
+
+[presets.signal]
+label = "Signal"
+note = "Cobalt story colour, haematite highlight, haematite-led identity palette."
+highlight = ["haematite", 9, 8]
+story = [["cobalt", 9, 8], ["fjord", 12, 6], ["shale", 5, 9], ["cobalt", 7, 11]]
+categorical = [["haematite", 8, 6], ["cobalt", 8, 6], ["ochre", 8, 7], ["amethyst", 10, 7], ["malachite", 8, 6]]
+sequential = "cobalt"
+diverging = "default"
+
+[presets.frost]
+label = "Frost"
+note = "Cool only: fjord and shale story colours, cobalt highlight, four-slot identity palette."
+highlight = ["cobalt", 9, 8]
+story = [["fjord", 9, 8], ["shale", 5, 6], ["fjord", 8, 12], ["shale", 11, 10]]
+categorical = [["cobalt", 8, 6], ["ochre", 8, 7], ["amethyst", 10, 7], ["malachite", 8, 6]]
+sequential = "shale"
+diverging = "fjord_ochre"

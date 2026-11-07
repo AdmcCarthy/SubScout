@@ -1,6 +1,6 @@
 """Serve a built site and screenshot it headlessly; report console errors.
 
-Usage: uv run python scripts/snapshot.py [site_dir] [out_dir]
+Usage: uv run python scripts/snapshot.py [site_dir] [out_dir] [path, e.g. compare/]
 Writes desktop light/dark, phone, and Present-mode screenshots.
 """
 
@@ -28,7 +28,7 @@ def serve(directory: Path) -> tuple[http.server.ThreadingHTTPServer, str]:
     return srv, f"http://127.0.0.1:{srv.server_address[1]}/"
 
 
-def main(site: Path, out: Path) -> int:
+def main(site: Path, out: Path, path: str = "") -> int:
     out.mkdir(parents=True, exist_ok=True)
     srv, url = serve(site)
     errors: list[str] = []
@@ -43,13 +43,13 @@ def main(site: Path, out: Path) -> int:
             page = browser.new_page(viewport=vp, color_scheme=scheme)
             page.on("console", lambda m, n=name: m.type == "error" and errors.append(f"{n}: {m.text}"))
             page.on("pageerror", lambda e, n=name: errors.append(f"{n}: {e}"))
-            page.goto(url, wait_until="networkidle")
+            page.goto(url + path, wait_until="networkidle")
             page.wait_for_timeout(600)
             page.screenshot(path=str(out / f"{name}.png"), full_page=True)
             if name == "desktop-light":
                 page.click("#present-btn")
                 page.wait_for_timeout(700)
-                for k in range(4):
+                for k in range(page.locator(".ss-step").count()):
                     page.screenshot(path=str(out / f"present-{k + 1}.png"))
                     page.keyboard.press("ArrowRight")
                     page.wait_for_timeout(1700)
@@ -65,4 +65,5 @@ def main(site: Path, out: Path) -> int:
 if __name__ == "__main__":
     site = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "_site"
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "_snapshots"
-    sys.exit(main(site, out))
+    path = sys.argv[3] if len(sys.argv) > 3 else ""
+    sys.exit(main(site, out, path))

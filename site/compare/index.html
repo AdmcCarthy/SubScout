@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SubScout Compare</title>
+<meta name="description" content="Choose SubScout's type pairing and data palette: side-by-side comparisons and a six-chart story that reads as an article or plays as a deck.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../runtime/css/tokens.css">
+<link rel="stylesheet" href="../runtime/css/base.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  .topbar { position: sticky; top: 0; z-index: 40; background: color-mix(in oklab, var(--ss-canvas) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--ss-border-subtle); }
+  .topbar .ss-wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding-block: 10px; }
+  .brand { font-family: var(--ss-font-display); font-weight: var(--ss-display-weight); font-size: 1.15rem; }
+  .brand a { color: inherit; text-decoration: none; }
+  .brand span { color: var(--ss-text-muted); font-family: var(--ss-font-body); font-weight: 400; font-size: .85rem; margin-left: 6px; }
+  .ctl-label { font-size: 11px; color: var(--ss-text-muted); font-family: var(--ss-font-mono); text-transform: uppercase; letter-spacing: .08em; }
+  .hero { padding-block: var(--ss-space-xxl) var(--ss-space-l); }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); margin: var(--ss-space-s) 0 var(--ss-space-m); }
+
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ss-space-l); }
+  @media (max-width: 980px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+  .col { background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: var(--ss-radius-l); padding: var(--ss-space-l) var(--ss-space-m); min-width: 0; }
+  .col-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-bottom: 2px solid var(--ss-text); padding-bottom: 8px; margin-bottom: var(--ss-space-m); }
+  .col-head b { font: 600 1.05rem var(--ss-font-body); }
+  .col-head small { font: 11px var(--ss-font-mono); color: var(--ss-text-muted); text-align: right; }
+  .col .choose { margin-top: var(--ss-space-m); width: 100%; }
+  .spec h2 { font-size: 1.9rem; margin: 8px 0; }
+  .spec .ss-standfirst { font-size: 1.1rem; margin-bottom: 12px; }
+  .spec p.body { font-size: 0.98rem; }
+  .spec .nums { font-family: var(--ss-font-display); font-size: 1.5rem; }
+  .mini { margin-top: var(--ss-space-m); }
+  .mini .ss-fig-title { font-size: .92rem; }
+  .mini .ss-fig-sub { font-size: .8rem; }
+  .mini .ss-legend { font-size: .75rem; gap: 2px 10px; }
+  .mini .ss-legend i { width: 10px; height: 10px; }
+  .mini + .mini { border-top: 1px solid var(--ss-border-subtle); padding-top: var(--ss-space-m); }
+  .pal { display: flex; gap: 2px; height: 22px; border-radius: 3px; overflow: hidden; margin: 2px 0 10px; }
+  .pal div { flex: 1; }
+  .pal-lab { font: 10.5px var(--ss-font-mono); color: var(--ss-text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  .note { font-size: var(--ss-size-caption); color: var(--ss-text-subtle); margin-bottom: 12px; }
+
+  .story-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--ss-space-m); margin-bottom: var(--ss-space-s); }
+  .chart-stack { display: grid; }
+  .chart-stack > .layer { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity var(--ss-dur) var(--ss-ease), visibility 0s linear var(--ss-dur); min-width: 0; }
+  .chart-stack > .layer.on { opacity: 1; visibility: visible; transition: opacity var(--ss-dur) var(--ss-ease) var(--ss-dur-fast), visibility 0s; }
+  #fig-story .ss-fig-title, #fig-story .ss-fig-sub { transition: opacity var(--ss-dur-fast); }
+  :root[data-mode="present"] #fig-story { padding: var(--ss-space-l); }
+  footer { padding-block: var(--ss-space-xxl) var(--ss-space-xxxl); font-size: var(--ss-size-caption); color: var(--ss-text-muted); border-top: 1px solid var(--ss-border-subtle); margin-top: var(--ss-space-xxl); }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="ss-wrap">
+    <div class="brand"><a href="../">SubScout</a><span>Compare · choose type and palette</span></div>
+    <div class="ss-controls">
+      <span class="ctl-label">Theme</span>
+      <div class="ss-seg" id="ctl-theme"><button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+      <span class="ctl-label">Units</span>
+      <div class="ss-seg" id="ctl-units"><button data-value="sm3">Sm³</button><button data-value="boe">boe</button></div>
+    </div>
+  </div>
+</div>
+
+<header class="hero ss-wrap">
+  <span class="ss-kicker">Decision page</span>
+  <h1>Pick a type pairing and a data palette</h1>
+  <p class="ss-standfirst">Each option is shown side by side with identical content. Then play the six-chart story below with any combination, as an article or as a deck. All data on this page is synthetic.</p>
+</header>
+
+<main>
+<!-- ============================================================ 1. type -->
+<section class="ss-section ss-wrap">
+  <span class="ss-kicker">1 · Type pairings</span>
+  <h2>Same words, three voices</h2>
+  <div class="cols" id="type-cols"></div>
+</section>
+
+<!-- ============================================================ 2. palettes -->
+<section class="ss-section ss-wrap">
+  <span class="ss-kicker">2 · Data palettes</span>
+  <h2>Same charts, three palettes</h2>
+  <p class="ss-prose">Each preset bundles a quiet <strong>story</strong> colour set (always labelled directly), one <strong>highlight</strong>, an <strong>identity</strong> palette for categories, and sequential and diverging ramps. All three pass the contrast and colour-vision checks in light and dark. Grey context is shared.</p>
+  <div class="cols" id="pal-cols"></div>
+</section>
+
+<!-- ============================================================ 3. story -->
+<section class="ss-section" id="story-sec">
+  <div class="ss-wrap story-head">
+    <div class="ss-prose">
+      <span class="ss-kicker">3 · The story test</span>
+      <h2>Six charts, one narrative</h2>
+      <p>Pick a combination, then scroll, or press <strong>Present</strong> and use the arrow keys.</p>
+    </div>
+    <div class="ss-controls">
+      <span class="ctl-label">Type</span>
+      <div class="ss-seg" id="ctl-type"><button data-value="ledger">Ledger</button><button data-value="survey">Survey</button><button data-value="core">Core</button></div>
+      <span class="ctl-label">Palette</span>
+      <div class="ss-seg" id="ctl-palette"><button data-value="tide">Tide</button><button data-value="signal">Signal</button><button data-value="frost">Frost</button></div>
+      <button class="ss-btn" id="present-btn">Present ▶</button>
+    </div>
+  </div>
+  <div class="ss-wrap">
+    <article class="ss-story" id="story">
+      <div class="ss-steps" id="steps"></div>
+      <div class="ss-graphic">
+        <figure class="ss-figure" id="fig-story">
+          <p class="ss-fig-title" id="st-title"></p>
+          <p class="ss-fig-sub" id="st-sub"></p>
+          <div class="ss-legend" id="st-legend"></div>
+          <div class="chart-stack">
+            <div class="layer ss-chart" data-chart="line"></div>
+            <div class="layer ss-chart" data-chart="stack"></div>
+            <div class="layer ss-chart" data-chart="bubble"></div>
+            <div class="layer ss-chart" data-chart="heat"></div>
+            <div class="layer ss-chart" data-chart="div"></div>
+          </div>
+          <dl class="ss-facts" id="st-facts"></dl>
+        </figure>
+      </div>
+    </article>
+  </div>
+</section>
+</main>
+
+<footer class="ss-wrap">
+  <p>All data on this page is synthetic: field, operator and discovery names are fictitious. Colour method ported from the <a href="https://github.com/equinor/design-system/tree/main/apps/eds-color-palette-generator">EDS colour palette generator</a> (© Equinor ASA, MIT); SubScout is not affiliated with Equinor.</p>
+  <p><a href="../">Foundations</a> · <a href="https://github.com/AdmcCarthy/SubScout">SubScout on GitHub</a></p>
+</footer>
+
+<script type="module">
+import { theme, units, UNITS, typePairing, palettePreset, bindSeg, story, refreshUnits } from "../runtime/js/subscout.js";
+import { lineChart, stackedBars, bubbles, heatmap, divergingBars } from "../runtime/js/charts.js";
+import { production, byOperator, discoveries, basins, biggest, wells, revisions } from "./data.js";
+
+bindSeg(document.getElementById("ctl-theme"), theme);
+bindSeg(document.getElementById("ctl-units"), units);
+bindSeg(document.getElementById("ctl-type"), typePairing);
+bindSeg(document.getElementById("ctl-palette"), palettePreset);
+const U = () => UNITS[units.get()];
+const prodUnit = () => `k ${U().short}/d`;
+const sizeUnit = () => `million ${U().short}`;
+const redraws = [];
+const watch = (el, fn) => {
+  let w = 0;
+  new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (nw && nw !== w) { w = nw; fn(w); } }).observe(el);
+  redraws.push(() => w && fn(w));
+};
+units.subscribe(() => redraws.forEach((f) => f()));
+
+// ---------------------------------------------------------------- 1. type columns
+const TYPES = [
+  ["ledger", "Ledger", "Newsreader · Instrument Sans · JetBrains Mono"],
+  ["survey", "Survey", "Source Serif 4 · Source Sans 3 · Source Code Pro"],
+  ["core", "Core", "Bricolage Grotesque · Hanken Grotesk · Spline Sans Mono"],
+];
+document.getElementById("type-cols").innerHTML = TYPES.map(([k, name, fonts]) => `
+  <div class="col spec" data-type="${k}">
+    <div class="col-head"><b>${name}</b><small>${fonts}</small></div>
+    <span class="ss-kicker">Norwegian Continental Shelf</span>
+    <h2>Close to home, and closer every year</h2>
+    <p class="ss-standfirst">Most new acreage lies within tie-back distance of existing infrastructure, which says more about strategy than geology.</p>
+    <p class="body">Mature basins rarely run out of oil; they run out of <em>cheap</em> oil. A tie-back turns a 20 million Sm³ discovery from a stranded resource into a project.</p>
+    <p class="nums ss-num">1,834.5 million Sm³ · 56 licences · 13.4%</p>
+    <div class="mini" data-palette="tide">
+      <p class="ss-fig-title">Field C held its plateau</p>
+      <p class="ss-fig-sub">Production, k <span data-ss-unit></span>/d</p>
+      <div class="ss-chart" data-mini="type-line"></div>
+      <dl class="ss-facts"><div><dt>Source</dt><dd>Synthetic</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="estimated">Estimated</span></dd></div></dl>
+    </div>
+    <button class="ss-btn choose" data-pick-type="${k}">Use ${name} below</button>
+  </div>`).join("");
+
+// ---------------------------------------------------------------- 2. palette columns
+const tok = await (await fetch("../runtime/css/tokens.json")).json();
+const PALS = Object.entries(tok.presets);
+const strip = (prefix, n) => `<div class="pal">${d3.range(1, n + 1).map((i) => `<div style="background:var(--ss-${prefix}-${i})"></div>`).join("")}</div>`;
+document.getElementById("pal-cols").innerHTML = PALS.map(([k, p]) => `
+  <div class="col" data-palette="${k}">
+    <div class="col-head"><b>${p.label}</b><small>${p.categorical_count} identity slots</small></div>
+    <p class="note">${p.note}</p>
+    <span class="pal-lab">context · story · highlight</span>
+    <div class="pal"><div style="background:var(--ss-data-context)"></div>${d3.range(1, 5).map((i) => `<div style="background:var(--ss-data-story-${i})"></div>`).join("")}<div style="background:var(--ss-data-highlight)"></div></div>
+    <span class="pal-lab">identity</span>${strip("data-cat", p.categorical_count)}
+    <span class="pal-lab">sequential</span>${strip("data-seq", 7)}
+    <span class="pal-lab">diverging</span>${strip("data-div", 9)}
+    <div class="mini"><p class="ss-fig-title">Two fields broke the pattern</p><p class="ss-fig-sub">Production, k <span data-ss-unit></span>/d</p><div class="ss-chart" data-mini="line"></div></div>
+    <div class="mini"><p class="ss-fig-title">Production by operator</p><p class="ss-fig-sub">k <span data-ss-unit></span>/d</p><div class="ss-legend"></div><div class="ss-chart" data-mini="stack"></div></div>
+    <div class="mini"><p class="ss-fig-title">Discoveries by basin</p><p class="ss-fig-sub">bubble area = size</p><div class="ss-legend"></div><div class="ss-chart" data-mini="bubble"></div></div>
+    <div class="mini"><p class="ss-fig-title">Exploration wells per quarter</p><div class="ss-legend"></div><div class="ss-chart" data-mini="heat"></div></div>
+    <div class="mini"><p class="ss-fig-title">Change in remaining resources</p><div class="ss-legend"></div><div class="ss-chart" data-mini="div"></div></div>
+    <button class="ss-btn choose" data-pick-palette="${k}">Use ${p.label} below</button>
+  </div>`).join("");
+refreshUnits();
+
+const legendOf = (el) => el.parentElement.querySelector(".ss-legend");
+document.querySelectorAll("[data-mini]").forEach((el) => {
+  const kind = el.dataset.mini;
+  let c, state = {};
+  if (kind === "type-line" || kind === "line") {
+    c = lineChart(el, production, { unitLabel: prodUnit });
+    state = kind === "line" ? { focus: ["Field C", "Field F"], note: { name: "Field F", x: 2016, text: "Tie-back" } } : { focus: ["Field C"] };
+  }
+  if (kind === "stack") c = stackedBars(el, byOperator, { legendEl: legendOf(el), unitLabel: prodUnit });
+  if (kind === "bubble") { c = bubbles(el, discoveries, basins, { legendEl: legendOf(el), unitLabel: sizeUnit }); }
+  if (kind === "heat") c = heatmap(el, wells, { legendEl: legendOf(el), valueLabel: "wells" });
+  if (kind === "div") c = divergingBars(el, revisions, { legendEl: legendOf(el) });
+  watch(el, (w) => c.draw(w, state));
+});
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-pick-type]"), p = e.target.closest("[data-pick-palette]");
+  if (t) typePairing.set(t.dataset.pickType);
+  if (p) palettePreset.set(p.dataset.pickPalette);
+  if (t || p) document.getElementById("story-sec").scrollIntoView({ behavior: "smooth" });
+});
+
+// ---------------------------------------------------------------- 3. the story
+const STEPS = [
+  { chart: "line", kicker: "Production", h: "Most fields peak early, then fade",
+    p: "Seven fields, one shape: a quick ramp, a short plateau, a long decline. Grey is context. One field is in the story colour because it does something different.",
+    title: "Field C held its plateau for 14 years", sub: () => `Production, thousand ${U().label} per day`,
+    state: { focus: ["Field C"] }, conf: "estimated" },
+  { chart: "line", kicker: "Production", h: "Two fields broke the pattern",
+    p: "A second story colour joins, and a highlight marks the moment that matters. The lines keep their identity; only their emphasis changes.",
+    title: "Fields C and F outlasted their neighbours", sub: () => `Production, thousand ${U().label} per day`,
+    state: { focus: ["Field C", "Field F"], note: { name: "Field F", x: 2016, text: "Tie-back to Field C" } }, conf: "estimated" },
+  { chart: "stack", kicker: "Ownership", h: "Production is concentrated",
+    p: "Identity colours, in a fixed order. Operators beyond the palette's slots fold into a grey “Other” rather than inventing new colours.",
+    title: "Five operators carry most of the output", sub: () => `Production by operator, thousand ${U().label} per day`,
+    state: {}, conf: "derived" },
+  { chart: "bubble", kicker: "Exploration", h: "Finds got smaller, and moved north",
+    p: "Each bubble is a discovery; area shows size. The biggest finds came early, in the North Sea. The three largest are highlighted; the rest fall back to context.",
+    title: "Discoveries by basin and year", sub: () => `bubble area = recoverable volume, million ${U().label}`,
+    state: { highlight: biggest }, conf: "estimated" },
+  { chart: "heat", kicker: "Activity", h: "Drilling follows the oil price",
+    p: "A sequential ramp: one hue, light to dark, read by lightness alone. The 2015–16 and 2020 troughs show as pale bands.",
+    title: "Exploration wells per quarter", sub: () => "wells spudded", state: {}, conf: "reported" },
+  { chart: "div", kicker: "Resources", h: "Revisions cut both ways",
+    p: "A diverging ramp around zero, two hues through a neutral, never red against green. Sorted, the split between rising and falling areas is plain.",
+    title: "Change in remaining resources, year on year", sub: () => "percent", state: { sort: true }, conf: "derived" },
+];
+const FACTS = {
+  estimated: ["estimated", "Estimated"], derived: ["derived", "Derived"], reported: ["reported", "Reported"],
+};
+document.getElementById("steps").innerHTML = STEPS.map((s, i) => `
+  <section class="ss-step"><div class="ss-step-card">
+    <span class="ss-kicker">${i + 1} · ${s.kicker}</span><h3>${s.h}</h3><p>${s.p}</p>
+  </div></section>`).join("");
+
+const layers = Object.fromEntries([...document.querySelectorAll("#fig-story .layer")].map((el) => [el.dataset.chart, el]));
+const legend = document.getElementById("st-legend");
+const charts = {
+  line: lineChart(layers.line, production, { unitLabel: prodUnit }),
+  stack: stackedBars(layers.stack, byOperator, { legendEl: legend, unitLabel: prodUnit }),
+  bubble: bubbles(layers.bubble, discoveries, basins, { legendEl: legend, unitLabel: sizeUnit }),
+  heat: heatmap(layers.heat, wells, { legendEl: legend, valueLabel: "wells" }),
+  div: divergingBars(layers.div, revisions, { legendEl: legend }),
+};
+let W = 0, cur = 0;
+function render(i, { animate } = {}) {
+  cur = i;
+  const s = STEPS[i];
+  document.getElementById("st-title").textContent = s.title;
+  document.getElementById("st-sub").textContent = s.sub();
+  if (!["stack", "bubble", "heat", "div"].includes(s.chart)) legend.innerHTML = "";
+  const [lvl, lab] = FACTS[s.conf];
+  document.getElementById("st-facts").innerHTML =
+    `<div><dt>Source</dt><dd>Synthetic data for this comparison</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="${lvl}">${lab}</span> (style example)</dd></div>`;
+  Object.entries(layers).forEach(([k, el]) => el.classList.toggle("on", k === s.chart));
+  if (W) charts[s.chart].draw(W, s.state, { animate });
+}
+const engine = story(document.getElementById("story"), { render });
+watch(layers.line, (w) => { W = w; render(cur); });
+redraws.push(() => render(cur));
+document.getElementById("present-btn").addEventListener("click", () => engine.setMode("present"));
+</script>
+</body>
+</html>

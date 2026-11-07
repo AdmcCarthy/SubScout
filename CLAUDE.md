@@ -26,10 +26,12 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
   an anchor only. Pages use **tone/alias tokens** (`--ss-text`, `--ss-accent-fill-emphasis`), never raw hex.
 - Core hues: fjord (accent), shale (neutral surfaces/text), slate (chart structure), cobalt (secondary data).
   Highlights only: malachite, ochre, haematite; for annotation/change/status, never large areas.
-- Two data palettes for two jobs:
+- Data colours come in **presets** (`[presets.*]` in colour.toml: tide, signal, frost; default in
+  `data.default_preset`). Switch with `data-palette="<name>"` on `<html>` or a container. Every preset is
+  tested. Within a preset, two palettes for two jobs:
   - **story** (`--ss-data-story-N`, default): grey context (`--ss-data-context`) + 1-3 quiet core colours,
     plus `--ss-data-highlight` for the one thing to look at. Low chroma, so **always direct-label**.
-  - **categorical** (`--ss-data-cat-1..5`): identity of 3-5 entities (operators etc.), fixed order, passes
+  - **categorical** (`--ss-data-cat-1..N`, N = `--ss-data-cat-count`): identity of 3-5 entities (operators etc.), fixed order, passes
     the six dataviz checks. More than 5: fold into "Other" (context grey) or small multiples; never add hues.
   - Colour follows the entity, never its rank. One y-axis per chart (no dual axes).
 - Diverging is cobalt ↔ ochre; never red ↔ green.
@@ -48,4 +50,8 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
 - Python ≥3.12 via uv. `uv run pytest`, `uv run ruff check . && uv run ruff format .`
 - Browser runtime is plain ES modules + CSS, no Node build. D3 from cdnjs with exact pinned versions.
 - Theme attribute: `data-colour-scheme="light|dark"` on `<html>`, falling back to system preference.
+  Type pairing: `data-type="ledger|survey|core"` (also works on containers).
+- Chart components live in `runtime/js/charts.js` (line, stacked bars, bubbles, heatmap, diverging bars).
+- Visual check before calling a page done: `uv run python scripts/build_pages.py && uv run python
+  scripts/snapshot.py _site _snapshots [path]` then look at the screenshots; 0 console errors required.
 - Stories must have tests for every number quoted in the prose (pattern from Viz_demo_generic).

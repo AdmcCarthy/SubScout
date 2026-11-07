@@ -2,23 +2,23 @@
    Type, spacing, motion, layout, figures, fact strip, Read/Present modes. */
 
 /* ------------------------------------------------------------ type pairings
-   Set on <html data-type="ledger|survey|core">. Default: ledger. */
+   Set data-type="ledger|survey|core" on <html> or any container. Default: ledger. */
 :root,
-:root[data-type="ledger"] {
+[data-type="ledger"] {
   --ss-font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
   --ss-font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
   --ss-font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
   --ss-display-weight: 500;
   --ss-display-tracking: -0.015em;
 }
-:root[data-type="survey"] {
+[data-type="survey"] {
   --ss-font-display: "Source Serif 4", Georgia, serif;
   --ss-font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
   --ss-font-mono: "Source Code Pro", ui-monospace, Menlo, monospace;
   --ss-display-weight: 600;
   --ss-display-tracking: -0.01em;
 }
-:root[data-type="core"] {
+[data-type="core"] {
   --ss-font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --ss-font-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
   --ss-font-mono: "Spline Sans Mono", ui-monospace, Menlo, monospace;
@@ -60,6 +60,7 @@
   --ss-ease: cubic-bezier(0.65, 0, 0.35, 1); /* ~ d3.easeCubicInOut */
   --ss-ease-out: cubic-bezier(0.33, 1, 0.68, 1);
 }
+[data-type] { font-family: var(--ss-font-body); }
 @media (min-width: 600px) {
   :root { --ss-gutter: 24px; }
 }

@@ -26,18 +26,16 @@ def cmd_audit(args: argparse.Namespace) -> int:
     print(f"{len(results) - len(bad)}/{len(results)} contrast rules pass")
     for scheme in C.SCHEMES:
         surface = C.to_hex(C.role_colour("neutral", "surface", scheme))
-        a = C.palette_audit(C.story(scheme), surface)
-        print(
-            f"{scheme}: story palette worst-case CVD deltaE {a['min_cvd_delta_e']:.3f} "
-            f"{a['closest_pair']}, lowest Lc on surface {a['min_lc_on_background']:.0f}"
-        )
-        k = C.categorical_checks(C.categorical(scheme), scheme, surface)
-        print(
-            f"{scheme}: categorical {'PASS' if k['ok'] else 'FAIL'}: band {k['band']}, "
-            f"min chroma {k['chroma']:.3f}, CVD dE {k['cvd']:.1f}, normal dE {k['normal']:.1f}, "
-            f"contrast {k['contrast']:.2f}:1"
-        )
-        palette_failed |= not k["ok"]
+        for name in C.preset_names():
+            a = C.palette_audit(C.story(scheme, name), surface)
+            k = C.categorical_checks(C.categorical(scheme, name), scheme, surface)
+            print(
+                f"{scheme:5} {name:7} story CVD dE {a['min_cvd_delta_e']:.3f}"
+                f" Lc {a['min_lc_on_background']:.0f}"
+                f" | categorical {'PASS' if k['ok'] else 'FAIL'}: chroma {k['chroma']:.3f},"
+                f" CVD dE {k['cvd']:.1f}, normal dE {k['normal']:.1f}, contrast {k['contrast']:.2f}:1"
+            )
+            palette_failed |= not k["ok"]
     return 1 if bad or palette_failed else 0
 
 

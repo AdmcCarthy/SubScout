@@ -5,7 +5,8 @@ Naming
 --ss-<hue>-<step>       raw scale, e.g. --ss-fjord-9          (avoid in stories)
 --ss-<tone>-<role>      semantic, e.g. --ss-accent-fill-emphasis
 --ss-<alias>            page-level shortcuts: --ss-canvas, --ss-text, ...
---ss-data-*             chart colours: context, highlight, story-N, cat-N, seq-<name>-N, div-N
+--ss-data-*             chart colours: context, highlight, story-N, cat-N, seq-N, div-N (from the
+                        active preset) and named ramps seq-<name>-N, div-<name>-N
 
 Theme switching follows EDS: `data-colour-scheme="light|dark"` on <html>,
 falling back to the reader's system preference.
@@ -51,20 +52,36 @@ def scheme_tokens(scheme: C.Scheme, cfg: dict | None = None) -> dict[str, str]:
             t[f"{tone}-{role}"] = scales[hue][step - 1]
     for alias, (tone, role) in ALIASES.items():
         t[alias] = t[f"{tone}-{role}"]
-    t["data-context"] = C.data_role("context", scheme, cfg)
-    t["data-highlight"] = C.data_role("highlight", scheme, cfg)
-    for i, hx in enumerate(C.story(scheme, cfg), 1):
-        t[f"data-story-{i}"] = hx
-    for i, hx in enumerate(C.categorical(scheme, cfg), 1):
-        t[f"data-cat-{i}"] = hx
+    t["data-context"] = C.context(scheme, cfg)
     for name in cfg["data"]["sequential"]:
         for i, hx in enumerate(C.sequential(name, scheme, cfg), 1):
             t[f"data-seq-{name}-{i}"] = hx
     for name in cfg["data"]["diverging"]:
-        prefix = "data-div" if name == "default" else f"data-div-{name}"
         for i, hx in enumerate(C.diverging(name, scheme, cfg), 1):
-            t[f"{prefix}-{i}"] = hx
+            t[f"data-div-{name}-{i}"] = hx
+    t.update(preset_tokens(None, scheme, cfg))
     return t
+
+
+def preset_tokens(name: str | None, scheme: C.Scheme, cfg: dict | None = None) -> dict[str, str]:
+    """Data tokens that a preset sets: highlight, story-N, cat-N, seq-N, div-N."""
+    cfg = cfg or C.load_config()
+    p = C.preset(name, cfg)
+    t = {"data-highlight": C.highlight(scheme, name, cfg), "data-cat-count": str(len(p["categorical"]))}
+    for i, hx in enumerate(C.story(scheme, name, cfg), 1):
+        t[f"data-story-{i}"] = hx
+    cat = C.categorical(scheme, name, cfg)
+    for i in range(1, MAX_CAT + 1):
+        # unused slots fall back to context grey ("Other")
+        t[f"data-cat-{i}"] = cat[i - 1] if i <= len(cat) else C.context(scheme, cfg)
+    for i, hx in enumerate(C.sequential(p["sequential"], scheme, cfg), 1):
+        t[f"data-seq-{i}"] = hx
+    for i, hx in enumerate(C.diverging(p["diverging"], scheme, cfg), 1):
+        t[f"data-div-{i}"] = hx
+    return t
+
+
+MAX_CAT = 5
 
 
 def _block(selector: str, tokens: dict[str, str], scheme: str, indent: str = "") -> str:
@@ -74,7 +91,31 @@ def _block(selector: str, tokens: dict[str, str], scheme: str, indent: str = "")
     return "\n".join(lines)
 
 
+def _vars(selector: str, tokens: dict[str, str], indent: str = "") -> str:
+    lines = [f"{indent}{selector} {{"] + [f"{indent}  --ss-{k}: {v};" for k, v in tokens.items()]
+    return "\n".join([*lines, f"{indent}}}"])
+
+
+def _preset_blocks(cfg: dict) -> list[str]:
+    """Per-preset overrides. Work on <html> or any container; dark rules out-rank light ones."""
+    out = ['/* data-colour presets: data-palette="<name>" on <html> or any container */']
+    for name in C.preset_names(cfg):
+        sel = f'[data-palette="{name}"]'
+        light, dark = preset_tokens(name, "light", cfg), preset_tokens(name, "dark", cfg)
+        not_light = ':root:not([data-colour-scheme="light"])'
+        forced = ':root[data-colour-scheme="dark"]'
+        out += [
+            _vars(f"{sel}, :root{sel}", light),
+            "@media (prefers-color-scheme: dark) {\n"
+            + _vars(f"{not_light} {sel}, {not_light}{sel}", dark, "  ")
+            + "\n}",
+            _vars(f"{forced} {sel}, {forced}{sel}", dark),
+        ]
+    return out
+
+
 def build_css(cfg: dict | None = None) -> str:
+    cfg = cfg or C.load_config()
     light, dark = scheme_tokens("light", cfg), scheme_tokens("dark", cfg)
     return (
         "\n\n".join(
@@ -85,6 +126,7 @@ def build_css(cfg: dict | None = None) -> str:
                 + _block(':root:not([data-colour-scheme="light"])', dark, "dark", "  ")
                 + "\n}",
                 _block(':root[data-colour-scheme="dark"]', dark, "dark"),
+                *_preset_blocks(cfg),
             ]
         )
         + "\n"
@@ -96,8 +138,17 @@ def build_json(cfg: dict | None = None) -> dict:
     return {
         "light": scheme_tokens("light", cfg),
         "dark": scheme_tokens("dark", cfg),
-        "story_count": len(cfg["data"]["story"]),
-        "categorical_count": len(cfg["data"]["categorical"]),
+        "default_preset": cfg["data"]["default_preset"],
+        "presets": {
+            n: {
+                "label": cfg["presets"][n]["label"],
+                "note": cfg["presets"][n]["note"],
+                "categorical_count": len(cfg["presets"][n]["categorical"]),
+                "light": preset_tokens(n, "light", cfg),
+                "dark": preset_tokens(n, "dark", cfg),
+            }
+            for n in C.preset_names(cfg)
+        },
     }
 
 

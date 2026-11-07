@@ -201,20 +201,36 @@ def diverging(name: str, scheme: Scheme, cfg: dict | None = None) -> list[str]:
     return out
 
 
-def _palette(name: str, scheme: Scheme, cfg: dict | None) -> list[str]:
+def preset_names(cfg: dict | None = None) -> list[str]:
+    return list((cfg or load_config())["presets"])
+
+
+def preset(name: str | None = None, cfg: dict | None = None) -> dict:
+    """A data-colour preset (default if `name` is None)."""
     cfg = cfg or load_config()
+    return cfg["presets"][name or cfg["data"]["default_preset"]]
+
+
+def _entries(entries: list, scheme: Scheme, cfg: dict) -> list[str]:
     idx = 1 if scheme == "light" else 2
-    return [to_hex(step_colour(e[0], e[idx], scheme, cfg)) for e in cfg["data"][name]]
+    return [to_hex(step_colour(e[0], e[idx], scheme, cfg)) for e in entries]
 
 
-def story(scheme: Scheme, cfg: dict | None = None) -> list[str]:
+def story(scheme: Scheme, name: str | None = None, cfg: dict | None = None) -> list[str]:
     """Quiet on-identity palette (1-3 series beside grey context). Always direct-label."""
-    return _palette("story", scheme, cfg)
+    cfg = cfg or load_config()
+    return _entries(preset(name, cfg)["story"], scheme, cfg)
 
 
-def categorical(scheme: Scheme, cfg: dict | None = None) -> list[str]:
-    """Identity palette for 3-5 entities, in fixed order. Passes the six checks."""
-    return _palette("categorical", scheme, cfg)
+def categorical(scheme: Scheme, name: str | None = None, cfg: dict | None = None) -> list[str]:
+    """Identity palette in fixed order. Passes the six checks."""
+    cfg = cfg or load_config()
+    return _entries(preset(name, cfg)["categorical"], scheme, cfg)
+
+
+def highlight(scheme: Scheme, name: str | None = None, cfg: dict | None = None) -> str:
+    cfg = cfg or load_config()
+    return _entries([preset(name, cfg)["highlight"]], scheme, cfg)[0]
 
 
 # Six-checks thresholds for identity palettes (dataviz method; Machado 2009 CVD).
@@ -254,10 +270,10 @@ def categorical_checks(colours: list[str], scheme: Scheme, surface: str) -> dict
     return res
 
 
-def data_role(role: str, scheme: Scheme, cfg: dict | None = None) -> str:
-    """`context` or `highlight` data colour."""
+def context(scheme: Scheme, cfg: dict | None = None) -> str:
+    """Grey for context/background series (shared by all presets)."""
     cfg = cfg or load_config()
-    spec = cfg["data"][role]
+    spec = cfg["data"]["context"]
     return to_hex(step_colour(spec["hue"], spec[scheme], scheme, cfg))
 
 
