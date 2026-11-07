@@ -345,7 +345,7 @@ SURFACE_ROLES = ("canvas", "surface", "raised")
 
 
 def surface_names(cfg: dict | None = None) -> list[str]:
-    return list((cfg or load_config())["surfaces"].keys() - {"default"})
+    return [k for k in (cfg or load_config())["surfaces"] if k != "default"]  # keep file order
 
 
 def surfaces(name: str, scheme: Scheme, cfg: dict | None = None) -> dict[str, str]:

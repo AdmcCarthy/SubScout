@@ -1305,32 +1305,6 @@
 
 /* surfaces: data-surface="<name>" on <html> or any container */
 
-[data-surface="nordic-warm"], :root[data-surface="nordic-warm"] {
-  --ss-canvas: #f9f4ec;
-  --ss-surface: #fffcf9;
-  --ss-surface-raised: #f3ede4;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-colour-scheme="light"]) [data-surface="nordic-warm"], :root:not([data-colour-scheme="light"])[data-surface="nordic-warm"] {
-    --ss-canvas: #0e1820;
-    --ss-surface: #15212a;
-    --ss-surface-raised: #1e2b35;
-  }
-}
-
-[data-colour-scheme="dark"] [data-surface="nordic-warm"], [data-colour-scheme="dark"][data-surface="nordic-warm"] {
-  --ss-canvas: #0e1820;
-  --ss-surface: #15212a;
-  --ss-surface-raised: #1e2b35;
-}
-
-:root [data-colour-scheme="light"][data-surface="nordic-warm"], :root[data-colour-scheme="light"][data-surface="nordic-warm"] {
-  --ss-canvas: #f9f4ec;
-  --ss-surface: #fffcf9;
-  --ss-surface-raised: #f3ede4;
-}
-
 [data-surface="nordic-cool"], :root[data-surface="nordic-cool"] {
   --ss-canvas: #f3f7fb;
   --ss-surface: #fdfeff;
@@ -1355,4 +1329,30 @@
   --ss-canvas: #f3f7fb;
   --ss-surface: #fdfeff;
   --ss-surface-raised: #ecf1f5;
+}
+
+[data-surface="nordic-warm"], :root[data-surface="nordic-warm"] {
+  --ss-canvas: #f9f4ec;
+  --ss-surface: #fffcf9;
+  --ss-surface-raised: #f3ede4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-colour-scheme="light"]) [data-surface="nordic-warm"], :root:not([data-colour-scheme="light"])[data-surface="nordic-warm"] {
+    --ss-canvas: #0e1820;
+    --ss-surface: #15212a;
+    --ss-surface-raised: #1e2b35;
+  }
+}
+
+[data-colour-scheme="dark"] [data-surface="nordic-warm"], [data-colour-scheme="dark"][data-surface="nordic-warm"] {
+  --ss-canvas: #0e1820;
+  --ss-surface: #15212a;
+  --ss-surface-raised: #1e2b35;
+}
+
+:root [data-colour-scheme="light"][data-surface="nordic-warm"], :root[data-colour-scheme="light"][data-surface="nordic-warm"] {
+  --ss-canvas: #f9f4ec;
+  --ss-surface: #fffcf9;
+  --ss-surface-raised: #f3ede4;
 }
