@@ -542,6 +542,29 @@ def copy_custom_modules(root: Path, out: Path, figures: list, report: Report) ->
             done.add(top)
 
 
+def _no_nan(o):
+    if isinstance(o, float) and (o != o or o in (float("inf"), float("-inf"))):
+        return None
+    if isinstance(o, dict):
+        return {k: _no_nan(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_no_nan(v) for v in o]
+    return o
+
+
+def payload_json(obj: dict, report: Report) -> str:
+    """Serialise the page payload. NaN and infinity are not valid JSON in the browser: they become null,
+    with a warning so the data can be fixed at source."""
+    try:
+        text = json.dumps(obj, ensure_ascii=False, default=_py, allow_nan=False)
+    except ValueError:
+        report.warn("page data contained NaN or infinity; written as null (fix it in the data or story.py)")
+        text = json.dumps(
+            _no_nan(json.loads(json.dumps(obj, ensure_ascii=False, default=_py))), ensure_ascii=False
+        )
+    return text.replace("</", "<\\/")
+
+
 def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     root, out = Path(root).resolve(), Path(out).resolve()
     report = Report()
@@ -805,7 +828,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
         palette=fm.get("palette", "tide"),
         surface=fm.get("surface", cfg["surfaces"]["default"]),
         has_scrolly=any(s["kind"] == "scrolly" for s in sections),
-        payload=json.dumps(
+        payload=payload_json(
             {
                 "figures": figs_payload,
                 "datasets": datasets,
@@ -813,9 +836,8 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
                 "units": fm.get("units", "sm3"),
                 "groups": fm.get("groups"),
             },
-            ensure_ascii=False,
-            default=_py,
-        ).replace("</", "<\\/"),
+            report,
+        ),
         esc=html.escape,
         conf_label={
             "observed": "Observed",

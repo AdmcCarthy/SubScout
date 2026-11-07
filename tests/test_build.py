@@ -130,3 +130,12 @@ def test_wide_layout_marks_the_scrolly_section(tmp_path):
     rep = build(_story(tmp_path, body), out)
     assert rep.errors == []
     assert 'class="ss-scrolly ss-scrolly--wide"' in (out / "index.html").read_text()
+
+
+def test_nan_in_page_data_becomes_null_with_a_warning(tmp_path):
+    from subscout.build import Report, payload_json
+
+    rep = Report()
+    text = payload_json({"datasets": {"x": [1.0, float("nan")]}}, rep)
+    assert json.loads(text) == {"datasets": {"x": [1.0, None]}}
+    assert any("NaN" in w for w in rep.warnings)

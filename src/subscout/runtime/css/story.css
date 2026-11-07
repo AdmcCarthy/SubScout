@@ -85,3 +85,6 @@
   #present-btn { padding: 5px 9px; font-size: 11.5px; white-space: nowrap; }
   .ss-graphic { top: 44px; height: calc(62vh - 44px); }
 }
+
+/* long URLs in sources and notes wrap instead of widening the page */
+.ss-sources a, .ss-facts a, .ss-appendix a { overflow-wrap: anywhere; }
