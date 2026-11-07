@@ -1,0 +1,49 @@
+# SubScout
+
+A framework for consistent, themed, journalistic data narratives. One Markdown story and its data
+produce a web page with two modes:
+
+- **Read**: a scrollytelling article, with charts and maps that change as you scroll.
+- **Present**: the same story as an in-browser deck with animated transitions.
+
+The look, colour logic, chart defaults and writing rules are shared by every story, so each new
+dataset and narrative comes out in the same house style. Stories are published on GitHub Pages.
+
+> Status: early. v0.1 is the colour engine and design tokens; layout, charts, the state engine and
+> the build follow.
+
+## Colour
+
+All colours are generated from [`src/subscout/tokens/colour.toml`](src/subscout/tokens/colour.toml):
+
+- **Seven anchor hues.** Core: `fjord`, `shale`, `slate`, `cobalt`. Highlights: `malachite`, `ochre`, `haematite`.
+- **One 15-step lightness ladder per scheme** (light and dark), shared by every hue.
+- **A gaussian chroma curve**, so colours are richest in the mid-tones.
+- **Fixed step roles**: fills, borders, text, surface.
+- **APCA contrast rules**, checked by the test suite for every hue in both schemes.
+
+To add a colour you only add an anchor (hue and chroma). The new colour gets the ladder, roles and
+contrast checks automatically.
+
+```bash
+uv run subscout tokens   # regenerate src/subscout/runtime/css/tokens.{css,json}
+uv run subscout audit    # contrast and colour-vision-deficiency report
+uv run pytest
+```
+
+Data palettes use the "context in grey, story in colour" approach, plus:
+
+- a curated categorical order, checked for colour-vision-deficiency separation
+- sequential ramps (`fjord`, `cobalt`, `shale`)
+- a cobalt ↔ ochre diverging scale
+
+## Credits
+
+The palette method (lightness ladder, gaussian chroma, step roles, APCA targets and the data-palette
+algorithms) is ported from the [Equinor Design System colour palette generator](https://github.com/equinor/design-system/tree/main/apps/eds-color-palette-generator),
+© Equinor ASA, MIT licence. SubScout is an independent project and is not affiliated with or endorsed
+by Equinor.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).

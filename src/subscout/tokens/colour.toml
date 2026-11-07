@@ -1,0 +1,150 @@
+# SubScout colour source of truth.
+#
+# Method ported from the Equinor Design System colour palette generator
+# (MIT, (c) Equinor ASA, github.com/equinor/design-system, ADR 0016):
+#   step colour = oklch( L[step], gaussian(L[step]) * anchor.C, anchor.H )
+# Only an anchor's hue and chroma are used; lightness always comes from the
+# shared ladder. To add a colour, add an anchor below: it inherits the ladder,
+# the chroma curve, the step roles and the contrast tests automatically.
+#
+# Names are SubScout's own (geological). SubScout is not affiliated with Equinor.
+
+[scale]
+steps = 15
+# Hand-set OKLCH lightness per step (EDS input/scale). Dark mode is not a
+# mirror: steps 3-5 "dip" for selected/border states, 14-15 are inverse steps.
+light = [0.98, 0.94, 0.91, 0.87, 0.82, 0.77, 0.72, 0.62, 0.52, 0.47, 0.42, 0.37, 0.32, 0.90, 1.00]
+dark  = [0.215, 0.226, 0.47, 0.30, 0.45, 0.595, 0.61, 0.76, 0.82, 0.88, 0.93, 0.96, 0.99, 0.33, 0.10]
+
+[scale.gaussian]
+# chroma multiplier = exp(-25/std_dev * (L - mean)^2); peaks in the mid-tones.
+light = { mean = 0.6, std_dev = 2 }
+dark  = { mean = 0.7, std_dev = 2 }
+
+# ---------------------------------------------------------------- hues
+# anchor = [L, C, H] in OKLCH. `group` documents intent:
+#   core      - identity colours used for surfaces, text and most data
+#   highlight - used sparingly: annotation, change, status; never large areas
+[hues.fjord]       # EDS "Moss Green"
+anchor = [0.4973, 0.084851, 204.553]
+group = "core"
+
+[hues.slate]       # EDS "Gray"
+anchor = [0.4091, 0.0, 0.0]
+group = "core"
+
+[hues.shale]       # EDS "North Sea"
+anchor = [0.3274, 0.0363, 242.96]
+group = "core"
+
+[hues.cobalt]      # EDS "Blue"
+anchor = [0.5857, 0.135751, 240.6802]
+group = "core"
+
+[hues.malachite]   # EDS "Green"
+anchor = [0.6291, 0.1659, 142.98]
+group = "highlight"
+
+[hues.ochre]       # EDS "Orange"
+anchor = [0.6934, 0.164689, 58.7381]
+group = "highlight"
+
+[hues.haematite]   # EDS "Red"
+anchor = [0.5776, 0.2314, 21.12]
+group = "highlight"
+
+# ---------------------------------------------------------------- tones
+# Semantic tone -> hue, per scheme. Pages only ever use tone tokens.
+[tones.light]
+accent = "fjord"
+neutral = "shale"      # cool-tinted surfaces and text
+structure = "slate"    # chart structure: gridlines, axes, context series
+info = "cobalt"
+success = "malachite"
+warning = "ochre"
+danger = "haematite"
+
+[tones.dark]
+accent = "fjord"
+neutral = "shale"
+structure = "slate"
+info = "cobalt"
+success = "malachite"
+warning = "ochre"
+danger = "haematite"
+
+# ---------------------------------------------------------------- step roles
+# Role -> step (1-based), identical for every tone (EDS ADR 0016 D5).
+[roles]
+fill-muted = 1
+fill-muted-hover = 2
+fill-muted-pressed = 3
+border-subtle = 4
+selected = 5
+border = 7
+selected-pressed = 8
+text-muted = 8          # labels, axis text, captions (Lc 60)
+border-strong = 9
+fill-emphasis = 9
+fill-emphasis-hover = 10
+fill-emphasis-pressed = 11
+text-subtle = 11        # secondary prose, standfirst (Lc 75)
+text-on-muted = 12
+text-strong = 13        # body text (Lc 90)
+text-on-emphasis = 15
+surface = 15
+
+# ---------------------------------------------------------------- contrast
+# APCA (W3 0.0.98G) minimums, checked by tests for every hue in every scheme.
+# fg/bg are role names; `tones` limits which tones must pass ("all" or a list).
+[[contrast]]
+fg = "text-strong"
+bg = "surface"
+lc = 90
+tones = "all"
+
+[[contrast]]
+fg = "text-subtle"
+bg = "surface"
+lc = 75
+tones = ["neutral", "structure"]
+
+[[contrast]]
+fg = "text-muted"
+bg = "surface"
+lc = 60
+tones = ["accent", "neutral", "structure", "info"]
+
+[[contrast]]
+fg = "text-on-emphasis"
+bg = "fill-emphasis"
+lc = 60
+tones = "all"
+
+# ---------------------------------------------------------------- data colours
+# Journalistic default: context in grey, the story in colour.
+[data]
+context = { hue = "slate", light = 6, dark = 6 }      # background series (Lc >= 30)
+highlight = { hue = "ochre", light = 8, dark = 8 }    # the one thing to look at
+
+# Curated categorical order: core hues first, highlights only beyond 4.
+# Tuned so every pair stays >= 0.06 OK deltaE under protan/deutan/tritan and
+# every colour is >= Lc 30 against the surface (tests enforce both).
+# Each entry is [hue, step_light, step_dark].
+categorical = [
+  ["fjord", 9, 8],
+  ["cobalt", 7, 10],
+  ["shale", 11, 6],
+  ["fjord", 6, 11],
+  ["ochre", 8, 8],
+  ["haematite", 10, 7],
+]
+
+[data.sequential]
+fjord = { hue = "fjord", steps = 7, range_light = [0.96, 0.34], range_dark = [0.30, 0.92], chroma_peak = 0.09 }
+cobalt = { hue = "cobalt", steps = 7, range_light = [0.96, 0.34], range_dark = [0.30, 0.92], chroma_peak = 0.13 }
+shale = { hue = "shale", steps = 7, range_light = [0.96, 0.30], range_dark = [0.30, 0.94], chroma_peak = 0.05 }
+
+[data.diverging]
+# blue <-> orange is CVD-safe; never red <-> green.
+default = { low = "cobalt", high = "ochre", steps = 9, neutral_light = 0.95, neutral_dark = 0.22, end_light = 0.50, end_dark = 0.68, chroma = 0.14 }
