@@ -233,11 +233,33 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
 .ss-step-card p:last-child { margin-bottom: 0; }
 .ss-graphic { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; min-width: 0; }
 .ss-graphic > .ss-figure { width: 100%; }
+.ss-story { --ss-trigger: 55; }
+/* phones: the figure is pinned at the top, compact and opaque; the text scrolls up underneath it in the
+   lower part of the screen, one card at a time. Text and figure never overlap. */
 @media (max-width: 760px) {
-  .ss-story { grid-template-columns: minmax(0, 1fr); }
-  .ss-graphic { grid-row: 1; grid-column: 1; height: 62vh; top: 0; z-index: 1; align-items: flex-start; padding-top: 8px; }
-  .ss-steps { grid-row: 1; grid-column: 1; z-index: 2; padding-top: 55vh; }
-  .ss-step-card { opacity: 0.94; }
+  .ss-story { grid-template-columns: minmax(0, 1fr); --ss-gfx: 56vh; --ss-trigger: 82; }
+  .ss-graphic {
+    grid-row: 1; grid-column: 1; position: sticky; top: 0; z-index: 3;
+    height: auto; max-height: calc(var(--ss-gfx) + var(--ss-topbar-h, 0px)); display: block;
+    padding-top: calc(var(--ss-topbar-h, 0px) + 6px); /* sits under the top bar so nothing shows between them */
+    background: var(--ss-canvas); align-self: start;
+  }
+  .ss-graphic::after { content: ""; position: absolute; left: 0; right: 0; bottom: -18px; height: 18px; pointer-events: none;
+    background: linear-gradient(var(--ss-canvas), color-mix(in oklab, var(--ss-canvas) 0%, transparent)); }
+  .ss-graphic .ss-figure { padding: 10px 12px 8px; border-radius: var(--ss-radius-m, 10px); }
+  .ss-graphic .ss-fig-sub { display: none; }
+  .ss-graphic .ss-fig-title { font-size: 0.92rem; }
+  .ss-graphic .ss-facts > div:not(:first-child) { display: none; }   /* full notes stay in the appendix */
+  .ss-graphic .ss-facts { display: block; margin-top: 4px; padding-top: 4px; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* only the showing figure sets the pinned panel's height; hidden layers overlay it */
+  .ss-graphic .ss-layers { position: relative; }
+  .ss-graphic .ss-layers > .ss-layer:not(.is-on) { position: absolute; inset: 0 0 auto 0; }
+  .ss-graphic .ss-facts > div, .ss-graphic .ss-facts dd { display: inline; }
+  .ss-steps { grid-row: 1; grid-column: 1; z-index: 1; padding-top: calc(var(--ss-gfx) + 6vh); padding-bottom: 20vh; }
+  .ss-step { min-height: 0; display: block; padding-bottom: 46vh; }
+  .ss-step:last-child { padding-bottom: 10vh; }
+  .ss-step-card { opacity: 1; max-width: none; padding: 14px 16px; font-size: 0.94rem; line-height: 1.5; }
+  .ss-step-card h3 { margin-top: 2px; }
 }
 
 /* wide scrolly (`::: step {layout=wide}` on the first step): the figure frame spans the page and the

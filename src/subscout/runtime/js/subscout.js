@@ -129,15 +129,28 @@ export function story(el, { render }) {
     render(i, { animate: animate && !reducedMotion(), mode });
   };
 
-  // Read mode: the step crossing the viewport middle is active.
-  const io = new IntersectionObserver(
-    (entries) => {
-      if (mode !== "read") return;
-      entries.forEach((en) => en.isIntersecting && go(steps.indexOf(en.target)));
-    },
-    { rootMargin: "-50% 0px -50% 0px" },
-  );
-  steps.forEach((s) => io.observe(s));
+  // Read mode: the step whose card crosses the trigger line is active. The line sits where the reader's
+  // eye is: the middle on desktop, inside the text area below the pinned figure on phones
+  // (CSS custom property --ss-trigger, a percentage of the viewport height).
+  let io = null;
+  const watch = () => {
+    io?.disconnect();
+    const t = parseFloat(getComputedStyle(el).getPropertyValue("--ss-trigger")) || 50;
+    io = new IntersectionObserver(
+      (entries) => {
+        if (mode !== "read") return;
+        entries.forEach((en) => en.isIntersecting && go(steps.indexOf(en.target.closest(".ss-step"))));
+      },
+      { rootMargin: `-${t}% 0px -${100 - t}% 0px` },
+    );
+    steps.forEach((s) => io.observe(s.querySelector(".ss-step-card") ?? s));
+  };
+  watch();
+  let lastT = null;
+  window.addEventListener("resize", () => {
+    const t = getComputedStyle(el).getPropertyValue("--ss-trigger");
+    if (t !== lastT) { lastT = t; watch(); }
+  });
 
   // Present mode: deck bar with dots, counter, exit.
   const bar = document.createElement("div");

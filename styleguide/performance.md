@@ -42,3 +42,16 @@ Patterns that keep pages inside the budget:
 - **On resize, redraw only the visible chart on the next frame**; hidden layers redraw in idle time
   (`idle()` in subscout.js).
 - Zero console errors are required.
+
+## Readability (scrolly)
+
+Every step must be readable as a reader meets it, on phones and on desktop: the active text card fully
+visible and uncovered, and its chart on screen, uncovered and at least a fifth of the screen high.
+`scripts/readability.py` checks this on 360×740, 390×844 and 414×896 phones and 1280×800 and 1440×900
+desktops, judging each step at the best moment a reader gets while it is active. It runs in CI on the
+demo; run it on every story before publishing.
+
+On phones the figure is pinned at the top of the screen, opaque and compact (title, legend, chart and a
+one-line source; subtitle and notes stay in the appendix), and the text scrolls up beneath it, one card
+at a time. A step becomes active when its card enters the text area (`--ss-trigger`, a percentage of the
+viewport height). Keep step text short enough to fit beneath the figure on a 360×740 screen.

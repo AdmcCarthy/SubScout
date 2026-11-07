@@ -61,6 +61,11 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
   Type pairing: `data-type="ledger|survey|core"` (also works on containers).
 - Chart components live in `runtime/js/charts.js` (line, stacked bars, bubbles, heatmap, diverging bars, bars, dots, map, network). Network layouts are
   precomputed at build time in `layout.py`; the browser only transitions between settled frames.
+- Readability gate: `uv run python scripts/readability.py <site> [path]` scrolls every step on three phone
+  and two desktop sizes and checks (by what is on top on screen) that the active text card and its chart are
+  both fully readable, uncovered and on screen. Phones pin the figure at the top (opaque, compact: title,
+  legend, chart, one-line source) and the text scrolls up beneath it; `--ss-trigger` sets where a card
+  activates. Custom figures must size themselves for that panel on narrow screens (about 30-36 % of vh).
 - Visual check before calling a page done: `uv run python scripts/build_pages.py && uv run python
   scripts/snapshot.py _site _snapshots [path]` then look at the screenshots; 0 console errors required.
 - Stories must have tests for every number quoted in the prose (pattern from Viz_demo_generic).
