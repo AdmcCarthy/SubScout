@@ -63,7 +63,7 @@
   {% if s.kind == "prose" %}
   <section class="ss-wrap ss-prose-section">{{ s.html }}</section>
   {% else %}
-  <section class="ss-scrolly">
+  <section class="ss-scrolly{% if s.steps[0].attrs.layout == 'wide' %} ss-scrolly--wide{% endif %}">
     <div class="ss-wrap">
       <article class="ss-story">
         <div class="ss-steps">

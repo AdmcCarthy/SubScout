@@ -88,7 +88,9 @@ available as `<name>_props`.
 
 ## Steps
 
-Consecutive steps form one scrolly sequence that also plays as a deck in Present mode. Each step may
+Consecutive steps form one scrolly sequence that also plays as a deck in Present mode. Put `layout=wide` on the
+first step (`::: step {beat=… layout=wide}`) for a showpiece figure: its frame spans the page and the
+step cards scroll in a lane inside it (phones and Present mode are unchanged). Each step may
 contain one chart block; a block with `use: <id>` changes the state of an earlier chart, so it
 transitions instead of being replaced.
 

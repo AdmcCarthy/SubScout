@@ -240,6 +240,18 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
   .ss-step-card { opacity: 0.94; }
 }
 
+/* wide scrolly (`::: step {layout=wide}` on the first step): the figure frame spans the page and the
+   step cards scroll in a lane inside it, at the left; the figure's content sits beside the lane */
+@media (min-width: 761px) {
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-story { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic,
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-steps { grid-row: 1; grid-column: 1; }
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-steps { z-index: 2; pointer-events: none; width: var(--ss-lane, 21rem); padding-left: var(--ss-space-m); }
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-step-card { pointer-events: auto; max-width: none; }
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic > .ss-layers .ss-figure,
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic > .ss-figure { padding-left: calc(var(--ss-lane, 21rem) + var(--ss-space-l)); }
+}
+
 /* ------------------------------------------------------------ story: Present mode (deck) */
 .ss-deck-bar { display: none; }
 :root[data-mode="present"] body { overflow: hidden; }

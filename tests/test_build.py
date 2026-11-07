@@ -122,3 +122,11 @@ def test_custom_figure_needs_existing_module(tmp_path):
     body = "```chart\nid: c\ntype: custom\nmodule: figures/missing.js\ndata: decades\ntitle: T\nsource: s\nconfidence: observed\nnotes: n\n```\n"
     rep = build(_story(tmp_path, body), tmp_path / "out")
     assert any("not found" in e for e in rep.errors)
+
+
+def test_wide_layout_marks_the_scrolly_section(tmp_path):
+    body = "::: step {layout=wide}\n### A\nText.\n:::\n"
+    out = tmp_path / "out"
+    rep = build(_story(tmp_path, body), out)
+    assert rep.errors == []
+    assert 'class="ss-scrolly ss-scrolly--wide"' in (out / "index.html").read_text()
