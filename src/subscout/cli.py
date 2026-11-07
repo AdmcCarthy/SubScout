@@ -39,6 +39,21 @@ def cmd_audit(args: argparse.Namespace) -> int:
     return 1 if bad or palette_failed else 0
 
 
+def cmd_build(args: argparse.Namespace) -> int:
+    from .build import build
+
+    rep = build(Path(args.story), Path(args.out))
+    for w in rep.warnings:
+        print(f"warning: {w}")
+    for e in rep.errors:
+        print(f"error: {e}")
+    if rep.errors:
+        print(f"build failed: {len(rep.errors)} error(s)")
+        return 1
+    print(f"built {args.story} -> {args.out} ({len(rep.warnings)} warning(s))")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="subscout", description="SubScout data-narrative framework")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -48,6 +63,10 @@ def main(argv: list[str] | None = None) -> int:
     a = sub.add_parser("audit", help="check colour contrast and CVD separation")
     a.add_argument("--all", action="store_true", help="show passing rules too")
     a.set_defaults(func=cmd_audit)
+    b = sub.add_parser("build", help="build a story folder into a static page")
+    b.add_argument("story", help="folder containing story.md")
+    b.add_argument("--out", default="_site", help="output directory")
+    b.set_defaults(func=cmd_build)
     args = p.parse_args(argv)
     return args.func(args)
 

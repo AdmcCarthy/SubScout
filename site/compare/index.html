@@ -161,7 +161,7 @@
 </footer>
 
 <script type="module">
-import { theme, units, UNITS, typePairing, palettePreset, surfaceOption, bindSeg, story, refreshUnits } from "../runtime/js/subscout.js";
+import { theme, units, UNITS, typePairing, palettePreset, surfaceOption, bindSeg, story, refreshUnits, idle } from "../runtime/js/subscout.js";
 import { lineChart, stackedBars, bubbles, heatmap, divergingBars, horizon } from "../runtime/js/charts.js";
 import { production, byOperator, discoveries, basins, biggest, wells, revisions } from "./data.js";
 
@@ -343,7 +343,14 @@ function render(i, { animate } = {}) {
   if (W) charts[s.chart].draw(W, s.state, { animate });
 }
 const engine = story(document.getElementById("story"), { render });
-watch(layers.line, (w) => { W = w; render(cur); });
+// pre-draw every chart once (idle), so stepping only transitions instead of building DOM mid-slide
+const firstState = Object.fromEntries(STEPS.map((s) => [s.chart, null]));
+STEPS.forEach((s) => { if (!firstState[s.chart]) firstState[s.chart] = s.state; });
+watch(layers.line, (w) => {
+  W = w;
+  render(cur); // the visible chart now; the rest in idle time
+  Object.entries(charts).forEach(([k, c]) => { if (k !== STEPS[cur].chart) idle(() => c.draw(W, firstState[k] ?? {}, { animate: false })); });
+});
 redraws.push(() => render(cur));
 document.getElementById("present-btn").addEventListener("click", () => engine.setMode("present"));
 </script>

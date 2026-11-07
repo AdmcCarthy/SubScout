@@ -42,16 +42,17 @@ function hbar(x0, x1, y, h, r = 4) {
 
 // ------------------------------------------------------------------ line
 /** data: {x: number[], series: [{name, vals}]}, state: {focus: [name], note?: {name, x, text}} */
-export function lineChart(el, data, { label = "Line chart", unitLabel = () => "" } = {}) {
+export function lineChart(el, data, { label = "Line chart", unitLabel = () => "", yFormat = null, unitScaled = true } = {}) {
+  const yf = yFormat === "pct" ? (d) => `${fmt(d * (Math.abs(d) <= 1 ? 100 : 1))}%` : d3.format(",");
   function draw(W, state = {}, { animate = false } = {}) {
-    const f = unitF();
+    const f = unitScaled ? unitF() : 1;
     const focus = state.focus ?? [];
     const H = Math.round(Math.max(220, Math.min(360, W * 0.6)));
     const m = { t: 30, r: W < 420 ? 58 : 70, b: 24, l: 34 };
     const x = d3.scaleLinear(d3.extent(data.x), [m.l, W - m.r]);
     const y = d3.scaleLinear([0, d3.max(data.series, (d) => d3.max(d.vals)) * f], [H - m.b, m.t]).nice();
     const svg = frame(el, W, H, label);
-    yAxis(svg, y, m, W, animate);
+    yAxis(svg, y, m, W, animate, yf);
     svg.selectAll("g.ss-x").data([0]).join("g").attr("class", "ss-axis ss-x").attr("transform", `translate(0,${H - m.b})`)
       .call(d3.axisBottom(x).ticks(W < 420 ? 4 : 6).tickFormat(d3.format("d")).tickSizeOuter(0));
     const line = d3.line().defined((d) => d > 0).x((_, i) => x(data.x[i])).y((d) => y(d * f)).curve(d3.curveMonotoneX);
@@ -72,7 +73,7 @@ export function lineChart(el, data, { label = "Line chart", unitLabel = () => ""
       .attr("x", W - m.r + 6).text((d) => d.name), animate, animate ? motion().base : 0)
       .style("opacity", 1).attr("y", (d) => d.y);
     svg.selectAll("text.others").data([0]).join("text").attr("class", "others ss-note ss-halo")
-      .attr("x", W - m.r + 6).attr("y", H - m.b - 8).text(focus.length ? "Others" : "");
+      .attr("x", W - m.r + 6).attr("y", H - m.b - 8).text(focus.length && focus.length < data.series.length ? "Others" : "");
     // note: highlight marker + text
     const n = state.note && data.series.find((d) => d.name === state.note.name);
     const nd = n ? [{ ...state.note, cx: x(state.note.x), cy: y(n.vals[data.x.indexOf(state.note.x)] * f) }] : [];
@@ -95,7 +96,7 @@ export function lineChart(el, data, { label = "Line chart", unitLabel = () => ""
         if (i < 0) return;
         cross.attr("x1", x(xv)).attr("x2", x(xv)).attr("opacity", 1);
         const rows = [...data.series].sort((a, b) => b.vals[i] - a.vals[i]).map((d) =>
-          `<tr><td>${focus.includes(d.name) ? `<b>${d.name}</b>` : d.name}</td><td class="ss-num" style="text-align:right;padding-left:12px">${d.vals[i] ? fmt(d.vals[i] * f, 1) : "–"}</td></tr>`).join("");
+          `<tr><td>${focus.includes(d.name) ? `<b>${d.name}</b>` : d.name}</td><td class="ss-num" style="text-align:right;padding-left:12px">${d.vals[i] ? (yFormat === "pct" ? yf(d.vals[i]) : fmt(d.vals[i] * f, 1)) : "–"}</td></tr>`).join("");
         getTip().show(`<b>${xv}</b> <span class="ss-k">${unitLabel()}</span><table>${rows}</table>`, e.clientX, e.clientY);
       })
       .on("pointerleave", () => { cross.attr("opacity", 0); getTip().hide(); });
@@ -105,26 +106,26 @@ export function lineChart(el, data, { label = "Line chart", unitLabel = () => ""
 
 // ------------------------------------------------------------------ stacked bars
 /** data: {x: [label], series: [{name, vals}]} ordered largest first; overflow folds into "Other". */
-export function stackedBars(el, data, { label = "Stacked bar chart", legendEl = null, unitLabel = () => "" } = {}) {
+export function stackedBars(el, data, { label = "Stacked bar chart", legendEl = null, unitLabel = () => "", colours = null, unitScaled = true } = {}) {
   function draw(W, state = {}, { animate = false } = {}) {
-    const f = unitF();
-    const n = catCount(el);
+    const f = unitScaled ? unitF() : 1;
+    const n = colours ? colours.length : catCount(el);
     const keep = data.series.slice(0, n);
     const rest = data.series.slice(n);
     const series = rest.length
       ? [...keep, { name: `Other (${rest.length})`, other: true, vals: data.x.map((_, i) => d3.sum(rest, (s) => s.vals[i])) }]
       : keep;
-    const col = (s, i) => (s.other ? v("data-context") : v(`data-cat-${i + 1}`));
+    const col = (s, i) => (s.other ? v("data-context") : colours ? v(colours[i]) : v(`data-cat-${i + 1}`));
     if (legendEl) legendEl.innerHTML = series.map((s, i) => `<span><i style="background:${col(s, i)}"></i>${s.name}</span>`).join("");
     const H = Math.round(Math.max(220, Math.min(340, W * 0.58)));
     const m = { t: 10, r: 6, b: 24, l: 38 };
-    const x = d3.scaleBand(data.x, [m.l, W - m.r]).padding(0.25);
+    const x = d3.scaleBand(data.x, [m.l, W - m.r]).padding(data.x.length > 16 ? 0.15 : 0.25);
     const totals = data.x.map((_, i) => d3.sum(series, (s) => s.vals[i]) * f);
     const y = d3.scaleLinear([0, d3.max(totals)], [H - m.b, m.t]).nice();
     const svg = frame(el, W, H, label);
     yAxis(svg, y, m, W, animate);
     svg.selectAll("g.ss-x").data([0]).join("g").attr("class", "ss-axis ss-x").attr("transform", `translate(0,${H - m.b})`)
-      .call(d3.axisBottom(x).tickSizeOuter(0).tickValues(W < 420 ? data.x.filter((_, i) => i % 2 === 0) : data.x));
+      .call(d3.axisBottom(x).tickSizeOuter(0).tickValues(data.x.filter((_, i) => i % Math.max(1, Math.ceil(data.x.length / (W < 420 ? 5 : 11))) === 0)));
     const segs = [];
     data.x.forEach((xl, i) => {
       let acc = 0;
@@ -290,4 +291,256 @@ export function horizon(el, { profile = null, seed = 7, layers = 4, height = 120
       .attr("x1", 0).attr("x2", W).attr("y1", top).attr("y2", top).style("stroke", "var(--ss-border)").attr("stroke-width", 1);
   }
   return { draw };
+}
+
+// ------------------------------------------------------------------ entity colours
+/** Colour follows the entity: groups[i] → data-cat-(i+1) while slots last, else context grey. */
+export function groupColour(el, groups) {
+  const n = catCount(el);
+  return (g) => {
+    const i = groups ? groups.indexOf(g) : -1;
+    return i >= 0 && i < n ? v(`data-cat-${i + 1}`) : v("data-context");
+  };
+}
+
+// ------------------------------------------------------------------ horizontal bars
+/** data: [{label, value, parts?: {a, b}, group?}] (sorted). spec: parts, parts_labels, groups. state: {highlight} */
+export function barChart(el, data, { label = "Bar chart", legendEl = null, spec = {}, groups = null } = {}) {
+  function draw(W, state = {}, { animate = false } = {}) {
+    const col = spec.colour_by ? groupColour(el, spec.groups || groups) : () => v("data-story-1");
+    const parts = spec.part || null;
+    if (legendEl) {
+      legendEl.innerHTML = parts && spec.parts_labels
+        ? parts.map((p, i) => `<span><i style="background:var(--ss-text-subtle);opacity:${i ? 0.35 : 1}"></i>${spec.parts_labels[i] ?? p}</span>`).join("")
+        : "";
+    }
+    const hl = new Set(state.highlight ?? []);
+    const rows = state.sort === "label" ? [...data].sort((a, b) => String(a.label).localeCompare(b.label)) : data;
+    const bh = 20, gap = 7, m = { t: 4, r: 40, b: 8, l: W < 420 ? 96 : 124 };
+    const H = m.t + m.b + rows.length * (bh + gap);
+    const max = d3.max(rows, (d) => d.value) || 1;
+    const x = d3.scaleLinear([0, max], [m.l, W - m.r]);
+    const svg = frame(el, W, H, label);
+    const g = svg.selectAll("g.row").data(rows, (d) => d.label)
+      .join((en) => en.append("g").attr("class", "row").attr("transform", (_, i) => `translate(0,${m.t + i * (bh + gap)})`));
+    T(g, animate).attr("transform", (_, i) => `translate(0,${m.t + i * (bh + gap)})`)
+      .style("opacity", (d) => (hl.size && !hl.has(d.label) ? 0.35 : 1));
+    g.each(function (d) {
+      const segs = parts ? parts.map((p, i) => ({ p, i, v: d.parts?.[p] ?? 0 })) : [{ p: "value", i: 0, v: d.value }];
+      let acc = 0;
+      segs.forEach((s) => { s.x0 = acc; acc += s.v; s.x1 = acc; s.last = false; });
+      const nonzero = segs.filter((s) => s.v > 0);
+      if (nonzero.length) nonzero.at(-1).last = true;
+      d3.select(this).selectAll("path.seg").data(segs, (s) => s.p).join("path").attr("class", "seg")
+        .style("fill", col(d.group ?? d.label)).style("fill-opacity", (s) => (s.i ? 0.35 : 1))
+        .attr("d", (s) => {
+          if (s.v <= 0) return "";
+          const a = x(s.x0) + (s.i ? 1 : 0), b = x(s.x1);
+          return s.last ? hbar(a, b, 0, bh) : `M${a},0H${b}V${bh}H${a}Z`;
+        })
+        .on("pointermove", (e) => getTip().show(`<b>${d.label}</b><br>${segs.map((s) => `${spec.parts_labels?.[s.i] ?? s.p}: ${fmt(s.v)}`).join("<br>")}`, e.clientX, e.clientY))
+        .on("pointerleave", () => getTip().hide());
+    });
+    g.selectAll("text.n").data((d) => [d]).join("text").attr("class", "n ss-label").attr("x", m.l - 8).attr("y", bh / 2 + 4)
+      .attr("text-anchor", "end").text((d) => d.label);
+    g.selectAll("text.v").data((d) => [d]).join("text").attr("class", "v ss-value").attr("y", bh / 2 + 4)
+      .attr("x", (d) => x(d.value) + 6).text((d) => fmt(d.value));
+    svg.selectAll("line.base").data([0]).join("line").attr("class", "base").attr("x1", x(0)).attr("x2", x(0))
+      .attr("y1", 0).attr("y2", H - m.b).style("stroke", v("axis"));
+  }
+  return { draw };
+}
+
+// ------------------------------------------------------------------ dot strip
+/** data: [{row, value, label?, flag?, group?}]. spec: rows (order), scale, value_label, flag_label, groups. */
+export function dotStrip(el, data, { label = "Dot strip", legendEl = null, spec = {}, groups = null } = {}) {
+  function draw(W, state = {}, { animate = false } = {}) {
+    const col = groupColour(el, spec.groups || groups);
+    const rows = spec.rows || [...d3.rollup(data, (v) => v.length, (d) => d.row)].sort((a, b) => b[1] - a[1]).map((d) => d[0]);
+    if (legendEl && spec.flag_label) {
+      legendEl.innerHTML = `<span><i style="background:var(--ss-text-subtle);border-radius:50%"></i>${spec.value_label ?? "one dot per item"}</span>`
+        + `<span><i style="border:2px solid var(--ss-text-subtle);border-radius:50%;width:10px;height:10px"></i>${spec.flag_label}</span>`;
+    }
+    const rh = 28, m = { t: 8, r: 14, b: 28, l: W < 420 ? 96 : 124 };
+    const H = m.t + m.b + rows.length * rh;
+    const max = d3.max(data, (d) => d.value) || 1;
+    const x = (spec.scale === "symlog" ? d3.scaleSymlog().constant(1) : spec.scale === "sqrt" ? d3.scaleSqrt() : d3.scaleLinear())
+      .domain([0, max]).range([m.l + 6, W - m.r]).nice();
+    const y = d3.scaleBand(rows, [m.t, H - m.b]).padding(0.1);
+    const svg = frame(el, W, H, label);
+    const ticks = spec.scale === "symlog" ? [0, 1, 2, 5, 10, 25, 50, 100, 250].filter((t) => t <= x.domain()[1]) : x.ticks(6);
+    svg.selectAll("g.ss-grid").data([0]).join("g").attr("class", "ss-grid").attr("transform", `translate(0,${m.t})`)
+      .call(d3.axisBottom(x).tickValues(ticks).tickSize(H - m.t - m.b).tickFormat(""));
+    svg.selectAll("g.ss-x").data([0]).join("g").attr("class", "ss-axis ss-x").attr("transform", `translate(0,${H - m.b})`)
+      .call(d3.axisBottom(x).tickValues(ticks).tickFormat((d) => fmt(d)).tickSizeOuter(0));
+    svg.selectAll("text.row").data(rows).join("text").attr("class", "row ss-label")
+      .attr("x", m.l - 10).attr("y", (r) => y(r) + y.bandwidth() / 2 + 4).attr("text-anchor", "end").text((r) => r);
+    const hl = new Set(state.highlight ?? []);
+    const jit = (i) => ((Math.sin(i * 12.9898) * 43758.5453) % 1);
+    const c = svg.selectAll("circle.d").data(data.map((d, i) => ({ ...d, i })), (d) => d.label ?? d.i).join("circle").attr("class", "d")
+      .attr("r", 5).attr("stroke-width", 2)
+      .on("pointermove", (e, d) => getTip().show(`<b>${d.label ?? ""}</b> · ${d.row}<br>${fmt(d.value, 1)} ${spec.unit ?? ""}${d.flag ? `<br>${spec.flag_label ?? "flagged"}` : ""}`, e.clientX, e.clientY))
+      .on("pointerleave", () => getTip().hide());
+    T(c, animate).attr("cx", (d) => x(d.value)).attr("cy", (d) => y(d.row) + y.bandwidth() / 2 + jit(d.i) * y.bandwidth() * 0.28)
+      .style("fill", (d) => (d.flag ? v("surface") : col(d.group ?? d.row)))
+      .style("stroke", (d) => (d.flag ? col(d.group ?? d.row) : v("surface")))
+      .style("opacity", (d) => (hl.size && !hl.has(d.row) && !hl.has(d.label) ? 0.25 : 1));
+  }
+  return { draw };
+}
+
+// ------------------------------------------------------------------ canvas map
+/**
+ * Canvas map with smooth camera moves. Geometry is projected once into Path2D objects (one combined
+ * path per uniformly styled layer, one per colour group for the focus layer), so a frame is a
+ * handful of fill/stroke calls; camera moves interpolate with d3.interpolateZoom.
+ * layers: [{data, role: land|area|context|grid|lines|focus|points, colour_by?, groups?, label?, tooltip?}]
+ * state: {view: [w, s, e, n], filter: {prop: value | [values]}}
+ */
+export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, groups = null } = {}) {
+  const host = d3.select(el).classed("ss-map", true);
+  const canvas = host.selectAll("canvas").data([0]).join("canvas").attr("role", "img").attr("aria-label", label).node();
+  const ctx = canvas.getContext("2d");
+  const hitCtx = document.createElement("canvas").getContext("2d");
+  const layers = spec.layers.map((ly) => ({ ...ly, fc: datasets[ly.data] }));
+  const frameLayer = layers.find((l) => l.role === (spec.frame || "area")) || layers[0];
+  const proj = d3.geoConicConformal().parallels([60, 72]).rotate([-14, 0]);
+  proj.fitSize([1000, 1000], frameLayer.fc);
+  const path = d3.geoPath(proj);
+  const focusGroups = groups || spec.groups;
+  // pre-build Path2D
+  for (const ly of layers) {
+    if (ly.role === "points") {
+      ly.pts = (ly.fc.features ?? ly.fc).map((f) => {
+        const c = f.geometry ? f.geometry.coordinates : [f.x, f.y];
+        return { p: proj(c), name: f.properties?.[ly.label || "name"] ?? f.n ?? "" };
+      });
+      continue;
+    }
+    if (ly.role === "focus") {
+      ly.items = ly.fc.features.map((f) => ({ f, path: new Path2D(path(f)) }));
+    } else {
+      const all = new Path2D();
+      for (const f of ly.fc.features) all.addPath(new Path2D(path(f)));
+      ly.all = all;
+    }
+  }
+  let W = 0, H = 0, cur = null, timer = null, state = {}, transform = { k: 1, x: 0, y: 0 };
+
+  const viewToZoom = (view) => {
+    let b;
+    if (view) {
+      const [w, s, e, n] = view;
+      const pts = [[w, s], [w, n], [e, s], [e, n], [(w + e) / 2, n], [(w + e) / 2, s]].map((c) => proj(c));
+      b = [[d3.min(pts, (p) => p[0]), d3.min(pts, (p) => p[1])], [d3.max(pts, (p) => p[0]), d3.max(pts, (p) => p[1])]];
+    } else b = path.bounds(frameLayer.fc);
+    return [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2, Math.max(b[1][0] - b[0][0], (b[1][1] - b[0][1]) * (W / H))];
+  };
+  const zoomToTransform = ([cx, cy, w]) => { const k = (W / w) * 0.94; return { k, x: W / 2 - cx * k, y: H / 2 - cy * k }; };
+  const matches = (props) => {
+    const flt = state.filter;
+    if (!flt) return true;
+    return Object.entries(flt).every(([k, val]) => (Array.isArray(val) ? val.includes(props[k]) : props[k] === val));
+  };
+
+  function paint() {
+    const cs = getComputedStyle(el);
+    const c = (name) => cs.getPropertyValue(`--ss-${name}`).trim();
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = c("info-fill-muted");
+    ctx.fillRect(0, 0, W, H);
+    const { k, x, y } = transform;
+    ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * x, dpr * y);
+    const px = 1 / k;
+    const colourOf = (g) => {
+      const i = focusGroups ? focusGroups.indexOf(g) : -1;
+      return i >= 0 && i < (parseInt(c("data-cat-count")) || 5) ? c(`data-cat-${i + 1}`) : c("data-context");
+    };
+    for (const ly of layers) {
+      if (ly.role === "land") { ctx.fillStyle = c("neutral-fill-muted-pressed"); ctx.fill(ly.all); }
+      else if (ly.role === "area") { ctx.fillStyle = c("accent-fill-muted"); ctx.globalAlpha = 0.9; ctx.fill(ly.all); ctx.globalAlpha = 1; }
+      else if (ly.role === "context") {
+        ctx.fillStyle = c("data-context"); ctx.globalAlpha = 0.32; ctx.fill(ly.all); ctx.globalAlpha = 1;
+        ctx.strokeStyle = c("surface"); ctx.lineWidth = 0.6 * px; ctx.stroke(ly.all);
+      } else if (ly.role === "grid") { ctx.strokeStyle = c("grid"); ctx.lineWidth = 0.6 * px; ctx.stroke(ly.all); }
+      else if (ly.role === "lines") { ctx.strokeStyle = c("border"); ctx.setLineDash([4 * px, 3 * px]); ctx.lineWidth = 1 * px; ctx.stroke(ly.all); ctx.setLineDash([]); }
+      else if (ly.role === "focus") {
+        for (const it of ly.items) {
+          const on = matches(it.f.properties);
+          ctx.fillStyle = on ? colourOf(it.f.properties[ly.colour_by]) : c("data-context");
+          ctx.globalAlpha = on ? 0.95 : 0.25;
+          ctx.fill(it.path);
+        }
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = c("surface"); ctx.lineWidth = 0.8 * px;
+        for (const it of ly.items) ctx.stroke(it.path);
+      }
+    }
+    // labels in screen space
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const font = cs.getPropertyValue("--ss-font-body");
+    for (const ly of layers.filter((l) => l.role === "points")) {
+      ctx.font = `500 11px ${font}`;
+      for (const pt of ly.pts) {
+        const sx = pt.p[0] * k + x, sy = pt.p[1] * k + y;
+        if (sx < 0 || sy < 0 || sx > W || sy > H) continue;
+        ctx.fillStyle = c("text-subtle"); ctx.beginPath(); ctx.arc(sx, sy, 2.2, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = c("info-fill-muted"); ctx.strokeText(pt.name, sx + 5, sy + 4);
+        ctx.fillStyle = c("text-subtle"); ctx.fillText(pt.name, sx + 5, sy + 4);
+      }
+    }
+  }
+
+  function legend() {
+    if (!legendEl) return;
+    const focus = layers.find((l) => l.role === "focus");
+    const ctxLayer = layers.find((l) => l.role === "context");
+    const n = catCount(el);
+    const shown = (focusGroups || []).slice(0, n);
+    legendEl.innerHTML = shown.map((g, i) => `<span><i style="background:var(--ss-data-cat-${i + 1})"></i>${g}</span>`).join("")
+      + (focusGroups && focusGroups.length > n ? `<span><i style="background:var(--ss-data-context)"></i>${spec.other_label ?? "Other"}</span>` : "")
+      + (ctxLayer ? `<span><i style="background:var(--ss-data-context);opacity:.35"></i>${ctxLayer.legend ?? "Context"}</span>` : "")
+      + (focus && !focusGroups ? "" : "");
+  }
+
+  function resize(nw) {
+    W = nw;
+    H = Math.round(Math.min(nw * (spec.aspect ?? 0.95), (window.innerHeight || 800) * 0.7));
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    canvas.style.height = `${H}px`;
+  }
+
+  function draw(nw, st = {}, { animate = false } = {}) {
+    if (nw !== W) resize(nw);
+    state = st;
+    legend();
+    const target = viewToZoom(st.view);
+    if (timer) timer.stop();
+    if (!animate || !cur) {
+      cur = target; transform = zoomToTransform(cur); paint(); return;
+    }
+    const interp = d3.interpolateZoom(cur, target);
+    const dur = Math.max(motion().slow, interp.duration * 0.6);
+    timer = d3.timer((t) => {
+      const u = d3.easeCubicInOut(Math.min(1, t / dur));
+      cur = interp(u); transform = zoomToTransform(cur); paint();
+      if (u >= 1) timer.stop();
+    });
+  }
+
+  // hover
+  canvas.addEventListener("pointermove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    const bx = (e.clientX - r.left - transform.x) / transform.k, by = (e.clientY - r.top - transform.y) / transform.k;
+    const focus = layers.find((l) => l.role === "focus");
+    const hit = focus?.items.find((it) => hitCtx.isPointInPath(it.path, bx, by));
+    if (!hit) return getTip().hide();
+    const p = hit.f.properties;
+    const fields = focus.tooltip || Object.keys(p).slice(0, 4);
+    getTip().show(`<b>${p[focus.label || "name"] ?? ""}</b><br>${fields.map((k) => `<span class="ss-k">${k.replace(/_/g, " ")}</span> ${p[k] ?? "–"}`).join("<br>")}`, e.clientX, e.clientY);
+  });
+  canvas.addEventListener("pointerleave", () => getTip().hide());
+  return { draw, repaint: () => W && paint() };
 }

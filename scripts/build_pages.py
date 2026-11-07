@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from subscout import tokens
+from subscout.build import build
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,6 +23,10 @@ def main(out: Path) -> None:
     tokens.write()  # make sure the packaged CSS is current
     shutil.copytree(ROOT / "src" / "subscout" / "runtime", out / "runtime")
     (out / ".nojekyll").touch()
+    for story in sorted((ROOT / "examples").glob("*/story.md")):
+        rep = build(story.parent, out / story.parent.name, runtime_href="../runtime")
+        if rep.errors:
+            raise SystemExit(f"{story.parent.name}: " + "; ".join(rep.errors))
     print(f"wrote {out}")
 
 

@@ -22,6 +22,12 @@ export function motion() {
   return { fast: ms("--ss-dur-fast"), base: ms("--ss-dur"), slow: ms("--ss-dur-slow"), stagger: ms("--ss-stagger") };
 }
 
+/** Run work when the main thread is idle (falls back to a short timeout). */
+export const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 600 }) : setTimeout(fn, 60));
+
+/** Is the element (or its layer) currently shown? Hidden layers can redraw later, in idle time. */
+export const isShown = (el) => !el.closest(".ss-layer") || el.closest(".ss-layer").classList.contains("is-on");
+
 /** Read a colour token, e.g. token("data-context"). */
 export const token = (name) => getComputedStyle(root).getPropertyValue(`--ss-${name}`).trim();
 

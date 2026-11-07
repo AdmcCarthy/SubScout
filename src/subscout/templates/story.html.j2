@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en-GB" data-type="ledger" data-palette="{{ palette }}" data-surface="{{ surface }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ esc(fm.title) }}</title>
+{% if fm.dek %}<meta name="description" content="{{ esc(fm.dek) }}">{% endif %}
+<meta property="og:title" content="{{ esc(fm.title) }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{{ runtime }}/css/tokens.css">
+<link rel="stylesheet" href="{{ runtime }}/css/base.css">
+<link rel="stylesheet" href="{{ runtime }}/css/story.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+{% macro facts(spec) -%}
+<dl class="ss-facts">
+  {% set src = sources.get(spec.source, {}) %}
+  <div><dt>Source</dt><dd>{% if src.url %}<a href="{{ esc(src.url) }}">{{ esc(src.name or spec.source) }}</a>{% else %}{{ esc(src.name or spec.source) }}{% endif %}{% if src.accessed %}, {{ src.accessed }}{% endif %}</dd></div>
+  {% if spec.unit %}<div><dt>Units</dt><dd>{{ esc(spec.unit) }}</dd></div>{% endif %}
+  <div><dt>Confidence</dt><dd><span class="ss-conf" data-level="{{ spec.confidence }}">{{ conf_label[spec.confidence] }}</span></dd></div>
+  {% if spec.notes %}<div><dt>Note</dt><dd>{{ spec.notes }}</dd></div>{% endif %}
+  {% if spec.exception %}<div class="ss-exception"><dt>Exception</dt><dd>{{ esc(spec.exception.rule) }}: {{ esc(spec.exception.reason) }}</dd></div>{% endif %}
+</dl>
+{%- endmacro %}
+{% macro figure(f, layer=false) -%}
+<figure class="ss-figure{% if layer %} ss-layer{% endif %}" data-fig="{{ f.id }}" data-type="{{ f.spec.type or f.spec.kind }}" data-register="{{ f.spec.register or register }}">
+  <p class="ss-fig-title">{{ f.spec.title }}</p>
+  {% if f.spec.subtitle %}<p class="ss-fig-sub">{{ f.spec.subtitle }}</p>{% endif %}
+  {% if f.kind == "chart" %}<div class="ss-legend"></div><div class="ss-chart"></div>{% else %}{{ f.html }}{% endif %}
+  {{ facts(f.spec) }}
+</figure>
+{%- endmacro %}
+
+<div class="ss-topbar">
+  <div class="ss-wrap">
+    <a class="ss-brand" href="#top">{{ esc(fm.short_title or fm.title) }}</a>
+    <div class="ss-controls">
+      <div class="ss-seg" id="ctl-theme" role="group" aria-label="Colour scheme"><button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+      <div class="ss-seg" id="ctl-units" role="group" aria-label="Volume units"><button data-value="sm3">Sm³</button><button data-value="boe">boe</button></div>
+      {% if has_scrolly %}<button class="ss-btn" id="present-btn" type="button">Present ▶</button>{% endif %}
+    </div>
+  </div>
+</div>
+
+<header class="ss-hero ss-wrap" id="top">
+  {% if fm.kicker %}<span class="ss-kicker">{{ esc(fm.kicker) }}</span>{% endif %}
+  <h1>{{ esc(fm.title) }}</h1>
+  <div class="ss-hero-grid">
+    <div>
+      {% if fm.dek %}<p class="ss-standfirst">{{ esc(fm.dek) }}</p>{% endif %}
+      <p class="ss-byline">{% if fm.byline %}{{ esc(fm.byline) }}{% endif %}{% if fm.date %} · {{ fm.date }}{% endif %} · <a href="#how-we-know">How we know</a></p>
+    </div>
+    {% if kpis %}<div class="ss-kpis">{% for k in kpis %}<div><b class="ss-num">{{ k.html }}</b><span>{{ esc(k.label) }}</span></div>{% endfor %}</div>{% endif %}
+  </div>
+  {% if fm.horizon %}<div class="ss-horizon" id="ss-hero-horizon" aria-hidden="true"></div>{% endif %}
+</header>
+
+<main>
+{% for s in sections %}
+  {% if s.kind == "prose" %}
+  <section class="ss-wrap ss-prose-section">{{ s.html }}</section>
+  {% else %}
+  <section class="ss-scrolly">
+    <div class="ss-wrap">
+      <article class="ss-story">
+        <div class="ss-steps">
+          {% for st in s.steps %}
+          <section class="ss-step" data-step="{{ st.index }}"{% if st.attrs.beat %} data-beat="{{ st.attrs.beat }}"{% endif %}><div class="ss-step-card">
+            {% if st.attrs.beat %}<span class="ss-kicker">{{ st.attrs.kicker or st.attrs.beat|replace("-", " ") }}</span>{% endif %}
+            {{ st.html }}
+          </div></section>
+          {% endfor %}
+        </div>
+        <div class="ss-graphic"><div class="ss-layers">
+          {% for fid in s.figs %}{{ figure(figures[fid], true) }}{% endfor %}
+        </div></div>
+      </article>
+    </div>
+  </section>
+  {% endif %}
+{% endfor %}
+
+<section class="ss-wrap ss-appendix" id="how-we-know">
+  <span class="ss-kicker">Appendix</span>
+  <h2>How we know</h2>
+  <div class="ss-appendix-grid">
+    <div>
+      <h3>Sources</h3>
+      <ul class="ss-sources">{% for k, s in sources.items() %}<li><b>{{ esc(s.name or k) }}</b>{% if s.url %}, <a href="{{ esc(s.url) }}">{{ esc(s.url) }}</a>{% endif %}{% if s.accessed %}, accessed {{ s.accessed }}{% endif %}{% if s.licence %}. Licence: {{ esc(s.licence) }}{% endif %}{% if s.note %}. {{ esc(s.note) }}{% endif %}</li>{% endfor %}</ul>
+      <h3>Conventions</h3>
+      <ul class="ss-sources">
+        <li><b>Confidence.</b> <span class="ss-conf" data-level="observed">Observed</span> measured or published by the source; <span class="ss-conf" data-level="derived">Derived</span> our calculation from observed data, method stated; <span class="ss-conf" data-level="interpreted">Interpreted</span> depends on a model, assumption or judgement.</li>
+        <li><b>Units.</b> Volumes in Sm³ oil equivalent, with boe via the toggle (1 Sm³ o.e. = 6.29 boe). P90 means a 90% chance of exceeding: the low case.</li>
+        {% if arc %}<li><b>Narrative arc.</b> {{ arc }} ({{ arc_beats|join(" → ") }}).</li>{% endif %}
+      </ul>
+    </div>
+    <div>
+      <h3>Numbers in this story</h3>
+      <div class="ss-table-wrap"><table class="ss-table ss-ledger" data-kind="ledger">
+        <caption class="ss-visually-hidden">Every number quoted in the text, with its exact value, method, source and confidence</caption>
+        <thead><tr><th>Number</th><th class="num">Exact value</th><th>Shown as</th><th>Method</th><th>Confidence</th></tr></thead>
+        <tbody>{% for l in ledger %}<tr id="ledger-{{ esc(l.name)|replace(' ', '-') }}"><td><code>{{ esc(l.name) }}</code></td><td class="num">{{ l.value }}{% if l.unit %} {{ esc(l.unit) }}{% endif %}</td><td>{{ l.shown|join(", ") }}</td><td>{{ esc(l.method) }}{% if l.source %} <small>({{ esc(sources.get(l.source, {}).name or l.source) }})</small>{% endif %}</td><td><span class="ss-conf" data-level="{{ l.confidence }}">{{ conf_label[l.confidence] }}</span></td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </div>
+  <h3>Figures</h3>
+  <div class="ss-table-wrap"><table class="ss-table" data-kind="ledger">
+    <caption class="ss-visually-hidden">Every figure with its source, confidence and any declared exception</caption>
+    <thead><tr><th>Figure</th><th>Form</th><th>Source</th><th>Confidence</th><th>Notes and exceptions</th></tr></thead>
+    <tbody>{% for f in figure_list %}<tr><td>{{ esc(f.title) }}</td><td>{{ f.type }}</td><td>{{ esc(sources.get(f.source, {}).name or f.source) }}</td><td><span class="ss-conf" data-level="{{ f.confidence }}">{{ conf_label[f.confidence] }}</span></td><td>{{ f.notes or "" }}{% if f.exception %} <b>Exception</b> ({{ esc(f.exception.rule) }}): {{ esc(f.exception.reason) }}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if extra_appendix %}<div class="ss-prose">{{ extra_appendix }}</div>{% endif %}
+</section>
+</main>
+
+<footer class="ss-wrap ss-footer">
+  <p>Built with <a href="https://github.com/AdmcCarthy/SubScout">SubScout</a>. Colour method ported from the EDS colour palette generator (© Equinor ASA, MIT); SubScout is independent and not affiliated with Equinor.</p>
+</footer>
+
+<script type="application/json" id="ss-payload">{{ payload }}</script>
+<script type="module" src="{{ runtime }}/js/story-page.js"></script>
+</body>
+</html>

@@ -16,3 +16,18 @@ jobs:
       - run: uv run pytest -q
       - name: Generated tokens are up to date
         run: uv run subscout tokens && git diff --exit-code src/subscout/runtime/css
+      - name: Build site and stories
+        run: uv run python scripts/build_pages.py _site
+      - name: Install headless Chromium
+        run: uv run playwright install --with-deps chromium
+      - name: Performance gate (4x CPU throttle)
+        run: |
+          uv run python scripts/perf.py _site demo/
+          uv run python scripts/perf.py _site compare/
+      - name: Screenshots and console errors
+        run: uv run python scripts/snapshot.py _site _snapshots demo/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snapshots
+          path: _snapshots
