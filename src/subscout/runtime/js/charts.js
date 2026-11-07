@@ -429,7 +429,15 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
 
   const viewToZoom = (view) => {
     let b;
-    if (view) {
+    if (view && view.fit) {
+      // fit the focus features that match `view.fit`, padded by `view.pad` (fraction of the size)
+      const focus = layers.find((l) => l.role === "focus");
+      const hits = focus.items.filter((it) => Object.entries(view.fit).every(([k, val]) => (Array.isArray(val) ? val.includes(it.f.properties[k]) : it.f.properties[k] === val)));
+      const bs = hits.map((it) => path.bounds(it.f));
+      b = [[d3.min(bs, (q) => q[0][0]), d3.min(bs, (q) => q[0][1])], [d3.max(bs, (q) => q[1][0]), d3.max(bs, (q) => q[1][1])]];
+      const pad = view.pad ?? 0.25, dw = (b[1][0] - b[0][0]) * pad, dh = (b[1][1] - b[0][1]) * pad;
+      b = [[b[0][0] - dw, b[0][1] - dh], [b[1][0] + dw, b[1][1] + dh]];
+    } else if (Array.isArray(view)) {
       const [w, s, e, n] = view;
       const pts = [[w, s], [w, n], [e, s], [e, n], [(w + e) / 2, n], [(w + e) / 2, s]].map((c) => proj(c));
       b = [[d3.min(pts, (p) => p[0]), d3.min(pts, (p) => p[1])], [d3.max(pts, (p) => p[0]), d3.max(pts, (p) => p[1])]];
@@ -443,39 +451,87 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
     return Object.entries(flt).every(([k, val]) => (Array.isArray(val) ? val.includes(props[k]) : props[k] === val));
   };
 
-  function paint() {
-    const cs = getComputedStyle(el);
-    const c = (name) => cs.getPropertyValue(`--ss-${name}`).trim();
+  // Static layers are drawn into cached bitmaps, one per camera view, pre-rendered in idle time.
+  // During camera moves the start bitmap is scaled and shifted (raster zoom) and only the focus
+  // layer and labels are drawn as vectors; the final frame uses the target view's bitmap.
+  const cache = new Map(); // view key -> {cv, tf}
+  let snap = null; // {cv, tf} currently used as the static layer
+  const keyOf = (view) => JSON.stringify(view ?? null);
+
+  const tokens = () => { const cs = getComputedStyle(el); return { cs, c: (name) => cs.getPropertyValue(`--ss-${name}`).trim() }; };
+
+  function renderStatic(tf) {
+    const { c } = tokens();
     const dpr = window.devicePixelRatio || 1;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cv = document.createElement("canvas");
+    cv.width = canvas.width; cv.height = canvas.height;
+    const sctx = cv.getContext("2d");
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.fillStyle = c("info-fill-muted");
+    sctx.fillRect(0, 0, W, H);
+    sctx.setTransform(dpr * tf.k, 0, 0, dpr * tf.k, dpr * tf.x, dpr * tf.y);
+    const px = 1 / tf.k;
+    for (const ly of layers) {
+      if (ly.role === "land") { sctx.fillStyle = c("neutral-fill-muted-pressed"); sctx.fill(ly.all); }
+      else if (ly.role === "area") { sctx.fillStyle = c("accent-fill-muted"); sctx.globalAlpha = 0.9; sctx.fill(ly.all); sctx.globalAlpha = 1; }
+      else if (ly.role === "context") {
+        sctx.fillStyle = c("data-context"); sctx.globalAlpha = 0.32; sctx.fill(ly.all); sctx.globalAlpha = 1;
+        sctx.strokeStyle = c("surface"); sctx.lineWidth = 0.6 * px; sctx.stroke(ly.all);
+      } else if (ly.role === "grid") { sctx.strokeStyle = c("grid"); sctx.lineWidth = 0.6 * px; sctx.stroke(ly.all); }
+      else if (ly.role === "lines") { sctx.strokeStyle = c("border"); sctx.setLineDash([4 * px, 3 * px]); sctx.lineWidth = 1 * px; sctx.stroke(ly.all); sctx.setLineDash([]); }
+    }
+    return { cv, tf: { ...tf } };
+  }
+
+  function staticFor(view) {
+    const k = keyOf(view);
+    let hit = cache.get(k);
+    if (!hit || hit.cv.width !== canvas.width || hit.cv.height !== canvas.height) {
+      hit = renderStatic(zoomToTransform(viewToZoom(view)));
+      cache.set(k, hit);
+    }
+    return hit;
+  }
+
+  /** Pre-render static bitmaps for the given views in idle time, so step changes stay light. */
+  function prepare(views) {
+    for (const vw of views) {
+      const run = () => { if (W) staticFor(vw); };
+      window.requestIdleCallback ? requestIdleCallback(run, { timeout: 2000 }) : setTimeout(run, 100);
+    }
+  }
+
+  function paint() {
+    const { cs, c } = tokens();
+    const dpr = window.devicePixelRatio || 1;
+    if (!snap) snap = staticFor(state.view);
+    // static layers: copy the cached bitmap, scaled to the current camera when it differs
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = c("info-fill-muted");
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const st = snap.tf, s = transform.k / st.k;
+    ctx.setTransform(s, 0, 0, s, dpr * (transform.x - st.x * s), dpr * (transform.y - st.y * s));
+    ctx.imageSmoothingQuality = "low";
+    ctx.drawImage(snap.cv, 0, 0);
+    // focus layer as vectors
     const { k, x, y } = transform;
     ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * x, dpr * y);
     const px = 1 / k;
+    const n = parseInt(c("data-cat-count")) || 5;
     const colourOf = (g) => {
       const i = focusGroups ? focusGroups.indexOf(g) : -1;
-      return i >= 0 && i < (parseInt(c("data-cat-count")) || 5) ? c(`data-cat-${i + 1}`) : c("data-context");
+      return i >= 0 && i < n ? c(`data-cat-${i + 1}`) : c("data-context");
     };
-    for (const ly of layers) {
-      if (ly.role === "land") { ctx.fillStyle = c("neutral-fill-muted-pressed"); ctx.fill(ly.all); }
-      else if (ly.role === "area") { ctx.fillStyle = c("accent-fill-muted"); ctx.globalAlpha = 0.9; ctx.fill(ly.all); ctx.globalAlpha = 1; }
-      else if (ly.role === "context") {
-        ctx.fillStyle = c("data-context"); ctx.globalAlpha = 0.32; ctx.fill(ly.all); ctx.globalAlpha = 1;
-        ctx.strokeStyle = c("surface"); ctx.lineWidth = 0.6 * px; ctx.stroke(ly.all);
-      } else if (ly.role === "grid") { ctx.strokeStyle = c("grid"); ctx.lineWidth = 0.6 * px; ctx.stroke(ly.all); }
-      else if (ly.role === "lines") { ctx.strokeStyle = c("border"); ctx.setLineDash([4 * px, 3 * px]); ctx.lineWidth = 1 * px; ctx.stroke(ly.all); ctx.setLineDash([]); }
-      else if (ly.role === "focus") {
-        for (const it of ly.items) {
-          const on = matches(it.f.properties);
-          ctx.fillStyle = on ? colourOf(it.f.properties[ly.colour_by]) : c("data-context");
-          ctx.globalAlpha = on ? 0.95 : 0.25;
-          ctx.fill(it.path);
-        }
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = c("surface"); ctx.lineWidth = 0.8 * px;
-        for (const it of ly.items) ctx.stroke(it.path);
+    for (const ly of layers.filter((l) => l.role === "focus")) {
+      for (const it of ly.items) {
+        const on = matches(it.f.properties);
+        ctx.fillStyle = on ? colourOf(it.f.properties[ly.colour_by]) : c("data-context");
+        ctx.globalAlpha = on ? 0.95 : 0.25;
+        ctx.fill(it.path);
       }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = c("surface"); ctx.lineWidth = 0.8 * px;
+      for (const it of ly.items) ctx.stroke(it.path);
     }
     // labels in screen space
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -513,20 +569,22 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
   }
 
   function draw(nw, st = {}, { animate = false } = {}) {
-    if (nw !== W) resize(nw);
+    if (nw !== W) { resize(nw); cache.clear(); snap = null; }
     state = st;
     legend();
     const target = viewToZoom(st.view);
     if (timer) timer.stop();
     if (!animate || !cur) {
-      cur = target; transform = zoomToTransform(cur); paint(); return;
+      cur = target; transform = zoomToTransform(cur); snap = staticFor(st.view); paint(); return;
     }
     const interp = d3.interpolateZoom(cur, target);
     const dur = Math.max(motion().slow, interp.duration * 0.6);
+    // snap keeps the bitmap of the view we are leaving; the target's bitmap is swapped in at the end
     timer = d3.timer((t) => {
       const u = d3.easeCubicInOut(Math.min(1, t / dur));
-      cur = interp(u); transform = zoomToTransform(cur); paint();
-      if (u >= 1) timer.stop();
+      cur = interp(u); transform = zoomToTransform(cur);
+      if (u >= 1) { timer.stop(); snap = staticFor(st.view); }
+      paint();
     });
   }
 
@@ -539,8 +597,10 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
     if (!hit) return getTip().hide();
     const p = hit.f.properties;
     const fields = focus.tooltip || Object.keys(p).slice(0, 4);
-    getTip().show(`<b>${p[focus.label || "name"] ?? ""}</b><br>${fields.map((k) => `<span class="ss-k">${k.replace(/_/g, " ")}</span> ${p[k] ?? "–"}`).join("<br>")}`, e.clientX, e.clientY);
+    const nice = (k, val) => (Array.isArray(val) ? val.map((x) => (typeof x === "object" ? `${x.c ?? x.name ?? ""}${x.pct != null ? ` ${x.pct}%` : ""}${x.op ? " (op.)" : ""}` : x)).join(", ") : val ?? "–");
+    const lab = (k) => (focus.tooltip_labels?.[k] ?? k.replace(/_/g, " "));
+    getTip().show(`<b>${focus.title_prefix ?? ""}${p[focus.label || "name"] ?? ""}</b><br>${fields.map((k) => `<span class="ss-k">${lab(k)}</span> ${nice(k, p[k])}`).join("<br>")}`, e.clientX, e.clientY);
   });
   canvas.addEventListener("pointerleave", () => getTip().hide());
-  return { draw, repaint: () => W && paint() };
+  return { draw, prepare, repaint: () => { if (W) { cache.clear(); snap = staticFor(state.view); paint(); } } };
 }

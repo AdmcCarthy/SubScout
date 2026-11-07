@@ -63,9 +63,20 @@ document.querySelectorAll(".ss-figure[data-fig]").forEach((figEl) => {
     rec.drawn = true;
   }).observe(rec.el);
 });
+// maps: pre-render each camera view used by later steps, in idle time
+charts.forEach((rec, id) => {
+  if (!rec.chart.prepare) return;
+  const views = [payload.figures[id].spec.view, ...Object.values(payload.figures).filter((f) => f.use === id).map((f) => f.state.view)];
+  const once = () => (rec.width ? rec.chart.prepare(views) : setTimeout(once, 200));
+  once();
+});
 const redrawAll = () => charts.forEach((r) => r.width && (r.chart.repaint ? r.chart.repaint() : r.chart.draw(r.width, r.state, { animate: false })));
 units.subscribe(redrawAll);
-onSchemeChange(() => charts.forEach((r) => r.chart.repaint && r.chart.repaint()));
+onSchemeChange(() => charts.forEach((r, id) => {
+  if (!r.chart.repaint) return;
+  r.chart.repaint();
+  if (r.chart.prepare) r.chart.prepare(Object.values(payload.figures).filter((f) => f.use === id).map((f) => f.state.view));
+}));
 
 // ---------------------------------------------------------------- scrolly groups
 document.querySelectorAll(".ss-story").forEach((storyEl) => {

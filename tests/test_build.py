@@ -17,6 +17,7 @@ def test_demo_builds_without_errors_or_warnings(tmp_path):
     html = (tmp_path / "out" / "index.html").read_text()
     report = json.loads((tmp_path / "out" / "build-report.json").read_text())
     assert "How we know" in html
+    assert "{{" not in html.split('id="ss-payload"')[0], "unrendered expression in page"
     assert {r["name"] for r in report["ledger"]} >= {"n_fields", "longest_plateau", "wells_drop"}
     assert all(f["confidence"] in ("observed", "derived", "interpreted") for f in report["figures"])
 
@@ -80,3 +81,21 @@ def test_about_rounds_to_two_significant_figures():
 
 def test_untraced_ignores_years_and_identifiers():
     assert untraced_numbers("In 2025, PL 1313 lay 106 km away.") == ["106"]
+
+
+def test_numbers_round_half_up_with_true_minus():
+    from subscout.build import fmt_num
+
+    assert fmt_num(62.5) == "63"
+    assert fmt_num(1.65, 1) == "1.7"
+    assert fmt_num(-4.25, 1) == "−4.3"
+    assert fmt_num(1234567) == "1,234,567"
+
+
+def test_appendix_expressions_are_rendered(tmp_path):
+    body = "Text {{ n }}.\n\n::: appendix\nThere were {{ n }} decades.\n:::\n"
+    out = tmp_path / "o"
+    rep = build(_story(tmp_path, body), out)
+    assert rep.errors == []
+    page = (out / "index.html").read_text()
+    assert "{{" not in page.split('id="ss-payload"')[0]

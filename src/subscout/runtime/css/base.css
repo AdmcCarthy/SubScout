@@ -180,6 +180,8 @@ a:hover { text-decoration-thickness: 2px; }
 .ss-conf[data-level="observed"], .ss-conf[data-level="reported"] { color: var(--ss-success-text-on-muted); background: var(--ss-success-fill-muted); border-color: var(--ss-success-border); }
 .ss-conf[data-level="derived"] { color: var(--ss-info-text-on-muted); background: var(--ss-info-fill-muted); border-color: var(--ss-info-border); }
 .ss-conf[data-level="interpreted"], .ss-conf[data-level="estimated"] { color: var(--ss-warning-text-on-muted); background: var(--ss-warning-fill-muted); border-color: var(--ss-warning-border); }
+.ss-conf[data-level="parameter"] { color: var(--ss-text-subtle); background: transparent; border-color: var(--ss-border); }
+.ss-conf[data-level="parameter"]::before { border-radius: 0; height: 2px; }
 .ss-conf[data-level="derived"]::before { background: transparent; border: 2px solid currentColor; width: 5px; height: 5px; }
 .ss-conf[data-level="interpreted"]::before, .ss-conf[data-level="estimated"]::before { border-radius: 1px; transform: rotate(45deg); }
 

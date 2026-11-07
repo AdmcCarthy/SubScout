@@ -53,6 +53,7 @@ used appears in the appendix numbers ledger with its value, method, source and c
 | `volume` | Sm³ value, shown in the reader's unit (Sm³ ⇄ boe toggle) |
 | `km`, `km2` | appends the unit |
 | `cite:<source>` | a literal external figure, cited (use for numbers not computed here) |
+| `param` | a literal threshold or definition chosen for the story (`{{ 25 \| param }} km`); listed in the ledger as a parameter |
 
 Digits typed directly in prose (other than years and labels such as "PL 1313") are reported as
 **untraced** warnings.

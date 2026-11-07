@@ -14,6 +14,7 @@ import re
 import shutil
 import sys
 from dataclasses import dataclass, field
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
 
@@ -149,8 +150,9 @@ def load_story_module(root: Path):
 
 
 def fmt_num(v: float, digits: int = 0) -> str:
-    s = f"{abs(v):,.{digits}f}"
-    return ("−" if v < 0 else "") + s
+    """British number style with half-up rounding (62.5 → 63, not Python's banker's 62) and a true minus."""
+    q = Decimal(str(abs(v))).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
+    return ("−" if v < 0 and q != 0 else "") + f"{q:,.{digits}f}"
 
 
 def about(v: float) -> str:
@@ -193,7 +195,7 @@ def apply_filters(
             attrs = {"data-ss-value": str(v), "data-ss-scale": scale, "data-ss-digits": arg or "0"}
             text = f"{fmt_num(v / (1e6 if scale else 1), int(arg or 0))}{' million' if scale else ''}"
             attrs["unit"] = "1"
-        elif f == "cite":
+        elif f in ("cite", "param"):
             pass
         else:
             report.error(f"{{{{ {name} }}}}: unknown filter '{f}'")
@@ -225,12 +227,18 @@ def substitute(text: str, metrics: dict[str, Metric], used: dict, report: Report
         for p in parts[1:]:
             k, _, a = p.partition(":")
             filters.append((k.strip(), a.strip() or None))
-        if re.fullmatch(r"-?\d[\d,.]*", name):  # cited literal
+        if re.fullmatch(r"-?\d[\d,.]*", name):  # literal: cited external figure or stated parameter
             cite = next((a for k, a in filters if k == "cite"), None)
-            if not cite:
-                report.error(f"{where}: literal {name} needs '| cite: <source>'")
-            m = Metric(float(name.replace(",", "")), "Cited external figure", cite, "observed")
-            key = f"{name} (cited)"
+            is_param = any(k == "param" for k, _ in filters)
+            num = float(name.replace(",", ""))
+            if is_param:
+                m = Metric(num, "Threshold or definition chosen for this story", None, "parameter")
+                key = f"{name} (parameter)"
+            else:
+                if not cite:
+                    report.error(f"{where}: literal {name} needs '| cite: <source>' or '| param'")
+                m = Metric(num, "Cited external figure", cite, "observed")
+                key = f"{name} (cited)"
         else:
             m = metrics.get(name)
             key = name
@@ -256,7 +264,13 @@ def untraced_numbers(md: str) -> list[str]:
     clean = re.sub(r"```.*?```", "", md, flags=re.S)
     clean = EXPR.sub("", clean)
     clean = re.sub(r"\{[^}]*\}", "", clean)  # step attributes
-    clean = re.sub(r"\b(PL|APA|TFO|Q|block|Block|quadrant|step|Step)\s*\d+(?:/\d+)?(?:\s[A-Z]\b)?", "", clean)
+    clean = re.sub(
+        r"\b(PL|APA|TFO|Q|block|Block|quadrant|step|Step|licence|licences|EPSG:?)\s*\d+(?:/\d+)?(?:\s[A-Z]\b)?",
+        "",
+        clean,
+    )
+    months = "January|February|March|April|May|June|July|August|September|October|November|December"
+    clean = re.sub(rf"\b\d{{1,2}}\s+({months})\b", "", clean)
     found = []
     for m in UNTRACED.finditer(clean):
         s = m.group(1)
@@ -276,7 +290,7 @@ APPENDIX = re.compile(r"^:::\s*appendix\s*\n(.*?)\n:::\s*$", re.S | re.M)
 
 
 def parse_attrs(s: str | None) -> dict:
-    return dict(re.findall(r"(\w[\w-]*)=([\w\-]+)", s or ""))
+    return {k: q or b for k, q, b in re.findall(r'(\w[\w-]*)=(?:"([^"]*)"|([\w\-]+))', s or "")}
 
 
 def norm_conf(c: str | None) -> str | None:
@@ -361,12 +375,12 @@ def prepare(spec: dict, data: dict, report: Report, where: str) -> Any:
         recs.sort(key=lambda d: -d["value"])
         return recs
     if t == "dots":
-        keep = {spec["row"]: "row", spec["value"]: "value"}
-        for k in ("label", "flag", "colour_by"):
+        # build each record field by field: row and colour_by may name the same column
+        out_keys = {"row": spec["row"], "value": spec["value"]}
+        for k, name in (("label", "label"), ("flag", "flag"), ("colour_by", "group")):
             if spec.get(k):
-                keep[spec[k]] = {"colour_by": "group"}.get(k, k)
-        recs = [{v: r.get(k) for k, v in keep.items()} for r in _records(df)]
-        return recs
+                out_keys[name] = spec[k]
+        return [{name: r.get(col) for name, col in out_keys.items()} for r in _records(df)]
     return None
 
 
@@ -609,9 +623,16 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
             if order != sorted(order):
                 report.warn(f"arc '{arc}': beats out of order: {beats}")
 
+    appendix_html = (
+        md.render(substitute(extra_appendix, metrics, used, report, "appendix")) if extra_appendix else ""
+    )
+
     # KPIs
     kpis = []
     for k in fm.get("kpis") or []:
+        extra = set(k) - {"metric", "label", "filter"}
+        if extra:
+            report.error(f"kpis: unexpected key(s) {sorted(extra)} for '{k.get('metric')}' (quote labels that contain commas)")
         m = metrics.get(k.get("metric"))
         if not m:
             report.error(f"kpis: unknown metric '{k.get('metric')}'")
@@ -641,13 +662,13 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
                 "use": f.spec["use"],
                 "state": {k: v for k, v in f.spec.items() if k != "use"},
             }
-    datasets = {n: data[n] for n in used_data}
+    datasets = {n: (_records(data[n]) if isinstance(data[n], pd.DataFrame) else data[n]) for n in used_data}
     steps_payload = [{"figs": st["figs"]} for st in steps_meta]
 
     ledger = [
         {
             "name": k,
-            "value": u["metric"].value,
+            "value": exact(u["metric"].value),
             "unit": u["metric"].unit,
             "shown": sorted(set(u["shown"])),
             "method": u["metric"].method,
@@ -684,7 +705,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
         sources=sources,
         ledger=ledger,
         figure_list=figure_list,
-        extra_appendix=md.render(extra_appendix) if extra_appendix else "",
+        extra_appendix=appendix_html,
         arc=arc,
         arc_beats=ARCS.get(arc, []),
         register=register,
@@ -704,7 +725,12 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
             default=_py,
         ).replace("</", "<\\/"),
         esc=html.escape,
-        conf_label={"observed": "Observed", "derived": "Derived", "interpreted": "Interpreted"},
+        conf_label={
+            "observed": "Observed",
+            "derived": "Derived",
+            "interpreted": "Interpreted",
+            "parameter": "Parameter",
+        },
     )
     macros = tpl.make_module(ctx)
     for s in sections:
