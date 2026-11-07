@@ -111,10 +111,18 @@ def test_surface_options_keep_contrast(row):
 def test_surface_blocks_generated():
     css = tokens.build_css()
     for name in C.surface_names():
-        if name != "baseline":
-            assert f'[data-surface="{name}"]' in css
+        assert f'[data-surface="{name}"]' in css  # every option, incl. baseline, so it can be restored
     assert (
         '[data-colour-scheme="dark"] {' in css
         or '[data-colour-scheme="dark"] {\n' in css
         or ', [data-colour-scheme="dark"] {' in css
     )
+
+
+def test_default_surface_is_in_root_tokens():
+    cfg = C.load_config()
+    name = cfg["surfaces"]["default"]
+    for scheme in C.SCHEMES:
+        root = tokens.scheme_tokens(scheme)
+        assert root["canvas"] == C.surfaces(name, scheme)["canvas"]
+        assert root["surface"] == C.surfaces(name, scheme)["surface"]

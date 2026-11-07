@@ -86,6 +86,7 @@
       <p class="ss-byline">SubScout · Adam McCarthy · all chart data on this page is <strong>illustrative</strong> · <a href="compare/">compare type and palette options →</a></p>
     </div>
   </div>
+  <div class="ss-horizon" id="hero-horizon" aria-hidden="true"></div>
 </header>
 
 <main>
@@ -247,11 +248,18 @@
 
 <script type="module">
 import { theme, typePairing, units, UNITS, bindSeg, story, tooltip, motion, fmt, refreshUnits } from "./runtime/js/subscout.js";
+import { horizon } from "./runtime/js/charts.js";
 
 bindSeg(document.getElementById("ctl-theme"), theme);
 bindSeg(document.getElementById("ctl-type"), typePairing);
 bindSeg(document.getElementById("ctl-units"), units);
 const tip = tooltip();
+{
+  const el = document.getElementById("hero-horizon");
+  const h = horizon(el, { seed: 7, height: 100, label: "Horizon motif (illustrative profile)" });
+  let w = 0;
+  new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (nw && nw !== w) h.draw((w = nw)); }).observe(el);
+}
 const v = (name) => `var(--ss-${name})`;
 
 // ---------------------------------------------------------------- colour scales

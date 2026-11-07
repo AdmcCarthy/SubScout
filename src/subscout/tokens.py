@@ -52,6 +52,7 @@ def scheme_tokens(scheme: C.Scheme, cfg: dict | None = None) -> dict[str, str]:
             t[f"{tone}-{role}"] = scales[hue][step - 1]
     for alias, (tone, role) in ALIASES.items():
         t[alias] = t[f"{tone}-{role}"]
+    t.update(surface_tokens(cfg["surfaces"]["default"], scheme, cfg))  # default room
     t["data-context"] = C.context(scheme, cfg)
     for name in cfg["data"]["sequential"]:
         for i, hx in enumerate(C.sequential(name, scheme, cfg), 1):
@@ -118,10 +119,8 @@ SURFACE_ALIASES = {"canvas": "canvas", "surface": "surface", "raised": "surface-
 
 
 def surface_tokens(name: str, scheme: C.Scheme, cfg: dict | None = None) -> dict[str, str]:
-    """Alias overrides a surface option sets (empty for the EDS baseline)."""
+    """Alias values a surface option sets (the EDS baseline sets its generated values explicitly)."""
     cfg = cfg or C.load_config()
-    if not cfg["surfaces"][name].get(scheme):
-        return {}
     return {SURFACE_ALIASES[r]: hx for r, hx in C.surfaces(name, scheme, cfg).items()}
 
 
@@ -131,8 +130,6 @@ def _surface_blocks(cfg: dict) -> list[str]:
     nl = ':root:not([data-colour-scheme="light"])'
     for name in C.surface_names(cfg):
         light, dark = surface_tokens(name, "light", cfg), surface_tokens(name, "dark", cfg)
-        if not (light or dark):
-            continue
         sel = f'[data-surface="{name}"]'
         out += [
             _vars(f"{sel}, :root{sel}", light),

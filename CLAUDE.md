@@ -35,6 +35,10 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
     the six dataviz checks. More than 5: fold into "Other" (context grey) or small multiples; never add hues.
   - Colour follows the entity, never its rank. One y-axis per chart (no dual axes).
 - Diverging is cobalt ↔ ochre; never red ↔ green.
+- **Chosen defaults (2026-11-07): Ledger type, Tide palette, Nordic cool room** (shale-white by day,
+  mørketid by night: deep blue-grey, never black) **with the horizon motif**. Surfaces live in
+  `[surfaces]` in colour.toml (`data-surface`); every option is contrast-tested. The horizon motif is
+  decorative and stays outside plot areas.
 - After editing colour.toml: `uv run subscout tokens && uv run subscout audit && uv run pytest`.
   Generated `runtime/css/tokens.*` are committed; CI fails if they are stale.
 

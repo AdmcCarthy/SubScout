@@ -256,9 +256,9 @@
   --ss-danger-text-strong: #571c1f;
   --ss-danger-text-on-emphasis: #ffffff;
   --ss-danger-surface: #ffffff;
-  --ss-canvas: #f5f9fc;
-  --ss-surface: #ffffff;
-  --ss-surface-raised: #e6ecf1;
+  --ss-canvas: #f3f7fb;
+  --ss-surface: #fdfeff;
+  --ss-surface-raised: #ecf1f5;
   --ss-text: #2d3439;
   --ss-text-subtle: #424f59;
   --ss-text-muted: #596c7b;
@@ -598,9 +598,9 @@
     --ss-danger-text-strong: #fff5f4;
     --ss-danger-text-on-emphasis: #040303;
     --ss-danger-surface: #040303;
-    --ss-canvas: #191a1a;
-    --ss-surface: #030303;
-    --ss-surface-raised: #1b1c1d;
+    --ss-canvas: #0e1820;
+    --ss-surface: #15212a;
+    --ss-surface-raised: #1e2b35;
     --ss-text: #f5fdff;
     --ss-text-subtle: #deeaf4;
     --ss-text-muted: #b4c7d7;
@@ -940,9 +940,9 @@
   --ss-danger-text-strong: #fff5f4;
   --ss-danger-text-on-emphasis: #040303;
   --ss-danger-surface: #040303;
-  --ss-canvas: #191a1a;
-  --ss-surface: #030303;
-  --ss-surface-raised: #1b1c1d;
+  --ss-canvas: #0e1820;
+  --ss-surface: #15212a;
+  --ss-surface-raised: #1e2b35;
   --ss-text: #f5fdff;
   --ss-text-subtle: #deeaf4;
   --ss-text-muted: #b4c7d7;
@@ -1304,6 +1304,32 @@
 }
 
 /* surfaces: data-surface="<name>" on <html> or any container */
+
+[data-surface="baseline"], :root[data-surface="baseline"] {
+  --ss-canvas: #f5f9fc;
+  --ss-surface: #ffffff;
+  --ss-surface-raised: #e6ecf1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-colour-scheme="light"]) [data-surface="baseline"], :root:not([data-colour-scheme="light"])[data-surface="baseline"] {
+    --ss-canvas: #191a1a;
+    --ss-surface: #030303;
+    --ss-surface-raised: #1b1c1d;
+  }
+}
+
+[data-colour-scheme="dark"] [data-surface="baseline"], [data-colour-scheme="dark"][data-surface="baseline"] {
+  --ss-canvas: #191a1a;
+  --ss-surface: #030303;
+  --ss-surface-raised: #1b1c1d;
+}
+
+:root [data-colour-scheme="light"][data-surface="baseline"], :root[data-colour-scheme="light"][data-surface="baseline"] {
+  --ss-canvas: #f5f9fc;
+  --ss-surface: #ffffff;
+  --ss-surface-raised: #e6ecf1;
+}
 
 [data-surface="nordic-cool"], :root[data-surface="nordic-cool"] {
   --ss-canvas: #f3f7fb;

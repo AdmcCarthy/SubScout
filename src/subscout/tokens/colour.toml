@@ -206,7 +206,7 @@ diverging = "fjord_ochre"
 #                blue-grey, never black, so the warm highlight glows
 # nordic-warm  - birch-white by day (warm, like pale timber); morketid by night
 [surfaces]
-default = "baseline"
+default = "nordic-cool"   # chosen 2026-11-07
 
 [surfaces.baseline]
 label = "Before"
