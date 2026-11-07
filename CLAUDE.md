@@ -1,5 +1,9 @@
 # SubScout: working rules
 
+**The style guide in `styleguide/` is the authority** for voice, rules, registers, language,
+uncertainty, arcs, tables, maps, motion and performance. Read the relevant file before building a
+story or component. This file summarises the engineering side.
+
 SubScout is a framework for **journalistic data narratives**: one Markdown story plus data produces a themed
 web page with two modes, **Read** (scrollytelling article) and **Present** (in-browser deck). Published on
 GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write for an informed reader.
@@ -15,9 +19,9 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
 - Metric first (Sm³, km, °C), boe alongside or via the page-wide units toggle. Oil: 1 Sm³ = 6.29 bbl;
   oil-equivalent conversions follow Sodir (1 Sm³ o.e.). State the convention used on the page.
 - Every figure carries: title, units, source (with date), confidence level, notes where needed.
-- Confidence levels: **Reported** (published figure, cited), **Derived** (our calculation from reported data,
-  method stated), **Estimated** (assumption-dependent; say which assumption). Balance beauty and
-  communication with key information; this is not a full EDA report, but never hide uncertainty.
+- Confidence levels: **Observed** (measured or published, cited), **Derived** (our calculation, method
+  stated), **Interpreted** (depends on a model or judgement; give the range or assumption). Balance beauty
+  and communication with key information; this is not a full EDA report, but never hide uncertainty.
 
 ## Colour (see `src/subscout/tokens/colour.toml`)
 - Method ported from the Equinor Design System palette generator (MIT, credited). SubScout is **not**

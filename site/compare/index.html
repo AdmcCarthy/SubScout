@@ -199,7 +199,7 @@ units.subscribe(() => redraws.forEach((f) => f()));
         <figure class="ss-figure">
           <p class="ss-fig-title">Fields C and F outlasted their neighbours</p>
           <div class="ss-chart" data-room-chart></div>
-          <dl class="ss-facts"><div><dt>Source</dt><dd>Synthetic</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="estimated">Interpreted</span></dd></div></dl>
+          <dl class="ss-facts"><div><dt>Source</dt><dd>Synthetic</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="interpreted">Interpreted</span></dd></div></dl>
         </figure>
       </div>
     </div>`;
@@ -239,7 +239,7 @@ document.getElementById("type-cols").innerHTML = TYPES.map(([k, name, fonts]) =>
       <p class="ss-fig-title">Field C held its plateau</p>
       <p class="ss-fig-sub">Production, k <span data-ss-unit></span>/d</p>
       <div class="ss-chart" data-mini="type-line"></div>
-      <dl class="ss-facts"><div><dt>Source</dt><dd>Synthetic</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="estimated">Estimated</span></dd></div></dl>
+      <dl class="ss-facts"><div><dt>Source</dt><dd>Synthetic</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="interpreted">Interpreted</span></dd></div></dl>
     </div>
     <button class="ss-btn choose" data-pick-type="${k}">Use ${name} below</button>
   </div>`).join("");
@@ -313,7 +313,7 @@ const STEPS = [
     title: "Change in remaining resources, year on year", sub: () => "percent", state: { sort: true }, conf: "derived" },
 ];
 const FACTS = {
-  estimated: ["estimated", "Estimated"], derived: ["derived", "Derived"], reported: ["reported", "Reported"],
+  estimated: ["interpreted", "Interpreted"], derived: ["derived", "Derived"], reported: ["observed", "Observed"],
 };
 document.getElementById("steps").innerHTML = STEPS.map((s, i) => `
   <section class="ss-step"><div class="ss-step-card">
