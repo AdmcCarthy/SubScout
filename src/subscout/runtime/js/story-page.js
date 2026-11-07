@@ -1,6 +1,6 @@
 // SubScout story page runtime: reads the build payload, creates charts, wires Read/Present.
 import { theme, units, UNITS, bindSeg, story, refreshUnits, onSchemeChange, idle, isShown } from "./subscout.js";
-import { lineChart, stackedBars, bubbles, heatmap, divergingBars, barChart, dotStrip, geoMap, horizon } from "./charts.js";
+import { lineChart, stackedBars, bubbles, heatmap, divergingBars, barChart, dotStrip, geoMap, horizon, networkChart } from "./charts.js";
 
 const payload = JSON.parse(document.getElementById("ss-payload").textContent);
 const U = () => UNITS[units.get()];
@@ -33,13 +33,14 @@ function make(figEl, fig) {
     case "bars": return barChart(el, data, o);
     case "dots": return dotStrip(el, data, o);
     case "map": return geoMap(el, spec, payload.datasets, o);
+    case "network": return networkChart(el, data, o);
     default: return null;
   }
 }
 
 const charts = new Map(); // fig id -> {chart, el, width, state}
 const initialState = (spec) => {
-  const keys = ["focus", "note", "highlight", "sort", "view", "filter"];
+  const keys = ["focus", "note", "highlight", "sort", "view", "filter", "frame"];
   return Object.fromEntries(keys.filter((k) => spec[k] !== undefined).map((k) => [k, spec[k]]));
 };
 document.querySelectorAll(".ss-figure[data-fig]").forEach((figEl) => {

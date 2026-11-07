@@ -119,8 +119,17 @@ Common keys: `id`, `type`, `data`, `title` (an action title), `subtitle`, `sourc
 | `stack` | tidy table | `x`, `y`, `series` | — |
 | `dots` | table | `row`, `value`, `label`, `flag`, `scale: linear | sqrt | symlog` | `highlight: [labels]` |
 | `map` | GeoJSON layers | `layers: [{data, role, colour_by}]`, `labels` | `view: [w, s, e, n]`, `filter: {prop: value}`, `colour_by` |
-| `heat` | tidy table | `x`, `y`, `value` | — |
+| `heat` | tidy table | `x`, `y`, `value`, `rows` (list, or `data` for data order), `value_label` | — |
 | `diverging` | table | `label`, `value` | `sort` |
+| `network` | node table + `edges` table | `frame`, `node`, `size`, `weight`, `colour_by`, `size_label`, `weight_label`, `frame_label`, `label_top`, `tooltip` | `frame`, `highlight: [nodes]` |
+
+**Networks.** `data` is a node table (one row per node per frame) and `edges` an edge table with
+columns `a`, `b`, the `frame` column and the `weight` column. Layouts are computed at build time
+(`subscout/layout.py`): each frame is warm-started from the previous one and all frames share one
+scale, so a node stays roughly in place and a smaller network looks smaller. Steps switch frames
+with `use: <id>` and `frame: <value>`; nodes and edges are keyed, so the change is a staged
+transition (leaving edges fade, nodes move, new edges appear), not a live force simulation. Dot area
+and line width share one scale across frames.
 
 ## Table blocks
 

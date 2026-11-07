@@ -59,7 +59,8 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
 - Browser runtime is plain ES modules + CSS, no Node build. D3 from cdnjs with exact pinned versions.
 - Theme attribute: `data-colour-scheme="light|dark"` on `<html>`, falling back to system preference.
   Type pairing: `data-type="ledger|survey|core"` (also works on containers).
-- Chart components live in `runtime/js/charts.js` (line, stacked bars, bubbles, heatmap, diverging bars).
+- Chart components live in `runtime/js/charts.js` (line, stacked bars, bubbles, heatmap, diverging bars, bars, dots, map, network). Network layouts are
+  precomputed at build time in `layout.py`; the browser only transitions between settled frames.
 - Visual check before calling a page done: `uv run python scripts/build_pages.py && uv run python
   scripts/snapshot.py _site _snapshots [path]` then look at the screenshots; 0 console errors required.
 - Stories must have tests for every number quoted in the prose (pattern from Viz_demo_generic).

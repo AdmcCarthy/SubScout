@@ -196,7 +196,9 @@ export function bubbles(el, data, groups, { label = "Bubble timeline", legendEl 
 /** data: {cols: [label], rows: [label], vals: number[row][col]} */
 export function heatmap(el, data, { label = "Heatmap", legendEl = null, valueLabel = "" } = {}) {
   function draw(W, state = {}, { animate = false } = {}) {
-    const m = { t: 6, r: 6, b: 24, l: 34 };
+    // left margin fits the longest row label (capped), so long names stay inside the chart
+    const longest = d3.max(data.rows, (r) => String(r).length) || 0;
+    const m = { t: 6, r: 6, b: 24, l: Math.round(Math.min(W * 0.42, Math.max(34, longest * 6.2 + 12))) };
     const cw = (W - m.l - m.r) / data.cols.length;
     const ch = Math.max(14, Math.min(34, cw * 1.6));
     const H = Math.round(m.t + m.b + ch * data.rows.length);
@@ -603,4 +605,127 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
   });
   canvas.addEventListener("pointerleave", () => getTip().hide());
   return { draw, prepare, repaint: () => { if (W) { cache.clear(); snap = staticFor(state.view); paint(); } } };
+}
+
+// ------------------------------------------------------------------ network (frames)
+/**
+ * Node-link network over a sequence of frames (e.g. rounds). Positions are precomputed at build
+ * time (layout.py), warm-started frame to frame and on one shared scale, so the browser only
+ * interpolates keyed nodes and edges between settled layouts (object constancy, no live simulation).
+ * data: {frames: [f], nodes: {f: [{id, size, group?, x, y, ...}]}, edges: {f: [{a, b, w}]}}
+ * spec: colour_by, size_label, weight_label, frame_label ("APA {frame}"), label_top, tooltip, tooltip_labels, aspect
+ * state: {frame, highlight: [ids]}
+ */
+export function networkChart(el, data, { label = "Network", legendEl = null, spec = {}, groups = null } = {}) {
+  const gs = spec.groups || groups;
+  const aspect = +(spec.aspect ?? 1.5);
+  const allNodes = Object.values(data.nodes).flat();
+  const allEdges = Object.values(data.edges).flat();
+  const maxS = d3.max(allNodes, (d) => d.size) || 1;
+  const maxW = d3.max(allEdges, (d) => d.w) || 1;
+  const labelTop = spec.label_top ?? 6;
+  let hover = null;
+  if (legendEl) {
+    const n = catCount(el);
+    const present = new Set(allNodes.map((d) => d.group));
+    const items = (gs || []).slice(0, n).filter((g) => present.has(g))
+      .map((g, i) => `<span><i style="background:${v(`data-cat-${(gs.indexOf(g)) + 1}`)};border-radius:50%"></i>${g}</span>`);
+    items.push(`<span><i style="background:${v("data-context")};border-radius:50%"></i>Other</span>`);
+    if (spec.size_label) items.push(`<span class="ss-k">Dot area: ${spec.size_label}</span>`);
+    if (spec.weight_label) items.push(`<span class="ss-k">Line width: ${spec.weight_label}</span>`);
+    legendEl.innerHTML = items.join("");
+  }
+  let last = { W: 0, state: {} };
+  function draw(W, state = {}, { animate = false } = {}) {
+    last = { W, state };
+    const col = spec.colour_by ? groupColour(el, gs) : () => v("data-story-1");
+    const fr = String(state.frame ?? spec.frame_default ?? data.frames.at(-1));
+    const nodes = data.nodes[fr] ?? [];
+    const edges = data.edges[fr] ?? [];
+    const H = Math.round(Math.max(260, Math.min(560, W / aspect)));
+    const Wb = Math.min(W, H * aspect);
+    const ox = (W - Wb) / 2, oy = (H - Wb / aspect) / 2;
+    const px = (d) => ox + d.x * Wb, py = (d) => oy + d.y * Wb;
+    const rmax = Wb * (spec.node_scale ?? 0.04); // must match layout.py so overlaps stay resolved
+    const r = (d) => Math.max(2, Math.sqrt(d.size / maxS) * rmax);
+    const ew = (d) => 0.6 + 4.4 * Math.sqrt(d.w / maxW);
+    const at = new Map(nodes.map((d) => [d.id, d]));
+    const hl = new Set(hover ? [hover] : (state.highlight ?? []));
+    const near = new Set(hl);
+    edges.forEach((e) => { if (hl.has(e.a)) near.add(e.b); if (hl.has(e.b)) near.add(e.a); });
+    // labels: highlighted, then coloured groups, then largest; greedy, dropping any that collide
+    const nc = catCount(el);
+    const coloured = (d) => gs && gs.indexOf(d.group) >= 0 && gs.indexOf(d.group) < nc;
+    const ranked = [...nodes].sort((a, b) => b.size - a.size);
+    const want = [...ranked.filter((d) => hl.has(d.id) || (hover && near.has(d.id))), ...ranked.filter(coloured), ...ranked.slice(0, labelTop)];
+    const placed = [], show = new Map();
+    const boxes = nodes.map((d) => ({ x0: px(d) - r(d), x1: px(d) + r(d), y0: py(d) - r(d), y1: py(d) + r(d), id: d.id }));
+    const ov = (b, p) => b.x0 < p.x1 - 1 && b.x1 > p.x0 + 1 && b.y0 < p.y1 - 1 && b.y1 > p.y0 + 1;
+    const hit = (b, dots) => placed.some((p) => ov(b, p)) || (dots && boxes.some((p) => p.id !== b.id && ov(b, p)));
+    const priority = new Set(want.filter((d) => hl.has(d.id) || coloured(d)).map((d) => d.id));
+    for (const d of want) {
+      if (show.has(d.id)) continue;
+      const w = d.id.length * 6.6 + 4, x = px(d), y = py(d), rr = r(d) + 3;
+      const opts = [["start", x + rr, y], ["end", x - rr, y], ["middle", x, y - rr - 7], ["middle", x, y + rr + 7]]
+        .map(([anchor, lx, ly]) => {
+          const x0 = anchor === "start" ? lx : anchor === "end" ? lx - w : lx - w / 2;
+          return { anchor, lx, ly, b: { x0, x1: x0 + w, y0: ly - 7, y1: ly + 7, id: d.id } };
+        }).filter((o) => o.b.x0 >= 0 && o.b.x1 <= W && o.b.y0 >= 22 && o.b.y1 <= H);
+      // clear of dots and labels; for priority nodes, fall back to clear of labels only (the halo keeps it legible)
+      const o = opts.find((o) => !hit(o.b, true)) ?? (priority.has(d.id) ? opts.find((o) => !hit(o.b, false)) : null);
+      if (o) { placed.push(o.b); show.set(d.id, { anchor: o.anchor, dx: o.lx - x, dy: o.ly - y }); }
+    }
+    const svg = frame(el, W, H, `${label}: ${fr}`);
+    const mo = motion();
+    const gE = svg.selectAll("g.edges").data([0]).join("g").attr("class", "edges");
+    const gN = svg.selectAll("g.nodes").data([0]).join("g").attr("class", "nodes");
+    svg.selectAll("text.frame").data([0]).join("text").attr("class", "frame ss-label")
+      .attr("x", 4).attr("y", 18).style("font-weight", 600)
+      .text((spec.frame_label ?? "{frame}").replace("{frame}", fr));
+    // edges: leaving ones fade first, staying ones move with their nodes, new ones fade in after
+    const ek = (d) => `${d.a}|${d.b}`;
+    const lines = gE.selectAll("line").data(edges.filter((e) => at.has(e.a) && at.has(e.b)), ek);
+    T(lines.exit(), animate, 0, mo.fast).style("opacity", 0).remove();
+    const le = lines.enter().append("line").style("opacity", 0)
+      .attr("x1", (d) => px(at.get(d.a))).attr("y1", (d) => py(at.get(d.a)))
+      .attr("x2", (d) => px(at.get(d.b))).attr("y2", (d) => py(at.get(d.b)));
+    T(lines, animate, mo.fast).attr("x1", (d) => px(at.get(d.a))).attr("y1", (d) => py(at.get(d.a)))
+      .attr("x2", (d) => px(at.get(d.b))).attr("y2", (d) => py(at.get(d.b)));
+    const lm = le.merge(lines).attr("stroke-linecap", "round");
+    const lit = (d) => hl.size && (hl.has(d.a) || hl.has(d.b));
+    T(lm, animate, animate ? mo.fast + mo.base : 0, mo.base)
+      .style("stroke", (d) => (lit(d) ? v("text-subtle") : v("data-context")))
+      .attr("stroke-width", ew)
+      .style("opacity", (d) => (hl.size ? (lit(d) ? 0.85 : 0.12) : 0.45));
+    // nodes
+    const g = gN.selectAll("g.node").data(nodes, (d) => d.id);
+    const gx = g.exit();
+    T(gx, animate, 0, mo.fast).style("opacity", 0).remove();
+    const ge = g.enter().append("g").attr("class", "node").style("opacity", 0)
+      .attr("transform", (d) => `translate(${px(d)},${py(d)})`);
+    ge.append("circle").attr("r", 0).attr("stroke-width", 1.5);
+    ge.append("text").attr("class", "ss-label ss-halo").attr("dy", "0.35em");
+    const gm = ge.merge(g);
+    gm.on("pointermove", (e, d) => {
+      const ps = edges.filter((x) => x.a === d.id || x.b === d.id)
+        .map((x) => ({ id: x.a === d.id ? x.b : x.a, w: x.w })).sort((a, b) => b.w - a.w);
+      const ex = (spec.tooltip || []).filter((k) => d[k] !== undefined && d[k] !== null)
+        .map((k) => `${spec.tooltip_labels?.[k] ?? k}: ${typeof d[k] === "number" ? fmt(d[k]) : d[k]}`).join("<br>");
+      const top = ps.slice(0, 6).map((p) => `<tr><td>${p.id}</td><td class="ss-num" style="text-align:right;padding-left:12px">${fmt(p.w)}</td></tr>`).join("");
+      getTip().show(`<b>${d.id}</b> · ${fr}<br>${fmt(d.size)} ${spec.size_label ?? ""}${ex ? `<br>${ex}` : ""}`
+        + (ps.length ? `<br><span class="ss-k">${ps.length} partner${ps.length > 1 ? "s" : ""}${spec.weight_label ? `, ${spec.weight_label}` : ""}</span><table>${top}</table>${ps.length > 6 ? `<span class="ss-k">and ${ps.length - 6} more</span>` : ""}` : `<br><span class="ss-k">no partners</span>`),
+      e.clientX, e.clientY);
+      if (hover !== d.id) { hover = d.id; draw(last.W, last.state, { animate: false }); }
+    }).on("pointerleave", () => { getTip().hide(); if (hover) { hover = null; draw(last.W, last.state, { animate: false }); } });
+    T(gm, animate, animate ? mo.fast : 0, mo.base).attr("transform", (d) => `translate(${px(d)},${py(d)})`)
+      .style("opacity", (d) => (hl.size && !near.has(d.id) ? 0.3 : 1));
+    T(gm.select("circle"), animate, animate ? mo.fast : 0, mo.base).attr("r", r)
+      .style("fill", (d) => col(d.group ?? d.id)).style("stroke", v("surface"));
+    gm.select("text").each(function (d) {
+      const l = show.get(d.id);
+      d3.select(this).attr("text-anchor", l?.anchor ?? "start").attr("x", l?.dx ?? 0).attr("y", l?.dy ?? 0).text(l ? d.id : "");
+    });
+    gm.filter((d) => hl.has(d.id)).raise();
+  }
+  return { draw };
 }

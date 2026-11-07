@@ -24,13 +24,14 @@ import yaml
 from markdown_it import MarkdownIt
 
 from . import colour as C
+from .layout import network_layout
 
 PKG = Path(__file__).parent
 CONFIDENCE = ("observed", "derived", "interpreted")
 CONFIDENCE_ALIASES = {"reported": "observed", "estimated": "interpreted"}
 REGISTERS = ("core", "section", "outcrop")
 TRUTH_GATE = {"dual-axis", "area-scaling", "source", "confidence", "lie-factor"}
-CHART_TYPES = {"line", "bars", "stack", "dots", "map", "heat", "diverging"}
+CHART_TYPES = {"line", "bars", "stack", "dots", "map", "heat", "diverging", "network"}
 TABLE_KINDS = {"league", "ledger"}
 ARCS = {
     "abt": ["and", "but", "therefore"],
@@ -325,6 +326,8 @@ def prepare(spec: dict, data: dict, report: Report, where: str) -> Any:
                 report.error(f"{where}: unknown map layer data '{ly.get('data')}'")
             layers.append(ly)
         return {"layers": layers}
+    if t == "network":
+        return prepare_network(spec, data, report, where)
     df = _df(data, spec.get("data", ""), report, where)
     if df is None:
         return None
@@ -353,6 +356,8 @@ def prepare(spec: dict, data: dict, report: Report, where: str) -> Any:
     if t == "heat":
         cols = sorted(df[spec["x"]].unique().tolist())
         rows = spec.get("rows") or sorted(df[spec["y"]].unique().tolist())
+        if rows == "data":  # keep the order rows first appear in the data
+            rows = list(dict.fromkeys(df[spec["y"]].tolist()))
         piv = df.pivot_table(index=spec["y"], columns=spec["x"], values=spec["value"], aggfunc="sum").reindex(
             rows
         )
@@ -382,6 +387,48 @@ def prepare(spec: dict, data: dict, report: Report, where: str) -> Any:
                 out_keys[name] = spec[k]
         return [{name: r.get(col) for name, col in out_keys.items()} for r in _records(df)]
     return None
+
+
+def prepare_network(spec: dict, data: dict, report: Report, where: str) -> Any:
+    """Nodes and edges per frame, with build-time layout (see layout.py)."""
+    nd = _df(data, spec.get("data", ""), report, where)
+    ed = _df(data, spec.get("edges", ""), report, where + " edges")
+    if nd is None or ed is None:
+        return None
+    fk, nk, sk = spec.get("frame"), spec.get("node", "id"), spec.get("size")
+    wk = spec.get("weight")
+    missing = [k for k, c in (("frame", fk), ("node", nk), ("size", sk)) if not c or c not in nd.columns]
+    missing += [f"edges.{c}" for c in (fk, "a", "b", wk) if not c or c not in ed.columns]
+    if missing:
+        report.error(
+            f"{where}: network needs columns for {missing} (nodes have {list(nd.columns)}, edges {list(ed.columns)})"
+        )
+        return None
+    frames = spec.get("frames") or sorted(nd[fk].unique().tolist())
+    frames = [str(_py(f)) for f in frames]
+    extra = [c for c in (spec.get("tooltip") or []) if c in nd.columns]
+    cb = spec.get("colour_by")
+    nodes, edges = {}, {}
+    for fr in frames:
+        sub = nd[nd[fk].astype(str) == fr]
+        nodes[fr] = [
+            {
+                "id": str(r[nk]),
+                "size": _py(r[sk]),
+                **({"group": r.get(cb)} if cb else {}),
+                **{c: r.get(c) for c in extra},
+            }
+            for r in _records(sub)
+        ]
+        es = ed[ed[fk].astype(str) == fr]
+        edges[fr] = [{"a": str(r["a"]), "b": str(r["b"]), "w": _py(r[wk])} for r in _records(es)]
+    pos = network_layout(
+        frames, nodes, edges, aspect=float(spec.get("aspect", 1.5)), rmax=float(spec.get("node_scale", 0.04))
+    )
+    for fr in frames:
+        for d in nodes[fr]:
+            d["x"], d["y"] = pos[fr][d["id"]]
+    return {"frames": frames, "nodes": nodes, "edges": edges}
 
 
 def table_html(spec: dict, data: dict, report: Report, where: str) -> str:
@@ -632,7 +679,9 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     for k in fm.get("kpis") or []:
         extra = set(k) - {"metric", "label", "filter"}
         if extra:
-            report.error(f"kpis: unexpected key(s) {sorted(extra)} for '{k.get('metric')}' (quote labels that contain commas)")
+            report.error(
+                f"kpis: unexpected key(s) {sorted(extra)} for '{k.get('metric')}' (quote labels that contain commas)"
+            )
         m = metrics.get(k.get("metric"))
         if not m:
             report.error(f"kpis: unknown metric '{k.get('metric')}'")
