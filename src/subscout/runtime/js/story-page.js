@@ -34,12 +34,31 @@ function make(figEl, fig) {
     case "dots": return dotStrip(el, data, o);
     case "map": return geoMap(el, spec, payload.datasets, o);
     case "network": return networkChart(el, data, o);
+    case "custom": return customChart(el, fig, o, figEl.dataset.fig);
     default: return null;
   }
 }
 
+// A story-supplied figure: `module` exports default (el, datasets, opts) => { draw(width, state, {animate}), repaint?() }.
+// Loaded on demand; calls made before it arrives are replayed.
+function customChart(el, fig, o, id) {
+  let impl = null, last = null;
+  // every state this figure will show (its own, then each `use:` step), so it can prepare ahead
+  const states = [fig.spec.state ?? {}, ...Object.values(payload.figures).filter((f) => f.use === id).map((f) => ({ ...(fig.spec.state ?? {}), ...f.state }))];
+  const names = [].concat(fig.spec.data ?? []);
+  const data = Object.fromEntries(names.map((n) => [n, payload.datasets[n]]));
+  import(new URL(fig.spec.module, document.baseURI).href)
+    .then((m) => { impl = (m.default ?? m.create)(el, data, { ...o, units: U, states }); if (last) impl.draw(...last); })
+    .catch((e) => console.error(`custom figure ${fig.spec.module}:`, e));
+  return {
+    draw: (...a) => { last = a; if (impl) impl.draw(...a); },
+    repaint: () => { if (impl?.repaint) impl.repaint(); else if (impl && last) impl.draw(last[0], last[1], { animate: false }); },
+  };
+}
+
 const charts = new Map(); // fig id -> {chart, el, width, state}
 const initialState = (spec) => {
+  if (spec.type === "custom") return { ...(spec.state ?? {}) };
   const keys = ["focus", "note", "highlight", "sort", "view", "filter", "frame"];
   return Object.fromEntries(keys.filter((k) => spec[k] !== undefined).map((k) => [k, spec[k]]));
 };

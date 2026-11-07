@@ -31,7 +31,7 @@ CONFIDENCE = ("observed", "derived", "interpreted")
 CONFIDENCE_ALIASES = {"reported": "observed", "estimated": "interpreted"}
 REGISTERS = ("core", "section", "outcrop")
 TRUTH_GATE = {"dual-axis", "area-scaling", "source", "confidence", "lie-factor"}
-CHART_TYPES = {"line", "bars", "stack", "dots", "map", "heat", "diverging", "network"}
+CHART_TYPES = {"line", "bars", "stack", "dots", "map", "heat", "diverging", "network", "custom"}
 TABLE_KINDS = {"league", "ledger"}
 ARCS = {
     "abt": ["and", "but", "therefore"],
@@ -317,6 +317,26 @@ def _records(df: pd.DataFrame) -> list[dict]:
     return json.loads(df.to_json(orient="records", force_ascii=False))
 
 
+def custom_data_names(spec: dict) -> list[str]:
+    d = spec.get("data")
+    return [d] if isinstance(d, str) else list(d or [])
+
+
+def prepare_custom(spec: dict, data: dict, report: Report, where: str) -> Any:
+    """A story-supplied figure module. Checks the spec; the module itself is copied at the end of the build."""
+    mod = spec.get("module")
+    if not isinstance(mod, str) or not mod.endswith(".js"):
+        report.error(f"{where}: custom figure needs 'module: path/to/figure.js'")
+    elif Path(mod).is_absolute() or ".." in Path(mod).parts:
+        report.error(f"{where}: module must be a relative path inside the story folder")
+    for n in custom_data_names(spec):
+        if n not in data:
+            report.error(f"{where}: unknown data '{n}'")
+    if not spec.get("exception") and not spec.get("notes"):
+        report.warn(f"{where}: custom figure should state how it departs from the rules (exception or notes)")
+    return {"datasets": custom_data_names(spec)}
+
+
 def prepare(spec: dict, data: dict, report: Report, where: str) -> Any:
     t = spec["type"]
     if t == "map":
@@ -328,6 +348,8 @@ def prepare(spec: dict, data: dict, report: Report, where: str) -> Any:
         return {"layers": layers}
     if t == "network":
         return prepare_network(spec, data, report, where)
+    if t == "custom":
+        return prepare_custom(spec, data, report, where)
     df = _df(data, spec.get("data", ""), report, where)
     if df is None:
         return None
@@ -499,6 +521,25 @@ class Figure:
     step: int | None = None
     payload: Any = None
     html: str = ""
+
+
+def copy_custom_modules(root: Path, out: Path, figures: list, report: Report) -> None:
+    """Copy each custom figure's module folder (so modules can import siblings) into the site."""
+    done: set[Path] = set()
+    for f in figures:
+        if f.kind != "chart" or f.spec.get("type") != "custom" or not isinstance(f.spec.get("module"), str):
+            continue
+        rel = Path(f.spec["module"])
+        src = (root / rel).resolve()
+        if not src.is_file() or root not in src.parents:
+            report.error(f"figure {f.id}: module '{rel}' not found in the story folder")
+            continue
+        top = rel.parts[0] if len(rel.parts) > 1 else None
+        if top is None:
+            shutil.copy2(src, out / rel)
+        elif top not in done:
+            shutil.copytree(root / top, out / top, dirs_exist_ok=True)
+            done.add(top)
 
 
 def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
@@ -706,6 +747,8 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
             figs_payload[f.id] = {"spec": f.spec, "data": f.payload}
             if f.spec.get("type") == "map":
                 used_data |= {ly["data"] for ly in f.spec.get("layers", [])}
+            if f.spec.get("type") == "custom":
+                used_data |= set(custom_data_names(f.spec))
         elif f.kind == "state":
             figs_payload[f.id] = {
                 "use": f.spec["use"],
@@ -791,6 +834,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     page = tpl.render(**ctx)
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(page, encoding="utf-8")
+    copy_custom_modules(root, out, figures, report)
     if runtime_href == "runtime":
         from . import tokens
 

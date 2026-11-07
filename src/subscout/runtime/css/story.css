@@ -74,3 +74,14 @@
 /* map */
 .ss-map { position: relative; width: 100%; touch-action: pan-y; }
 .ss-map canvas { display: block; width: 100%; border-radius: 6px; background: var(--ss-data-sea, var(--ss-cobalt-1)); }
+
+/* phones: one compact top-bar row, and pinned graphics sit below it */
+@media (max-width: 560px) {
+  .ss-topbar .ss-wrap { flex-wrap: nowrap; gap: 8px; padding-block: 6px; }
+  .ss-brand { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
+  .ss-controls { flex-wrap: nowrap; gap: 4px; }
+  .ss-seg button { padding: 4px 7px; font-size: 11.5px; }
+  #ctl-theme button[data-value="system"] { display: none; }
+  #present-btn { padding: 5px 9px; font-size: 11.5px; white-space: nowrap; }
+  .ss-graphic { top: 44px; height: calc(62vh - 44px); }
+}

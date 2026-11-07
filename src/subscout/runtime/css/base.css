@@ -235,8 +235,8 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
 .ss-graphic > .ss-figure { width: 100%; }
 @media (max-width: 760px) {
   .ss-story { grid-template-columns: minmax(0, 1fr); }
-  .ss-graphic { grid-row: 1; height: 62vh; top: 0; z-index: 1; align-items: flex-start; padding-top: 8px; }
-  .ss-steps { grid-row: 1; z-index: 2; padding-top: 55vh; }
+  .ss-graphic { grid-row: 1; grid-column: 1; height: 62vh; top: 0; z-index: 1; align-items: flex-start; padding-top: 8px; }
+  .ss-steps { grid-row: 1; grid-column: 1; z-index: 2; padding-top: 55vh; }
   .ss-step-card { opacity: 0.94; }
 }
 

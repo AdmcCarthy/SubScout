@@ -99,3 +99,26 @@ def test_appendix_expressions_are_rendered(tmp_path):
     assert rep.errors == []
     page = (out / "index.html").read_text()
     assert "{{" not in page.split('id="ss-payload"')[0]
+
+
+def test_custom_figure_module_is_checked_and_copied(tmp_path):
+    body = (
+        "```chart\nid: c\ntype: custom\nmodule: figures/c.js\ndata: decades\ntitle: A custom figure\n"
+        "source: s\nconfidence: observed\nnotes: Bespoke form.\nstate: { mode: a }\n```\n"
+    )
+    d = _story(tmp_path, body)
+    (d / "figures").mkdir()
+    (d / "figures" / "c.js").write_text("export default () => ({ draw() {} });\n")
+    rep = build(d, tmp_path / "out")
+    assert rep.errors == []
+    assert (tmp_path / "out" / "figures" / "c.js").exists()
+    html = (tmp_path / "out" / "index.html").read_text()
+    payload = json.loads(html.split('id="ss-payload"')[1].split(">", 1)[1].split("</script>")[0])
+    assert "decades" in payload["datasets"]
+    assert payload["figures"]["c"]["spec"]["state"] == {"mode": "a"}
+
+
+def test_custom_figure_needs_existing_module(tmp_path):
+    body = "```chart\nid: c\ntype: custom\nmodule: figures/missing.js\ndata: decades\ntitle: T\nsource: s\nconfidence: observed\nnotes: n\n```\n"
+    rep = build(_story(tmp_path, body), tmp_path / "out")
+    assert any("not found" in e for e in rep.errors)

@@ -121,6 +121,15 @@ Common keys: `id`, `type`, `data`, `title` (an action title), `subtitle`, `sourc
 | `map` | GeoJSON layers | `layers: [{data, role, colour_by}]`, `labels` | `view: [w, s, e, n]`, `filter: {prop: value}`, `colour_by` |
 | `heat` | tidy table | `x`, `y`, `value`, `rows` (list, or `data` for data order), `value_label` | — |
 | `diverging` | table | `label`, `value` | `sort` |
+| `custom` | any datasets (`data: name` or a list) | `module: figures/x.js` (a story-supplied ES module) | anything in `state:`; `use:` steps pass their keys through |
+
+**Custom figures.** When no built-in form fits, a story can supply its own figure as an ES module. It
+exports `default (el, datasets, opts) => ({ draw(width, state, { animate }), repaint() })`; `datasets`
+holds the named data, `opts.units()` the reader's unit, `opts.states` every state the story will ask
+for (its own `state:`, then each `use:` step: prepare them ahead to keep steps smooth), and it may import SubScout helpers from
+`../runtime/js/subscout.js`. The module's folder is copied into the site. A custom figure still needs
+an action title, source and confidence, and should declare how it departs from the rules
+(`exception:` or `notes:`); the truth gate still applies.
 | `network` | node table + `edges` table | `frame`, `node`, `size`, `weight`, `colour_by`, `size_label`, `weight_label`, `frame_label`, `label_top`, `tooltip` | `frame`, `highlight: [nodes]` |
 
 **Networks.** `data` is a node table (one row per node per frame) and `edges` an edge table with
