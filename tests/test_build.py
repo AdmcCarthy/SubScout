@@ -139,3 +139,24 @@ def test_nan_in_page_data_becomes_null_with_a_warning(tmp_path):
     text = payload_json({"datasets": {"x": [1.0, float("nan")]}}, rep)
     assert json.loads(text) == {"datasets": {"x": [1.0, None]}}
     assert any("NaN" in w for w in rep.warnings)
+
+
+def test_export_page_lists_every_view(tmp_path):
+    body = (
+        '::: step {kicker="First"}\n### A\nText.\n\n```chart\nid: c\ntype: custom\nmodule: figures/c.js\ndata: decades\n'
+        "title: A figure\nsource: s\nconfidence: observed\nnotes: n\nexport: true\nstate: { era: 0 }\n```\n:::\n\n"
+        '::: step {kicker="Second"}\n### B\nMore.\n\n```chart\nuse: c\nera: 1\n```\n:::\n'
+    )
+    d = _story(tmp_path, body)
+    (d / "figures").mkdir()
+    (d / "figures" / "c.js").write_text("export default () => ({ draw() {} });\n")
+    out = tmp_path / "out"
+    rep = build(d, out)
+    assert rep.errors == []
+    page = (out / "export" / "c" / "index.html").read_text()
+    payload = json.loads(page.split('id="ss-payload">')[1].split("</script>")[0].replace("<\\/", "</"))
+    assert [s["name"] for s in payload["states"]] == ["First", "Second"]
+    assert [s["state"] for s in payload["states"]] == [{"era": 0}, {"era": 1}]
+    assert set(payload["sizes"]) == {"slide", "portrait", "square"}
+    assert (out / "export" / "c" / "renders.json").read_text() == "[]"
+    assert 'href="export/c/"' in (out / "index.html").read_text()

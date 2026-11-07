@@ -54,6 +54,20 @@ def cmd_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_export(args: argparse.Namespace) -> int:
+    from .export import render
+
+    try:
+        files = render(Path(args.site), scale=args.scale, only=args.figure or None)
+    except ImportError:
+        print(
+            "subscout export needs Playwright: install subscout[export] and run `playwright install chromium`"
+        )
+        return 1
+    print(f"rendered {len(files)} PNG(s) at {args.scale}x into {args.site}/export/*/png")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="subscout", description="SubScout data-narrative framework")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -67,6 +81,13 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("story", help="folder containing story.md")
     b.add_argument("--out", default="_site", help="output directory")
     b.set_defaults(func=cmd_build)
+    e = sub.add_parser("export", help="render export pages to high-resolution PNGs (needs Playwright)")
+    e.add_argument("site", help="built site folder (after `subscout build`)")
+    e.add_argument(
+        "--scale", type=int, default=3, help="pixel density (default 3: a 1600 x 900 slide -> 4800 x 2700)"
+    )
+    e.add_argument("--figure", action="append", help="only this figure id (repeatable)")
+    e.set_defaults(func=cmd_export)
     args = p.parse_args(argv)
     return args.func(args)
 

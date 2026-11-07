@@ -523,6 +523,42 @@ class Figure:
     html: str = ""
 
 
+def write_exports(out, figures, figs_payload, data, steps_meta, fm, sources, runtime_href, report) -> None:
+    """Export pages for figures that opt in with `export:` (see export.py)."""
+    from . import export as ex
+
+    for f in figures:
+        if f.kind != "chart":
+            continue
+        opts = ex.export_options(f.spec)
+        if not opts:
+            continue
+        names = (
+            custom_data_names(f.spec)
+            if f.spec.get("type") == "custom"
+            else [ly["data"] for ly in f.spec.get("layers", [])]
+        )
+        datasets = {
+            n: (_records(data[n]) if isinstance(data[n], pd.DataFrame) else data[n])
+            for n in names
+            if n in data
+        }
+        base = (
+            {k: v for k, v in (f.spec.get("state") or {}).items()}
+            if f.spec.get("type") == "custom"
+            else {
+                k: f.spec[k]
+                for k in ("focus", "note", "highlight", "sort", "view", "filter", "frame")
+                if k in f.spec
+            }
+        )
+        states = ex.states_for(f.id, base, figures, steps_meta, f.step)
+        credit = " · ".join(x for x in [fm.get("byline"), fm.get("url")] if x)
+        ex.write_export_page(
+            out, f, figs_payload[f.id], datasets, states, opts, fm, sources, credit, runtime_href
+        )
+
+
 def copy_custom_modules(root: Path, out: Path, figures: list, report: Report) -> None:
     """Copy each custom figure's module folder (so modules can import siblings) into the site."""
     done: set[Path] = set()
@@ -857,6 +893,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(page, encoding="utf-8")
     copy_custom_modules(root, out, figures, report)
+    write_exports(out, figures, figs_payload, data, steps_meta, fm, sources, runtime_href, report)
     if runtime_href == "runtime":
         from . import tokens
 

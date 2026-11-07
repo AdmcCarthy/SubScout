@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-GB" data-type="ledger" data-palette="{{ esc(fm.get('palette', 'tide')) }}" data-surface="{{ esc(fm.get('surface', 'nordic-cool')) }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ esc(plain_title) }} · export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="{{ rt }}/css/tokens.css">
+<link rel="stylesheet" href="{{ rt }}/css/base.css">
+<link rel="stylesheet" href="{{ rt }}/css/export.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+<div class="ex-tools" id="tools">
+  <a class="ex-back" href="../../">← Story</a>
+  <label>Size <select id="t-size"></select></label>
+  <label>View <select id="t-state"></select></label>
+  <div class="ss-seg" id="t-theme" role="group" aria-label="Colour scheme"><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+  <div class="ss-seg" id="t-units" role="group" aria-label="Units"><button data-value="sm3">Sm³</button><button data-value="boe">boe</button></div>
+  <span class="ex-dl" id="t-dl"></span>
+</div>
+<main class="ex-stage"><div class="ex-board" id="board">
+  <header class="ex-head">
+    <div class="ex-kicker">{{ esc(fm.get('kicker', '')) }}</div>
+    <h1 class="ex-title" id="ex-title">{{ spec.get('title', '') }}</h1>
+    {% if spec.get('subtitle') %}<p class="ex-sub">{{ spec['subtitle'] }}</p>{% endif %}
+    <div class="ss-legend ex-legend"></div>
+  </header>
+  <div class="ss-chart ex-chart" id="ex-chart"></div>
+  <footer class="ex-foot">{% for k, v in facts %}<span><b>{{ k }}</b>{{ esc(v) }}</span>{% endfor %}<span class="ex-credit">{{ esc(credit) }}</span></footer>
+</div></main>
+<script type="application/json" id="ss-payload">{{ payload }}</script>
+<script type="module" src="{{ rt }}/js/export-page.js"></script>
+</body>
+</html>

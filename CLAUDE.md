@@ -66,6 +66,9 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
   both fully readable, uncovered and on screen. Phones pin the figure at the top (opaque, compact: title,
   legend, chart, one-line source) and the text scrolls up beneath it; `--ss-trigger` sets where a card
   activates. Custom figures must size themselves for that panel on narrow screens (about 30-36 % of vh).
+- Export pages: `export:` on a chart block -> `export/<id>/` artboard page (src/subscout/export.py,
+  runtime/js/export-page.js, css/export.css); `subscout export <site>` renders PNGs at 3x (Playwright, optional
+  extra `subscout[export]`). The export page is for images, not reading: no scrolly, fixed artboard sizes.
 - Visual check before calling a page done: `uv run python scripts/build_pages.py && uv run python
   scripts/snapshot.py _site _snapshots [path]` then look at the screenshots; 0 console errors required.
 - Stories must have tests for every number quoted in the prose (pattern from Viz_demo_generic).

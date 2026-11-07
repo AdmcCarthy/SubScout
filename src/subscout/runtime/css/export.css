@@ -1,0 +1,29 @@
+/* Export page: one figure on a fixed artboard, for high-resolution image export. */
+html, body { margin: 0; background: var(--ss-canvas); color: var(--ss-text); font-family: var(--ss-font-body); }
+.ex-tools {
+  position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
+  padding: 10px 20px; background: color-mix(in oklab, var(--ss-canvas) 92%, transparent); border-bottom: 1px solid var(--ss-border-subtle);
+  font-size: 13px;
+}
+.ex-tools label { display: inline-flex; gap: 6px; align-items: center; color: var(--ss-text-muted); }
+.ex-tools select { font: inherit; color: var(--ss-text); background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: 6px; padding: 4px 6px; }
+.ex-back { color: var(--ss-link); text-decoration: none; margin-right: 6px; }
+.ex-dl { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; color: var(--ss-text-muted); }
+.ex-dl a { color: var(--ss-on-accent, #fff); background: var(--ss-accent-fill-emphasis); padding: 6px 12px; border-radius: 999px; text-decoration: none; font-weight: 600; }
+.ex-stage { padding: 24px; overflow: auto; }
+.ex-board {
+  box-sizing: border-box; margin: 0 auto; background: var(--ss-surface); display: flex; flex-direction: column;
+  padding: 44px 52px 30px; transform-origin: top left; box-shadow: 0 2px 24px rgb(0 0 0 / .08);
+}
+.ex-kicker { font: 500 13px/1.4 var(--ss-font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ss-text-muted); }
+.ex-title { font: var(--ss-display-weight, 500) 34px/1.15 var(--ss-font-display); letter-spacing: -0.01em; margin: 8px 0 6px; text-wrap: balance; max-width: 40ch; }
+.ex-sub { margin: 0 0 12px; font-size: 16px; color: var(--ss-text-muted); }
+.ex-legend:empty { display: none; }
+.ex-chart { flex: 1 1 auto; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; }
+.ex-chart > * { max-width: 100%; }
+.ex-foot { display: flex; flex-wrap: wrap; gap: 4px 22px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--ss-border-subtle); font-size: 12.5px; color: var(--ss-text-muted); }
+.ex-foot b { font: 500 11px var(--ss-font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ss-text); margin-right: 6px; }
+.ex-credit { margin-left: auto; }
+body.is-bare .ex-tools { display: none; }
+body.is-bare .ex-stage { padding: 0; overflow: hidden; }
+body.is-bare .ex-board { box-shadow: none; }

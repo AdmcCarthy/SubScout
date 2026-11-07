@@ -125,6 +125,15 @@ Common keys: `id`, `type`, `data`, `title` (an action title), `subtitle`, `sourc
 | `diverging` | table | `label`, `value` | `sort` |
 | `custom` | any datasets (`data: name` or a list) | `module: figures/x.js` (a story-supplied ES module) | anything in `state:`; `use:` steps pass their keys through |
 
+**Export pages.** Add `export: true` (or `export: {sizes: [slide, portrait, square], themes: [light, dark]}`)
+to a detailed figure that readers will want as an image. The build writes `export/<id>/`: the figure alone on
+a fixed artboard (slide 1600×900, portrait 1200×1500, square 1200×1200) with title, legend, source, units,
+confidence and byline, a toolbar for size, view (the figure's own state and every `use:` step, named after
+the step), theme and units, and download links. `uv run subscout export _site` (needs `subscout[export]`
+and `playwright install chromium`) renders every combination at 3× in headless Chromium, e.g. 4800×2700
+for a slide, and lists them in `renders.json`; run it in the Pages workflow after the build. Custom figures
+receive `opts.export` and `opts.height()` and should fill that height. The figure's footer links to the page.
+
 **Custom figures.** When no built-in form fits, a story can supply its own figure as an ES module. It
 exports `default (el, datasets, opts) => ({ draw(width, state, { animate }), repaint() })`; `datasets`
 holds the named data, `opts.units()` the reader's unit, `opts.states` every state the story will ask

@@ -22,6 +22,7 @@
   {% if spec.unit %}<div><dt>Units</dt><dd>{{ esc(spec.unit) }}</dd></div>{% endif %}
   <div><dt>Confidence</dt><dd><span class="ss-conf" data-level="{{ spec.confidence }}">{{ conf_label[spec.confidence] }}</span></dd></div>
   {% if spec.notes %}<div><dt>Note</dt><dd>{{ spec.notes }}</dd></div>{% endif %}
+  {% if spec.export and spec.id %}<div><dt>Export</dt><dd><a href="export/{{ spec.id }}/">High-resolution image</a></dd></div>{% endif %}
   {% if spec.exception %}<div class="ss-exception"><dt>Exception</dt><dd>{{ esc(spec.exception.rule) }}: {{ esc(spec.exception.reason) }}</dd></div>{% endif %}
 </dl>
 {%- endmacro %}
