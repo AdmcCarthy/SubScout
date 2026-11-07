@@ -30,9 +30,17 @@ def test_contrast_rules(result):
 
 
 @pytest.mark.parametrize("scheme", C.SCHEMES)
-def test_categorical_palette_is_cvd_separable_and_visible(scheme):
+def test_categorical_palette_passes_six_checks(scheme):
     surface = C.to_hex(C.role_colour("neutral", "surface", scheme))
-    audit = C.palette_audit(C.categorical(scheme), surface)
+    checks = C.categorical_checks(C.categorical(scheme), scheme, surface)
+    assert checks["ok"], checks
+    assert checks["cvd"] >= C.CVD_TARGET, checks  # target, not just the floor
+
+
+@pytest.mark.parametrize("scheme", C.SCHEMES)
+def test_story_palette_is_cvd_separable_and_visible(scheme):
+    surface = C.to_hex(C.role_colour("neutral", "surface", scheme))
+    audit = C.palette_audit(C.story(scheme), surface)
     assert audit["min_cvd_delta_e"] >= 0.06, audit
     assert audit["min_lc_on_background"] >= 30, audit
 
@@ -75,4 +83,4 @@ def test_tokens_css_has_both_schemes_and_aliases():
     css = tokens.build_css()
     assert css.count("--ss-canvas:") == 3  # light, media-dark, forced-dark
     assert ':root[data-colour-scheme="dark"]' in css
-    assert "--ss-data-cat-6:" in css and "--ss-data-div-9:" in css
+    assert "--ss-data-story-4:" in css and "--ss-data-cat-5:" in css and "--ss-data-div-9:" in css

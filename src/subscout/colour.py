@@ -201,11 +201,57 @@ def diverging(name: str, scheme: Scheme, cfg: dict | None = None) -> list[str]:
     return out
 
 
-def categorical(scheme: Scheme, cfg: dict | None = None) -> list[str]:
-    """SubScout's curated categorical order (core hues first)."""
+def _palette(name: str, scheme: Scheme, cfg: dict | None) -> list[str]:
     cfg = cfg or load_config()
     idx = 1 if scheme == "light" else 2
-    return [to_hex(step_colour(e[0], e[idx], scheme, cfg)) for e in cfg["data"]["categorical"]]
+    return [to_hex(step_colour(e[0], e[idx], scheme, cfg)) for e in cfg["data"][name]]
+
+
+def story(scheme: Scheme, cfg: dict | None = None) -> list[str]:
+    """Quiet on-identity palette (1-3 series beside grey context). Always direct-label."""
+    return _palette("story", scheme, cfg)
+
+
+def categorical(scheme: Scheme, cfg: dict | None = None) -> list[str]:
+    """Identity palette for 3-5 entities, in fixed order. Passes the six checks."""
+    return _palette("categorical", scheme, cfg)
+
+
+# Six-checks thresholds for identity palettes (dataviz method; Machado 2009 CVD).
+BAND = {"light": (0.43, 0.77), "dark": (0.48, 0.67)}
+CHROMA_FLOOR = 0.10
+CVD_TARGET, CVD_FLOOR = 8.0, 6.0  # OKLab deltaE x100, adjacent pairs, protan/deutan
+NORMAL_FLOOR = 15.0
+CONTRAST_MIN = 3.0  # WCAG 2 vs surface
+
+
+def categorical_checks(colours: list[str], scheme: Scheme, surface: str) -> dict:
+    """Run the identity-palette checks; returns per-check values and an overall `ok`."""
+    lch = [Color(c).convert("oklch") for c in colours]
+    lo, hi = BAND[scheme]
+    adj = list(zip(colours[:-1], colours[1:], strict=True))
+
+    def de(a: str, b: str, kind: str | None = None) -> float:
+        ca, cb = Color(a), Color(b)
+        if kind:
+            ca, cb = ca.filter(kind, method="machado"), cb.filter(kind, method="machado")
+        return ca.delta_e(cb, method="ok") * 100
+
+    res = {
+        "band": all(lo <= c["lightness"] <= hi for c in lch),
+        "chroma": min(c["chroma"] for c in lch),
+        "cvd": min(de(a, b, k) for a, b in adj for k in ("protan", "deutan")),
+        "normal": min(de(a, b) for a, b in adj),
+        "contrast": min(Color(c).contrast(surface, method="wcag21") for c in colours),
+    }
+    res["ok"] = (
+        res["band"]
+        and res["chroma"] >= CHROMA_FLOOR
+        and res["cvd"] >= CVD_FLOOR
+        and res["normal"] >= NORMAL_FLOOR
+        and res["contrast"] >= CONTRAST_MIN
+    )
+    return res
 
 
 def data_role(role: str, scheme: Scheme, cfg: dict | None = None) -> str:

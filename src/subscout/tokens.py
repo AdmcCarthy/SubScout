@@ -5,7 +5,7 @@ Naming
 --ss-<hue>-<step>       raw scale, e.g. --ss-fjord-9          (avoid in stories)
 --ss-<tone>-<role>      semantic, e.g. --ss-accent-fill-emphasis
 --ss-<alias>            page-level shortcuts: --ss-canvas, --ss-text, ...
---ss-data-*             chart colours: context, highlight, cat-N, seq-<name>-N, div-N
+--ss-data-*             chart colours: context, highlight, story-N, cat-N, seq-<name>-N, div-N
 
 Theme switching follows EDS: `data-colour-scheme="light|dark"` on <html>,
 falling back to the reader's system preference.
@@ -53,6 +53,8 @@ def scheme_tokens(scheme: C.Scheme, cfg: dict | None = None) -> dict[str, str]:
         t[alias] = t[f"{tone}-{role}"]
     t["data-context"] = C.data_role("context", scheme, cfg)
     t["data-highlight"] = C.data_role("highlight", scheme, cfg)
+    for i, hx in enumerate(C.story(scheme, cfg), 1):
+        t[f"data-story-{i}"] = hx
     for i, hx in enumerate(C.categorical(scheme, cfg), 1):
         t[f"data-cat-{i}"] = hx
     for name in cfg["data"]["sequential"]:
@@ -94,6 +96,7 @@ def build_json(cfg: dict | None = None) -> dict:
     return {
         "light": scheme_tokens("light", cfg),
         "dark": scheme_tokens("dark", cfg),
+        "story_count": len(cfg["data"]["story"]),
         "categorical_count": len(cfg["data"]["categorical"]),
     }
 

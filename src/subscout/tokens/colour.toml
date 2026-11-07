@@ -25,6 +25,7 @@ dark  = { mean = 0.7, std_dev = 2 }
 # anchor = [L, C, H] in OKLCH. `group` documents intent:
 #   core      - identity colours used for surfaces, text and most data
 #   highlight - used sparingly: annotation, change, status; never large areas
+#   data      - only used inside data palettes
 [hues.fjord]       # EDS "Moss Green"
 anchor = [0.4973, 0.084851, 204.553]
 group = "core"
@@ -52,6 +53,10 @@ group = "highlight"
 [hues.haematite]   # EDS "Red"
 anchor = [0.5776, 0.2314, 21.12]
 group = "highlight"
+
+[hues.amethyst]    # SubScout addition (not in EDS): violet for identity palettes
+anchor = [0.55, 0.15, 305.0]
+group = "data"
 
 # ---------------------------------------------------------------- tones
 # Semantic tone -> hue, per scheme. Pages only ever use tone tokens.
@@ -127,17 +132,31 @@ tones = "all"
 context = { hue = "slate", light = 6, dark = 6 }      # background series (Lc >= 30)
 highlight = { hue = "ochre", light = 8, dark = 8 }    # the one thing to look at
 
-# Curated categorical order: core hues first, highlights only beyond 4.
-# Tuned so every pair stays >= 0.06 OK deltaE under protan/deutan/tritan and
-# every colour is >= Lc 30 against the surface (tests enforce both).
+# Two palettes for two jobs:
+#
+# story       - the journalistic default: grey context + 1-3 core colours. Quiet,
+#               on-identity, low chroma, so it MUST be direct-labelled (never
+#               colour alone). Checked: worst-case CVD OK deltaE >= 0.06, Lc >= 30.
+# categorical - identity of 3-5 entities (e.g. operators). High chroma, checked
+#               with the dataviz six checks: lightness band, chroma floor >= 0.10,
+#               adjacent CVD deltaE >= 8 (Machado 2009), normal-vision >= 15,
+#               contrast >= 3:1. Order found by exhaustive search; keep it fixed.
+#               More than 5 entities: fold the rest into "Other" (context grey)
+#               or use small multiples; never generate extra hues.
 # Each entry is [hue, step_light, step_dark].
-categorical = [
+story = [
   ["fjord", 9, 8],
   ["cobalt", 7, 10],
   ["shale", 11, 6],
   ["fjord", 6, 11],
-  ["ochre", 8, 8],
-  ["haematite", 10, 7],
+]
+
+categorical = [
+  ["ochre", 8, 7],
+  ["cobalt", 8, 6],
+  ["haematite", 9, 7],
+  ["amethyst", 9, 7],
+  ["malachite", 10, 6],
 ]
 
 [data.sequential]

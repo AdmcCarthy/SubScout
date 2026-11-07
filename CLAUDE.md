@@ -26,8 +26,13 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
   an anchor only. Pages use **tone/alias tokens** (`--ss-text`, `--ss-accent-fill-emphasis`), never raw hex.
 - Core hues: fjord (accent), shale (neutral surfaces/text), slate (chart structure), cobalt (secondary data).
   Highlights only: malachite, ochre, haematite; for annotation/change/status, never large areas.
-- Charts: context in grey (`--ss-data-context`), the story in colour (`--ss-data-highlight` or cat-1).
-  Diverging is cobalt ↔ ochre; never red ↔ green.
+- Two data palettes for two jobs:
+  - **story** (`--ss-data-story-N`, default): grey context (`--ss-data-context`) + 1-3 quiet core colours,
+    plus `--ss-data-highlight` for the one thing to look at. Low chroma, so **always direct-label**.
+  - **categorical** (`--ss-data-cat-1..5`): identity of 3-5 entities (operators etc.), fixed order, passes
+    the six dataviz checks. More than 5: fold into "Other" (context grey) or small multiples; never add hues.
+  - Colour follows the entity, never its rank. One y-axis per chart (no dual axes).
+- Diverging is cobalt ↔ ochre; never red ↔ green.
 - After editing colour.toml: `uv run subscout tokens && uv run subscout audit && uv run pytest`.
   Generated `runtime/css/tokens.*` are committed; CI fails if they are stale.
 

@@ -19,18 +19,26 @@ def cmd_tokens(args: argparse.Namespace) -> int:
 def cmd_audit(args: argparse.Namespace) -> int:
     results = C.contrast_audit()
     bad = [r for r in results if not r.passed]
+    palette_failed = False
     for r in results if args.all else bad:
         mark = "ok  " if r.passed else "FAIL"
         print(f"{mark} {r.scheme:5} {r.tone:10} {r.fg:>16} on {r.bg:<14} Lc {r.lc:5.1f} (min {r.target:g})")
     print(f"{len(results) - len(bad)}/{len(results)} contrast rules pass")
     for scheme in C.SCHEMES:
         surface = C.to_hex(C.role_colour("neutral", "surface", scheme))
-        a = C.palette_audit(C.categorical(scheme), surface)
+        a = C.palette_audit(C.story(scheme), surface)
         print(
-            f"{scheme}: categorical worst-case CVD deltaE {a['min_cvd_delta_e']:.3f} "
+            f"{scheme}: story palette worst-case CVD deltaE {a['min_cvd_delta_e']:.3f} "
             f"{a['closest_pair']}, lowest Lc on surface {a['min_lc_on_background']:.0f}"
         )
-    return 1 if bad else 0
+        k = C.categorical_checks(C.categorical(scheme), scheme, surface)
+        print(
+            f"{scheme}: categorical {'PASS' if k['ok'] else 'FAIL'}: band {k['band']}, "
+            f"min chroma {k['chroma']:.3f}, CVD dE {k['cvd']:.1f}, normal dE {k['normal']:.1f}, "
+            f"contrast {k['contrast']:.2f}:1"
+        )
+        palette_failed |= not k["ok"]
+    return 1 if bad or palette_failed else 0
 
 
 def main(argv: list[str] | None = None) -> int:
