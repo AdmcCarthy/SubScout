@@ -11,7 +11,7 @@ becomes active measures what is actually on top on screen (document.elementFromP
 Each step is judged at the best moment a reader gets while that step is active (they can stop there):
 the script keeps scrolling through the step's active window and keeps the best-scoring frame.
 
-Usage: uv run python scripts/readability.py <site_dir> [path] [--json out.json]
+Usage: uv run python scripts/readability.py <site_dir | https://...> [path] [--json out.json]
 Exit code 1 if any step fails on any viewport.
 """
 
@@ -91,8 +91,9 @@ def serve(directory: Path):
     return srv, f"http://127.0.0.1:{srv.server_address[1]}/"
 
 
-def check(site: Path, path: str = "") -> list[dict]:
-    srv, url = serve(site)
+def check(site: Path | str, path: str = "") -> list[dict]:
+    remote = str(site).startswith("http")
+    srv, url = (None, str(site).rstrip("/") + "/") if remote else serve(Path(site))
     rows = []
     with sync_playwright() as p:
         b = p.chromium.launch()
@@ -129,12 +130,13 @@ def check(site: Path, path: str = "") -> list[dict]:
                 rows.append({**row, **vals, "fail": fails})
             pg.close()
         b.close()
-    srv.shutdown()
+    if srv:
+        srv.shutdown()
     return rows
 
 
 def main(argv: list[str]) -> int:
-    site = Path(argv[0])
+    site = argv[0] if argv[0].startswith("http") else Path(argv[0])
     path = next((a for a in argv[1:] if not a.startswith("--") and not a.endswith(".json")), "")
     rows = check(site, path)
     bad = [r for r in rows if r["fail"]]
