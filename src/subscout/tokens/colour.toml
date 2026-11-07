@@ -26,6 +26,7 @@ dark  = { mean = 0.7, std_dev = 2 }
 #   core      - identity colours used for surfaces, text and most data
 #   highlight - used sparingly: annotation, change, status; never large areas
 #   data      - only used inside data palettes
+#   surface   - only used for page surfaces
 [hues.fjord]       # EDS "Moss Green"
 anchor = [0.4973, 0.084851, 204.553]
 group = "core"
@@ -53,6 +54,10 @@ group = "highlight"
 [hues.haematite]   # EDS "Red"
 anchor = [0.5776, 0.2314, 21.12]
 group = "highlight"
+
+[hues.birch]       # SubScout addition: warm neutral for surfaces only (pale timber)
+anchor = [0.70, 0.04, 75.0]
+group = "surface"
 
 [hues.amethyst]    # SubScout addition (not in EDS): violet for identity palettes
 anchor = [0.55, 0.15, 305.0]
@@ -88,7 +93,7 @@ border-subtle = 4
 selected = 5
 border = 7
 selected-pressed = 8
-text-muted = 8          # labels, axis text, captions (Lc 60)
+text-muted = 9          # labels, axis text, captions (Lc 60 on canvas and surface)
 border-strong = 9
 fill-emphasis = 9
 fill-emphasis-hover = 10
@@ -186,3 +191,35 @@ story = [["fjord", 9, 8], ["shale", 5, 6], ["fjord", 8, 12], ["shale", 11, 10]]
 categorical = [["cobalt", 8, 6], ["ochre", 8, 7], ["amethyst", 10, 7], ["malachite", 8, 6]]
 sequential = "shale"
 diverging = "fjord_ochre"
+
+# ---------------------------------------------------------------- surfaces
+# Page surfaces (canvas, surface, raised) can be overridden per option, so the
+# look of the room can change without touching the data colours. Switch with
+# data-surface="<name>" on <html> or any container. Values are explicit OKLCH
+# [L, C] plus a hue name, because near-white and near-black surfaces carry
+# too little chroma for the gaussian ladder to express warmth or depth.
+# Every option is tested: text, labels and all data colours keep their
+# contrast targets on its canvas and surface, in both schemes.
+#
+# baseline     - the EDS method as generated (no overrides)
+# nordic-cool  - shale-white by day; morketid (polar night) by night: deep
+#                blue-grey, never black, so the warm highlight glows
+# nordic-warm  - birch-white by day (warm, like pale timber); morketid by night
+[surfaces]
+default = "baseline"
+
+[surfaces.baseline]
+label = "Before"
+note = "EDS baseline: cool shale-white by day, near-black by night. No Nordic elements."
+
+[surfaces.nordic-cool]
+label = "Nordic cool"
+note = "Shale-white by day, mørketid by night: deep blue-grey, never black."
+light = { hue = "shale", canvas = [0.975, 0.006], surface = [0.997, 0.002], raised = [0.955, 0.008] }
+dark = { hue = "shale", canvas = [0.205, 0.022], surface = [0.240, 0.024], raised = [0.280, 0.026] }
+
+[surfaces.nordic-warm]
+label = "Nordic warm"
+note = "Birch-white by day, like pale timber; mørketid by night."
+light = { hue = "birch", canvas = [0.968, 0.011], surface = [0.993, 0.005], raised = [0.948, 0.014] }
+dark = { hue = "shale", canvas = [0.205, 0.022], surface = [0.240, 0.024], raised = [0.280, 0.026] }

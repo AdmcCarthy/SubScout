@@ -49,6 +49,23 @@
   .chart-stack > .layer.on { opacity: 1; visibility: visible; transition: opacity var(--ss-dur) var(--ss-ease) var(--ss-dur-fast), visibility 0s; }
   #fig-story .ss-fig-title, #fig-story .ss-fig-sub { transition: opacity var(--ss-dur-fast); }
   :root[data-mode="present"] #fig-story { padding: var(--ss-space-l); }
+  /* 0. the room: before vs Nordic */
+  .room-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ss-space-m); }
+  @media (max-width: 980px) { .room-grid { grid-template-columns: minmax(0, 1fr); } }
+  .room-row-label { grid-column: 1 / -1; font: 11px var(--ss-font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ss-text-muted); margin-top: var(--ss-space-s); }
+  .room { background: var(--ss-canvas); color: var(--ss-text); font-family: var(--ss-font-body); border-radius: var(--ss-radius-l); border: 1px solid var(--ss-border-subtle); overflow: hidden; min-width: 0; }
+  .room-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 12px 16px 0; }
+  .room-head b { font: 600 .95rem var(--ss-font-body); }
+  .room-head small { font: 11px var(--ss-font-mono); color: var(--ss-text-muted); }
+  .room .ss-horizon { margin-top: 8px; }
+  .room-body { padding: 14px 16px 16px; }
+  .room-body h3 { font-size: 1.45rem; margin: 6px 0 6px; }
+  .room-body .ss-standfirst { font-size: 1rem; margin-bottom: 10px; }
+  .room-body .ss-figure { padding: 12px; }
+  .room-body .lamp { font-family: var(--ss-font-display); font-size: 1.6rem; }
+  .room-body .lamp b { color: var(--ss-data-highlight); font-weight: 500; }
+  .room-note { font-size: var(--ss-size-caption); color: var(--ss-text-subtle); margin: 6px 0 0; }
+  .page-horizon { margin-top: var(--ss-space-l); }
   footer { padding-block: var(--ss-space-xxl) var(--ss-space-xxxl); font-size: var(--ss-size-caption); color: var(--ss-text-muted); border-top: 1px solid var(--ss-border-subtle); margin-top: var(--ss-space-xxl); }
 </style>
 </head>
@@ -59,6 +76,8 @@
     <div class="ss-controls">
       <span class="ctl-label">Theme</span>
       <div class="ss-seg" id="ctl-theme"><button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+      <span class="ctl-label">Room</span>
+      <div class="ss-seg" id="ctl-surface"><button data-value="baseline">Before</button><button data-value="nordic-cool">Nordic cool</button><button data-value="nordic-warm">Nordic warm</button></div>
       <span class="ctl-label">Units</span>
       <div class="ss-seg" id="ctl-units"><button data-value="sm3">Sm³</button><button data-value="boe">boe</button></div>
     </div>
@@ -69,9 +88,19 @@
   <span class="ss-kicker">Decision page</span>
   <h1>Pick a type pairing and a data palette</h1>
   <p class="ss-standfirst">Each option is shown side by side with identical content. Then play the six-chart story below with any combination, as an article or as a deck. All data on this page is synthetic.</p>
+  <div class="ss-horizon page-horizon" id="page-horizon" hidden></div>
 </header>
 
 <main>
+<!-- ============================================================ 0. the room -->
+<section class="ss-section ss-wrap" id="room">
+  <span class="ss-kicker">0 · The room</span>
+  <h2>Before, and with Norwegian restraint</h2>
+  <p class="ss-prose"><strong>Before</strong> is the EDS baseline you have seen so far: cool white by day, near-black by night, no motif. The <strong>Nordic</strong> options change only the room around the data: surfaces that are warm or cool white by day, <em>mørketid</em> by night (deep blue-grey, never black, so the one warm highlight glows like a lamp in a window), and the horizon motif. Data colours, type and rules are identical in all six panels. Use <strong>Room</strong> in the top bar to apply one to the whole page.</p>
+  <div class="room-grid" id="room-grid"></div>
+  <p class="room-note">The horizon motif here is an illustrative profile. In stories it is drawn from real bathymetry or an interpreted seismic horizon, and sits outside plot areas.</p>
+</section>
+
 <!-- ============================================================ 1. type -->
 <section class="ss-section ss-wrap">
   <span class="ss-kicker">1 · Type pairings</span>
@@ -132,14 +161,15 @@
 </footer>
 
 <script type="module">
-import { theme, units, UNITS, typePairing, palettePreset, bindSeg, story, refreshUnits } from "../runtime/js/subscout.js";
-import { lineChart, stackedBars, bubbles, heatmap, divergingBars } from "../runtime/js/charts.js";
+import { theme, units, UNITS, typePairing, palettePreset, surfaceOption, bindSeg, story, refreshUnits } from "../runtime/js/subscout.js";
+import { lineChart, stackedBars, bubbles, heatmap, divergingBars, horizon } from "../runtime/js/charts.js";
 import { production, byOperator, discoveries, basins, biggest, wells, revisions } from "./data.js";
 
 bindSeg(document.getElementById("ctl-theme"), theme);
 bindSeg(document.getElementById("ctl-units"), units);
 bindSeg(document.getElementById("ctl-type"), typePairing);
 bindSeg(document.getElementById("ctl-palette"), palettePreset);
+bindSeg(document.getElementById("ctl-surface"), surfaceOption);
 const U = () => UNITS[units.get()];
 const prodUnit = () => `k ${U().short}/d`;
 const sizeUnit = () => `million ${U().short}`;
@@ -150,6 +180,46 @@ const watch = (el, fn) => {
   redraws.push(() => w && fn(w));
 };
 units.subscribe(() => redraws.forEach((f) => f()));
+
+// ---------------------------------------------------------------- 0. the room
+{
+  const tokRoom = await (await fetch("../runtime/css/tokens.json")).json();
+  const opts = ["baseline", "nordic-cool", "nordic-warm"];
+  const panel = (name, scheme) => {
+    const o = tokRoom.surfaces[name];
+    const nordic = name !== "baseline";
+    return `<div class="room" data-surface="${name}" data-colour-scheme="${scheme}">
+      <div class="room-head"><b>${o.label}</b><small>${scheme === "light" ? "day" : name === "baseline" ? "night" : "mørketid"}</small></div>
+      ${nordic ? `<div class="ss-horizon" data-horizon="${name}-${scheme}"></div>` : ""}
+      <div class="room-body">
+        <span class="ss-kicker">North Sea · production</span>
+        <h3>Field C held its plateau for 14 years</h3>
+        <p class="ss-standfirst">A tie-back kept the host busy while its neighbours declined.</p>
+        <p class="lamp ss-num">Plateau <b>44</b> k <span data-ss-unit></span>/d</p>
+        <figure class="ss-figure">
+          <p class="ss-fig-title">Fields C and F outlasted their neighbours</p>
+          <div class="ss-chart" data-room-chart></div>
+          <dl class="ss-facts"><div><dt>Source</dt><dd>Synthetic</dd></div><div><dt>Confidence</dt><dd><span class="ss-conf" data-level="estimated">Interpreted</span></dd></div></dl>
+        </figure>
+      </div>
+    </div>`;
+  };
+  document.getElementById("room-grid").innerHTML =
+    `<div class="room-row-label">Day (light)</div>` + opts.map((o) => panel(o, "light")).join("") +
+    `<div class="room-row-label">Night (dark)</div>` + opts.map((o) => panel(o, "dark")).join("");
+  document.querySelectorAll("[data-horizon]").forEach((el, i) => { const h = horizon(el, { seed: 7 }); watch(el, (w) => h.draw(w)); });
+  document.querySelectorAll("[data-room-chart]").forEach((el) => {
+    const c = lineChart(el, production, { unitLabel: prodUnit });
+    watch(el, (w) => c.draw(w, { focus: ["Field C", "Field F"], note: { name: "Field F", x: 2016, text: "Tie-back" } }));
+  });
+  // page-level horizon follows the Room control
+  const ph = document.getElementById("page-horizon");
+  const phz = horizon(ph, { seed: 7, height: 90 });
+  let phW = 0;
+  new ResizeObserver(([e]) => { phW = Math.round(e.contentRect.width); if (phW) phz.draw(phW); }).observe(ph);
+  surfaceOption.subscribe((v) => { ph.hidden = v === "baseline"; if (!ph.hidden && phW) phz.draw(phW); });
+  ph.hidden = surfaceOption.get() === "baseline";
+}
 
 // ---------------------------------------------------------------- 1. type columns
 const TYPES = [

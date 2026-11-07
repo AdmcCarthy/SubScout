@@ -337,3 +337,65 @@ def palette_audit(colours: list[str], background: str) -> dict:
         "closest_pair": worst[1:],
         "min_lc_on_background": min(apca(c, background) for c in colours),
     }
+
+
+# ------------------------------------------------------------------ surfaces
+
+SURFACE_ROLES = ("canvas", "surface", "raised")
+
+
+def surface_names(cfg: dict | None = None) -> list[str]:
+    return list((cfg or load_config())["surfaces"].keys() - {"default"})
+
+
+def surfaces(name: str, scheme: Scheme, cfg: dict | None = None) -> dict[str, str]:
+    """Canvas/surface/raised hexes for a surface option (EDS baseline if no override)."""
+    cfg = cfg or load_config()
+    spec = cfg["surfaces"][name].get(scheme)
+    if not spec:
+        return {
+            "canvas": to_hex(role_colour("neutral", "fill-muted", scheme, cfg)),
+            "surface": to_hex(role_colour("neutral", "surface", scheme, cfg)),
+            "raised": to_hex(role_colour("neutral", "fill-muted-hover", scheme, cfg)),
+        }
+    h = _hue_angle(spec["hue"], cfg)
+    return {r: to_hex(oklch_to_srgb(spec[r][0], spec[r][1], h)) for r in SURFACE_ROLES}
+
+
+def surface_audit(cfg: dict | None = None) -> list[dict]:
+    """Contrast of text (canvas and surface) and every data colour (surface) for each surface option."""
+    cfg = cfg or load_config()
+    rows = []
+    for name in surface_names(cfg):
+        for scheme in SCHEMES:
+            bgs = surfaces(name, scheme, cfg)
+            text = {
+                "text": (role_colour("neutral", "text-strong", scheme, cfg), 90),
+                "text-subtle": (role_colour("neutral", "text-subtle", scheme, cfg), 75),
+                "text-muted": (role_colour("neutral", "text-muted", scheme, cfg), 60),
+                "context": (context(scheme, cfg), 30),
+            }
+            for p in preset_names(cfg):
+                text[f"{p}:highlight"] = (highlight(scheme, p, cfg), 45)
+                for i, c in enumerate(story(scheme, p, cfg), 1):
+                    text[f"{p}:story-{i}"] = (c, 30)
+                for i, c in enumerate(categorical(scheme, p, cfg), 1):
+                    text[f"{p}:cat-{i}"] = (c, 30)
+            # text must read on canvas and surface; data marks sit on figure surfaces only
+            data_keys = {k for k in text if ":" in k or k == "context"}
+            for bg_role in ("canvas", "surface"):
+                for what, (fg, target) in text.items():
+                    if bg_role == "canvas" and what in data_keys:
+                        continue
+                    lc = apca(fg, bgs[bg_role])
+                    rows.append(
+                        {
+                            "surface": name,
+                            "scheme": scheme,
+                            "bg": bg_role,
+                            "fg": what,
+                            "lc": lc,
+                            "target": target,
+                        }
+                    )
+    return rows

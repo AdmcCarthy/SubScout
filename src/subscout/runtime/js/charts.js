@@ -253,3 +253,41 @@ export function divergingBars(el, data, { label = "Diverging bar chart", legendE
   }
   return { draw };
 }
+
+// ------------------------------------------------------------------ horizon motif
+/**
+ * A horizon line over a seabed profile with strata beneath: the Nordic "building on the horizon"
+ * motif, and a seismic horizon. Decorative, so it lives outside plot areas (Few rule 1).
+ * `profile` is an array of depths 0..1 (e.g. from bathymetry or a picked horizon); if omitted, a
+ * smooth illustrative profile is generated from `seed`.
+ */
+export function horizon(el, { profile = null, seed = 7, layers = 4, height = 120, label = "Horizon motif" } = {}) {
+  function draw(W) {
+    const n = 160;
+    const rnd = d3.randomLcg(seed);
+    const ph = d3.range(4).map(() => rnd() * Math.PI * 2);
+    const prof = profile ?? d3.range(n).map((i) => {
+      const t = i / (n - 1);
+      return 0.5 + 0.18 * Math.sin(t * 3.1 + ph[0]) + 0.09 * Math.sin(t * 7.3 + ph[1]) + 0.04 * Math.sin(t * 17 + ph[2]);
+    });
+    const x = d3.scaleLinear([0, prof.length - 1], [0, W]);
+    const top = 0.28 * height, seabedMin = 0.42 * height, seabedMax = 0.72 * height;
+    const yb = (v) => seabedMin + (seabedMax - seabedMin) * v;
+    const svg = d3.select(el).selectAll("svg").data([0]).join("svg")
+      .attr("viewBox", `0 0 ${W} ${height}`).attr("role", "img").attr("aria-label", label)
+      .attr("preserveAspectRatio", "none").style("display", "block").style("width", "100%").style("height", `${height}px`);
+    // strata: each layer follows the seabed, thinning with depth; fills step down the shale ladder
+    const steps = [3, 4, 5, 7].slice(0, layers);
+    const band = (k) => d3.area().curve(d3.curveBasis).x((_, i) => x(i))
+      .y0((v) => Math.min(height, yb(v) + (k + 1) * (height - seabedMax) / (layers + 0.4) + (v - 0.5) * 6 * (k + 1)))
+      .y1((v) => (k === 0 ? yb(v) : Math.min(height, yb(v) + k * (height - seabedMax) / (layers + 0.4) + (v - 0.5) * 6 * k)));
+    svg.selectAll("path.stratum").data(steps).join("path").attr("class", "stratum")
+      .attr("d", (_, k) => band(k)(prof)).style("fill", (s) => `var(--ss-shale-${s})`).style("opacity", 0.55);
+    svg.selectAll("path.seabed").data([0]).join("path").attr("class", "seabed").attr("fill", "none")
+      .attr("d", d3.line().curve(d3.curveBasis).x((_, i) => x(i)).y(yb)(prof))
+      .style("stroke", "var(--ss-fjord-9)").attr("stroke-width", 1.25);
+    svg.selectAll("line.horizon").data([0]).join("line").attr("class", "horizon")
+      .attr("x1", 0).attr("x2", W).attr("y1", top).attr("y2", top).style("stroke", "var(--ss-border)").attr("stroke-width", 1);
+  }
+  return { draw };
+}

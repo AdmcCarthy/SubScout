@@ -94,8 +94,27 @@ def test_generated_categorical_reaches_large_counts():
 
 def test_tokens_css_has_both_schemes_and_aliases():
     css = tokens.build_css()
-    assert css.count("--ss-canvas:") == 3  # light, media-dark, forced-dark
+    assert css.count("--ss-canvas:") >= 3  # light, media-dark, forced-dark (+ surface options)
     assert ':root[data-colour-scheme="dark"]' in css
     assert "--ss-data-story-4:" in css and "--ss-data-cat-5:" in css and "--ss-data-div-9:" in css
     for name in C.preset_names():
         assert f'[data-palette="{name}"]' in css
+
+
+@pytest.mark.parametrize(
+    "row", C.surface_audit(), ids=lambda r: f"{r['surface']}-{r['scheme']}-{r['bg']}-{r['fg']}"
+)
+def test_surface_options_keep_contrast(row):
+    assert row["lc"] >= row["target"], row
+
+
+def test_surface_blocks_generated():
+    css = tokens.build_css()
+    for name in C.surface_names():
+        if name != "baseline":
+            assert f'[data-surface="{name}"]' in css
+    assert (
+        '[data-colour-scheme="dark"] {' in css
+        or '[data-colour-scheme="dark"] {\n' in css
+        or ', [data-colour-scheme="dark"] {' in css
+    )

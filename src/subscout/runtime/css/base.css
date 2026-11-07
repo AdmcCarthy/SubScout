@@ -203,7 +203,7 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
 
 /* ------------------------------------------------------------ controls */
 .ss-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.ss-seg { display: inline-flex; background: var(--ss-neutral-fill-muted-hover); border: 1px solid var(--ss-border-subtle); border-radius: 999px; padding: 2px; }
+.ss-seg { display: inline-flex; background: var(--ss-surface-raised); border: 1px solid var(--ss-border-subtle); border-radius: 999px; padding: 2px; }
 .ss-seg button {
   border: 0; background: transparent; color: var(--ss-text-subtle);
   font: 500 13px/1 var(--ss-font-body); padding: 7px 12px; border-radius: 999px; cursor: pointer;
