@@ -12,3 +12,4 @@ wheels/
 .ruff_cache/
 _site/
 data/raw/
+_snapshots/

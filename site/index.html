@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SubScout Foundations</title>
+<meta name="description" content="SubScout's house style: colour, type, data palettes, figures with a fact strip, and one story that reads as an article or plays as a deck.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="runtime/css/tokens.css">
+<link rel="stylesheet" href="runtime/css/base.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  /* page-specific: the foundations specimen */
+  .topbar { position: sticky; top: 0; z-index: 40; background: color-mix(in oklab, var(--ss-canvas) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--ss-border-subtle); }
+  .topbar .ss-wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding-block: 10px; }
+  .brand { font-family: var(--ss-font-display); font-weight: var(--ss-display-weight); font-size: 1.15rem; letter-spacing: var(--ss-display-tracking); }
+  .brand span { color: var(--ss-text-muted); font-family: var(--ss-font-body); font-weight: 400; font-size: 0.85rem; margin-left: 6px; }
+  .ctl-label { font-size: 11px; color: var(--ss-text-muted); font-family: var(--ss-font-mono); text-transform: uppercase; letter-spacing: .08em; margin-right: 2px; }
+  .hero { padding-block: var(--ss-space-xxxl) var(--ss-space-xxl); }
+  .hero h1 { margin: var(--ss-space-m) 0 var(--ss-space-l); max-width: 14ch; }
+  .lead-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--ss-space-xl); align-items: start; margin-bottom: var(--ss-space-l); }
+  @media (max-width: 760px) { .lead-grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .spec-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--ss-space-m); padding-block: var(--ss-space-m); border-bottom: 1px solid var(--ss-border-subtle); align-items: baseline; }
+  .spec-row > .ss-mono { color: var(--ss-text-muted); font-size: 12px; }
+  @media (max-width: 600px) { .spec-row { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+  .scales { display: grid; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .scale-row { display: grid; grid-template-columns: 6.5rem repeat(15, minmax(30px, 1fr)); gap: 3px; align-items: center; min-width: 600px; }
+  .scale-row .nm { font-size: 13px; font-weight: 600; }
+  .scale-row .nm small { display: block; font-weight: 400; color: var(--ss-text-muted); font-size: 11px; }
+  .sw { height: 34px; border-radius: 3px; position: relative; cursor: default; }
+  .sw:hover { outline: 2px solid var(--ss-text); outline-offset: 1px; z-index: 1; }
+  .steps-head .sw { height: auto; font: 500 10.5px var(--ss-font-mono); color: var(--ss-text-muted); text-align: center; }
+  .steps-head .sw b { display: block; font-size: 12px; color: var(--ss-text); }
+  .role-strip { display: grid; grid-template-columns: 6.5rem repeat(15, minmax(30px, 1fr)); gap: 3px; min-width: 600px; font: 10px/1.2 var(--ss-font-mono); color: var(--ss-text-muted); }
+  .role-strip span { writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; height: 7.5rem; text-align: left; }
+
+  .tokens-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--ss-space-m); }
+  .tok-card { border-radius: var(--ss-radius-l); padding: var(--ss-space-m); border: 1px solid var(--ss-border-subtle); }
+  .tok-card code { font: 11.5px var(--ss-font-mono); color: var(--ss-text-muted); display: block; margin-top: 4px; }
+  .tone-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tone-chip { border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+
+  .pal { display: flex; gap: 2px; border-radius: 4px; overflow: hidden; height: 40px; margin: 6px 0 4px; }
+  .pal div { flex: 1; }
+  .pal-meta { font-size: var(--ss-size-caption); color: var(--ss-text-muted); }
+  .pal-block { margin-bottom: var(--ss-space-l); }
+  .pal-block h3 { font-family: var(--ss-font-body); font-size: 0.95rem; font-weight: 600; letter-spacing: 0; margin: 0; }
+
+  .story-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--ss-space-m); margin-bottom: var(--ss-space-m); }
+  footer { padding-block: var(--ss-space-xxl) var(--ss-space-xxxl); font-size: var(--ss-size-caption); color: var(--ss-text-muted); border-top: 1px solid var(--ss-border-subtle); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="ss-wrap">
+    <div class="brand">SubScout<span>Foundations · v0.1</span></div>
+    <div class="ss-controls">
+      <span class="ctl-label">Theme</span>
+      <div class="ss-seg" id="ctl-theme" role="group" aria-label="Colour scheme">
+        <button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button>
+      </div>
+      <span class="ctl-label">Type</span>
+      <div class="ss-seg" id="ctl-type" role="group" aria-label="Type pairing">
+        <button data-value="ledger">Ledger</button><button data-value="survey">Survey</button><button data-value="core">Core</button>
+      </div>
+      <span class="ctl-label">Units</span>
+      <div class="ss-seg" id="ctl-units" role="group" aria-label="Volume units">
+        <button data-value="sm3">Sm³</button><button data-value="boe">boe</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero ss-wrap">
+  <span class="ss-kicker">Design foundations</span>
+  <h1>A house style for subsurface stories</h1>
+  <div class="lead-grid">
+    <p class="ss-standfirst">One palette logic, one type system, one way of stating sources and confidence, and one story that reads as an article or plays as a deck.</p>
+    <div class="ss-prose">
+      <p>Every colour on this page is generated from seven anchor hues (eight with amethyst), a shared 15-step lightness ladder and a chroma curve. Contrast is checked automatically. Switch theme, type pairing and units above. Everything you see responds.</p>
+      <p class="ss-byline">SubScout · Adam McCarthy · all chart data on this page is <strong>illustrative</strong></p>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============================================================ type -->
+<section class="ss-section ss-wrap" id="type">
+  <span class="ss-kicker">01 · Type</span>
+  <h2>Three pairings to choose from</h2>
+  <p class="ss-prose">Switch <em>Ledger</em> (Newsreader, Instrument Sans, JetBrains Mono), <em>Survey</em> (Source Serif 4, Source Sans 3, Source Code Pro) or <em>Core</em> (Bricolage Grotesque, Hanken Grotesk, Spline Sans Mono) in the top bar. All are open-licence. Headings are sentence case. Lines run 55–80 characters.</p>
+  <div>
+    <div class="spec-row"><span class="ss-mono">kicker</span><span class="ss-kicker">Norwegian Continental Shelf · licensing</span></div>
+    <div class="spec-row"><span class="ss-mono">headline</span><h1 style="font-size:clamp(2rem,5vw,3.4rem)">Close to home, and closer every year</h1></div>
+    <div class="spec-row"><span class="ss-mono">section</span><h2 style="margin:0">Where the new acreage sits</h2></div>
+    <div class="spec-row"><span class="ss-mono">standfirst</span><p class="ss-standfirst" style="margin:0">Most of the awarded blocks lie within tie-back distance of existing infrastructure, which says more about strategy than about geology.</p></div>
+    <div class="spec-row"><span class="ss-mono">body</span><p class="ss-prose" style="margin:0">Mature basins rarely run out of oil; they run out of <em>cheap</em> oil. A tie-back to a host platform turns a 20 million Sm³ discovery from a stranded resource into a project, and that arithmetic shapes where companies apply.</p></div>
+    <div class="spec-row"><span class="ss-mono">numbers</span><p class="ss-num" style="margin:0;font-size:1.6rem;font-family:var(--ss-font-display)"><span data-ss-value="1834500000" data-ss-scale="M"></span> <span data-ss-unit></span> · 56 licences · 13.4%</p></div>
+    <div class="spec-row"><span class="ss-mono">caption</span><span class="ss-byline">Figure captions, axis labels and fact strips use the muted text step (APCA Lc ≥ 60).</span></div>
+  </div>
+</section>
+
+<!-- ============================================================ colour -->
+<section class="ss-section ss-wrap" id="colour">
+  <span class="ss-kicker">02 · Colour</span>
+  <h2>Every hue, the same fifteen steps</h2>
+  <p class="ss-prose">Each scale is <span class="ss-mono">oklch(L<sub>step</sub>, gaussian(L) × C<sub>anchor</sub>, H<sub>anchor</sub>)</span>. Lightness is shared, so step 13 is always body text and step 9 always an emphasis fill, whatever the hue. Adding a colour means adding one anchor. Hover a swatch for its value.</p>
+  <div class="scales" id="scales"></div>
+</section>
+
+<section class="ss-section ss-wrap" id="tokens">
+  <span class="ss-kicker">03 · Roles</span>
+  <h2>Pages use roles, never raw colours</h2>
+  <div class="tokens-demo">
+    <div class="tok-card" style="background:var(--ss-canvas)"><strong>Canvas</strong><code>--ss-canvas · shale 1</code></div>
+    <div class="tok-card" style="background:var(--ss-surface)"><strong>Surface</strong><code>--ss-surface · shale 15</code></div>
+    <div class="tok-card" style="background:var(--ss-surface)">
+      <div style="color:var(--ss-text)">Text: body, Lc ≥ 90</div>
+      <div style="color:var(--ss-text-subtle)">Text subtle: standfirst, Lc ≥ 75</div>
+      <div style="color:var(--ss-text-muted)">Text muted: labels, Lc ≥ 60</div>
+      <code>--ss-text · --ss-text-subtle · --ss-text-muted</code>
+    </div>
+    <div class="tok-card" style="background:var(--ss-surface)">
+      <div class="tone-chips">
+        <span class="tone-chip" style="background:var(--ss-accent);color:var(--ss-on-accent)">Accent</span>
+        <span class="tone-chip" style="background:var(--ss-accent-soft);color:var(--ss-accent-text-on-muted)">Accent soft</span>
+        <span class="tone-chip" style="background:var(--ss-info-fill-emphasis);color:var(--ss-info-text-on-emphasis)">Info</span>
+      </div>
+      <code>fill-emphasis + text-on-emphasis (Lc ≥ 60)</code>
+    </div>
+    <div class="tok-card" style="background:var(--ss-surface)">
+      <strong>Confidence</strong>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+        <span class="ss-conf" data-level="reported">Reported</span>
+        <span class="ss-conf" data-level="derived">Derived</span>
+        <span class="ss-conf" data-level="estimated">Estimated</span>
+      </div>
+      <code>shape + label + colour, never colour alone</code>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ data palettes -->
+<section class="ss-section ss-wrap" id="data">
+  <span class="ss-kicker">04 · Data colour</span>
+  <h2>Context in grey, the story in colour</h2>
+  <p class="ss-prose">Two palettes for two jobs. The <strong>story</strong> palette is quiet and on-brand: one to three series beside grey context, always labelled directly. The <strong>categorical</strong> palette is for real identity (operators, for instance). It passes the lightness, chroma, colour-vision and contrast checks in both themes, in a fixed order.</p>
+  <div class="ss-grid-2">
+    <div>
+      <div class="pal-block"><h3>Story · context · highlight</h3><div class="pal" id="pal-story"></div><div class="pal-meta">context (slate) · story 1–4 (fjord, cobalt, shale, fjord light) · highlight (ochre)</div></div>
+      <div class="pal-block"><h3>Categorical · fixed order</h3><div class="pal" id="pal-cat"></div><div class="pal-meta">ochre · cobalt · haematite · amethyst · malachite · more than five folds into "Other"</div></div>
+    </div>
+    <div>
+      <div class="pal-block"><h3>Sequential · fjord</h3><div class="pal" id="pal-seq-fjord"></div></div>
+      <div class="pal-block"><h3>Sequential · cobalt</h3><div class="pal" id="pal-seq-cobalt"></div></div>
+      <div class="pal-block"><h3>Diverging · cobalt ↔ ochre</h3><div class="pal" id="pal-div"></div><div class="pal-meta">neutral midpoint near the background; never red ↔ green</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ figures -->
+<section class="ss-section ss-wrap" id="figures">
+  <span class="ss-kicker">05 · Figures</span>
+  <h2>Every figure states its source, units and confidence</h2>
+  <div class="ss-grid-2">
+    <figure class="ss-figure" id="fig-line">
+      <p class="ss-fig-title">Field C held its plateau while its neighbours declined</p>
+      <p class="ss-fig-sub">Oil and gas production, thousand <span data-ss-unit></span> per day</p>
+      <div class="ss-chart"></div>
+      <dl class="ss-facts">
+        <div><dt>Source</dt><dd>Synthetic profiles for this preview (not real fields)</dd></div>
+        <div><dt>Units</dt><dd>k <span data-ss-unit></span>/d; 1 Sm³ o.e. = 6.29 boe</dd></div>
+        <div><dt>Confidence</dt><dd><span class="ss-conf" data-level="estimated">Estimated</span></dd></div>
+      </dl>
+      <details class="ss-table"><summary>Show data table</summary><div class="tbl"></div></details>
+    </figure>
+    <figure class="ss-figure" id="fig-bar">
+      <p class="ss-fig-title">Five operators hold most of the illustrative acreage</p>
+      <p class="ss-fig-sub">Licences operated, count</p>
+      <div class="ss-legend" id="bar-legend"></div>
+      <div class="ss-chart"></div>
+      <dl class="ss-facts">
+        <div><dt>Source</dt><dd>Synthetic counts for this preview</dd></div>
+        <div><dt>Units</dt><dd>licences</dd></div>
+        <div><dt>Confidence</dt><dd><span class="ss-conf" data-level="reported">Reported</span> <span style="margin-left:4px">(style example)</span></dd></div>
+        <div><dt>Note</dt><dd>Operators beyond five fold into "Other"</dd></div>
+      </dl>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================ story demo -->
+<section class="ss-section" id="story-demo">
+  <div class="ss-wrap story-head">
+    <div class="ss-prose">
+      <span class="ss-kicker">06 · Read and Present</span>
+      <h2>One story, two ways to tell it</h2>
+      <p>Scroll to read: each card moves the chart to its next state. Or press <strong>Present</strong>: the same states become slides (arrow keys, space, swipe, Esc to leave), with the same d3 transitions.</p>
+    </div>
+    <button class="ss-btn" id="present-btn">Present ▶</button>
+  </div>
+  <div class="ss-wrap">
+    <article class="ss-story" id="story">
+      <div class="ss-steps">
+        <section class="ss-step"><div class="ss-step-card">
+          <span class="ss-kicker">Step 1</span><h3>Discoveries came in waves</h3>
+          <p>Counting discoveries by decade shows a rise to a peak, then a long tail. The chart starts neutral: no colour until there is something to see.</p>
+        </div></section>
+        <section class="ss-step"><div class="ss-step-card">
+          <span class="ss-kicker">Step 2</span><h3>The 1990s were the busiest decade</h3>
+          <p>One highlight, one annotation. Everything else stays as context.</p>
+        </div></section>
+        <section class="ss-step"><div class="ss-step-card">
+          <span class="ss-kicker">Step 3</span><h3>But the finds got smaller</h3>
+          <p>The same decades, now sized by average discovery volume. The bars keep their identity as the measure changes, and the axis rescales first so you can follow it.</p>
+        </div></section>
+        <section class="ss-step"><div class="ss-step-card">
+          <span class="ss-kicker">Step 4</span><h3>Busiest is not biggest</h3>
+          <p>Ranked by number of finds, the 1990s lead and the 1960s fall to last. Each bar slides to its new place rather than being redrawn. This is object constancy: the reader never loses track of a decade.</p>
+        </div></section>
+      </div>
+      <div class="ss-graphic">
+        <figure class="ss-figure" id="fig-story">
+          <p class="ss-fig-title" id="story-title">Discoveries per decade</p>
+          <p class="ss-fig-sub" id="story-sub">count</p>
+          <div class="ss-chart"></div>
+          <dl class="ss-facts">
+            <div><dt>Source</dt><dd>Illustrative numbers, shaped like a mature basin</dd></div>
+            <div><dt>Confidence</dt><dd><span class="ss-conf" data-level="estimated">Estimated</span></dd></div>
+          </dl>
+        </figure>
+      </div>
+    </article>
+  </div>
+</section>
+</main>
+
+<footer class="ss-wrap">
+  <p>The colour method (lightness ladder, gaussian chroma, step roles, APCA targets) is ported from the <a href="https://github.com/equinor/design-system/tree/main/apps/eds-color-palette-generator">EDS colour palette generator</a> (© Equinor ASA, MIT). SubScout is independent and not affiliated with Equinor. All chart data on this page is synthetic and for illustration only.</p>
+  <p><a href="https://github.com/AdmcCarthy/SubScout">SubScout on GitHub</a></p>
+</footer>
+
+<script type="module">
+import { theme, typePairing, units, UNITS, bindSeg, story, tooltip, motion, fmt, refreshUnits } from "./runtime/js/subscout.js";
+
+bindSeg(document.getElementById("ctl-theme"), theme);
+bindSeg(document.getElementById("ctl-type"), typePairing);
+bindSeg(document.getElementById("ctl-units"), units);
+const tip = tooltip();
+const v = (name) => `var(--ss-${name})`;
+
+// ---------------------------------------------------------------- colour scales
+const HUES = [
+  ["fjord", "core · accent"], ["shale", "core · neutral"], ["slate", "core · structure"], ["cobalt", "core · info"],
+  ["malachite", "highlight"], ["ochre", "highlight"], ["haematite", "highlight"], ["amethyst", "data only"],
+];
+const ROLES = ["muted · canvas", "muted hover", "muted pressed", "border subtle", "selected", "—", "border",
+  "selected pressed · text muted", "emphasis · border strong", "emphasis hover", "emphasis pressed · text subtle",
+  "text on muted", "text strong", "—", "surface · on emphasis"];
+const scales = document.getElementById("scales");
+scales.innerHTML =
+  `<div class="role-strip"><span></span>${ROLES.map((r) => `<span>${r}</span>`).join("")}</div>` +
+  `<div class="scale-row steps-head"><span></span>${d3.range(1, 16).map((i) => `<div class="sw"><b>${i}</b></div>`).join("")}</div>` +
+  HUES.map(([h, g]) => `<div class="scale-row"><div class="nm">${h}<small>${g}</small></div>${
+    d3.range(1, 16).map((i) => `<div class="sw" style="background:${v(`${h}-${i}`)}" data-tok="${h}-${i}"></div>`).join("")}</div>`).join("");
+scales.addEventListener("pointermove", (e) => {
+  const sw = e.target.closest("[data-tok]");
+  if (!sw) return tip.hide();
+  const val = getComputedStyle(document.documentElement).getPropertyValue(`--ss-${sw.dataset.tok}`).trim();
+  tip.show(`<b>${sw.dataset.tok}</b><br><span class="ss-mono">${val}</span>`, e.clientX, e.clientY);
+});
+scales.addEventListener("pointerleave", () => tip.hide());
+
+const strip = (id, toks) => (document.getElementById(id).innerHTML = toks.map((t) => `<div style="background:${v(t)}" title="--ss-${t}"></div>`).join(""));
+strip("pal-story", ["data-context", "data-story-1", "data-story-2", "data-story-3", "data-story-4", "data-highlight"]);
+strip("pal-cat", d3.range(1, 6).map((i) => `data-cat-${i}`));
+strip("pal-seq-fjord", d3.range(1, 8).map((i) => `data-seq-fjord-${i}`));
+strip("pal-seq-cobalt", d3.range(1, 8).map((i) => `data-seq-cobalt-${i}`));
+strip("pal-div", d3.range(1, 10).map((i) => `data-div-${i}`));
+
+// ---------------------------------------------------------------- helpers
+const responsive = (el, draw) => {
+  let w = 0;
+  new ResizeObserver(([e]) => {
+    const nw = Math.round(e.contentRect.width);
+    if (nw && nw !== w) { w = nw; draw(w); }
+  }).observe(el);
+};
+
+// ---------------------------------------------------------------- line chart (story palette)
+{
+  const years = d3.range(2000, 2026);
+  const prof = (peak, start, plateau, decline) => years.map((y) => {
+    const t = y - start;
+    if (t < 0) return 0;
+    if (t < 3) return peak * (0.04 + 0.96 * (t / 3));
+    if (t < 3 + plateau) return peak;
+    return peak * Math.exp(-decline * (t - 3 - plateau));
+  });
+  const fields = [
+    { name: "Field A", vals: prof(52, 1998, 2, 0.13) },
+    { name: "Field B", vals: prof(38, 2001, 3, 0.16) },
+    { name: "Field C", vals: prof(44, 2004, 14, 0.12), focus: true },
+    { name: "Field D", vals: prof(27, 2006, 2, 0.18) },
+    { name: "Field E", vals: prof(31, 2011, 3, 0.15) },
+  ];
+  const fig = document.getElementById("fig-line");
+  const el = fig.querySelector(".ss-chart");
+  const draw = (W) => {
+    const f = UNITS[units.get()].factor;
+    const H = Math.max(240, Math.min(340, W * 0.62));
+    const m = { t: 12, r: 64, b: 26, l: 36 };
+    const x = d3.scaleLinear([2000, 2025], [m.l, W - m.r]);
+    const y = d3.scaleLinear([0, d3.max(fields, (d) => d3.max(d.vals)) * f], [H - m.b, m.t]).nice();
+    const svg = d3.select(el).selectAll("svg").data([0]).join("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
+      .attr("aria-label", "Line chart of five illustrative field production profiles; Field C is highlighted.");
+    svg.selectAll("g.ss-grid").data([0]).join("g").attr("class", "ss-grid").attr("transform", `translate(${m.l},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat(""));
+    svg.selectAll("g.ss-y").data([0]).join("g").attr("class", "ss-axis ss-y").attr("transform", `translate(${m.l},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickSize(0).tickPadding(6));
+    svg.selectAll("g.ss-x").data([0]).join("g").attr("class", "ss-axis ss-x").attr("transform", `translate(0,${H - m.b})`)
+      .call(d3.axisBottom(x).ticks(W < 420 ? 4 : 6).tickFormat(d3.format("d")).tickSizeOuter(0));
+    const line = d3.line().defined((d) => d > 0).x((_, i) => x(years[i])).y((d) => y(d * f)).curve(d3.curveMonotoneX);
+    const ordered = [...fields].sort((a, b) => (a.focus ? 1 : 0) - (b.focus ? 1 : 0));
+    svg.selectAll("path.series").data(ordered, (d) => d.name).join("path").attr("class", "series")
+      .attr("fill", "none").attr("stroke-linejoin", "round").attr("stroke-linecap", "round")
+      .style("stroke", (d) => (d.focus ? v("data-story-1") : v("data-context")))
+      .attr("stroke-width", (d) => (d.focus ? 2.5 : 1.5)).attr("d", (d) => line(d.vals));
+    // direct labels: focus series + its annotation
+    const c = fields.find((d) => d.focus);
+    svg.selectAll("text.lab").data([c]).join("text").attr("class", "lab ss-label ss-halo")
+      .attr("x", x(2025) + 6).attr("y", y(c.vals.at(-1) * f) + 4).text(c.name);
+    svg.selectAll("text.ctx").data([0]).join("text").attr("class", "ctx ss-note ss-halo")
+      .attr("x", x(2025) + 6).attr("y", y(4 * f)).text("Others");
+    const pY = 2011;
+    svg.selectAll("line.ann").data([0]).join("line").attr("class", "ann")
+      .attr("x1", x(pY)).attr("x2", x(pY)).attr("y1", y(44 * f) - 6).attr("y2", y(44 * f) - 26).style("stroke", v("data-highlight")).attr("stroke-width", 1.5);
+    svg.selectAll("text.ann").data([0]).join("text").attr("class", "ann ss-note ss-halo")
+      .attr("x", x(pY)).attr("y", y(44 * f) - 31).attr("text-anchor", "middle").text("14-year plateau");
+    // hover: crosshair + tooltip
+    const hl = svg.selectAll("line.cross").data([0]).join("line").attr("class", "cross")
+      .attr("y1", m.t).attr("y2", H - m.b).style("stroke", v("border-strong")).attr("stroke-dasharray", "3 3").attr("opacity", 0);
+    svg.selectAll("rect.hit").data([0]).join("rect").attr("class", "hit").attr("x", m.l).attr("y", m.t)
+      .attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent")
+      .on("pointermove", (e) => {
+        const yr = Math.round(x.invert(d3.pointer(e)[0]));
+        const i = years.indexOf(yr);
+        if (i < 0) return;
+        hl.attr("x1", x(yr)).attr("x2", x(yr)).attr("opacity", 1);
+        const rows = [...fields].sort((a, b) => b.vals[i] - a.vals[i])
+          .map((d) => `<tr><td>${d.focus ? "<b>" + d.name + "</b>" : d.name}</td><td style="text-align:right;padding-left:12px" class="ss-num">${d.vals[i] ? fmt(d.vals[i] * f, 1) : "–"}</td></tr>`).join("");
+        tip.show(`<b>${yr}</b> <span class="ss-k">k ${UNITS[units.get()].short}/d</span><table>${rows}</table>`, e.clientX, e.clientY);
+      })
+      .on("pointerleave", () => { hl.attr("opacity", 0); tip.hide(); });
+    // table view
+    fig.querySelector(".tbl").innerHTML = `<table><thead><tr><th>Year</th>${fields.map((d) => `<th>${d.name}</th>`).join("")}</tr></thead><tbody>${
+      years.filter((y) => y % 5 === 0).map((y) => `<tr><td>${y}</td>${fields.map((d) => `<td>${fmt(d.vals[years.indexOf(y)] * f, 1)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  };
+  let lastW = 0;
+  responsive(el, (w) => draw((lastW = w)));
+  units.subscribe(() => lastW && draw(lastW));
+}
+
+// ---------------------------------------------------------------- bar chart (categorical)
+{
+  const data = [
+    { name: "Operator A", n: 23, c: "data-cat-1" }, { name: "Operator B", n: 17, c: "data-cat-2" },
+    { name: "Operator C", n: 12, c: "data-cat-3" }, { name: "Operator D", n: 9, c: "data-cat-4" },
+    { name: "Operator E", n: 6, c: "data-cat-5" }, { name: "Other (7)", n: 11, c: "data-context" },
+  ];
+  document.getElementById("bar-legend").innerHTML = data.map((d) => `<span><i style="background:${v(d.c)}"></i>${d.name}</span>`).join("");
+  const el = document.querySelector("#fig-bar .ss-chart");
+  responsive(el, (W) => {
+    const bh = 26, gap = 10, m = { t: 4, r: 36, b: 8, l: 92 };
+    const H = m.t + m.b + data.length * (bh + gap);
+    const x = d3.scaleLinear([0, 25], [m.l, W - m.r]);
+    const svg = d3.select(el).selectAll("svg").data([0]).join("svg").attr("viewBox", `0 0 ${W} ${H}`)
+      .attr("role", "img").attr("aria-label", "Bar chart of licences by illustrative operator");
+    const g = svg.selectAll("g.bar").data(data, (d) => d.name).join("g").attr("class", "bar")
+      .attr("transform", (_, i) => `translate(0,${m.t + i * (bh + gap)})`);
+    // 4px rounded data end, square at the baseline
+    g.selectAll("path").data((d) => [d]).join("path").style("fill", (d) => v(d.c))
+      .attr("d", (d) => { const x0 = x(0), x1 = x(d.n), r = 4; return `M${x0},0H${x1 - r}Q${x1},0 ${x1},${r}V${bh - r}Q${x1},${bh} ${x1 - r},${bh}H${x0}Z`; })
+      .on("pointermove", (e, d) => tip.show(`<b>${d.name}</b><br>${d.n} licences`, e.clientX, e.clientY)).on("pointerleave", () => tip.hide());
+    g.selectAll("text.n").data((d) => [d]).join("text").attr("class", "n ss-label").attr("x", m.l - 8).attr("y", bh / 2 + 4).attr("text-anchor", "end").text((d) => d.name);
+    g.selectAll("text.v").data((d) => [d]).join("text").attr("class", "v ss-value").attr("x", (d) => x(d.n) + 6).attr("y", bh / 2 + 4).text((d) => d.n);
+    svg.selectAll("line.base").data([0]).join("line").attr("class", "base").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 0).attr("y2", H - m.b).style("stroke", v("axis"));
+  });
+}
+
+// ---------------------------------------------------------------- story chart (state engine)
+{
+  const decades = ["1960s", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"];
+  const count = [4, 26, 41, 52, 47, 38, 19];
+  const size = [410, 230, 96, 47, 30, 22, 15]; // average, million Sm³ o.e.
+  const data = decades.map((d, i) => ({ d, count: count[i], size: size[i] }));
+  const STATES = [
+    { measure: "count", sort: false, focus: null, title: "Discoveries per decade", sub: "count" },
+    { measure: "count", sort: false, focus: "1990s", title: "Discoveries per decade", sub: "count" },
+    { measure: "size", sort: false, focus: null, title: "Average discovery size per decade", sub: "million <span data-ss-unit></span>" },
+    { measure: "count", sort: true, focus: "1990s", title: "Discoveries per decade, ranked", sub: "count" },
+  ];
+  const fig = document.getElementById("fig-story");
+  const el = fig.querySelector(".ss-chart");
+  let W = 0, state = 0;
+  const val = (d, s) => (s.measure === "size" ? d.size * UNITS[units.get()].factor : d.count);
+
+  function render(i, { animate } = { animate: false }) {
+    state = i;
+    if (!W) return;
+    const s = STATES[i];
+    document.getElementById("story-title").textContent = s.title;
+    document.getElementById("story-sub").innerHTML = s.sub;
+    refreshUnits(fig);
+    const mo = motion();
+    const dur = animate ? mo.base : 0;
+    const H = Math.max(260, Math.min(420, W * 0.6));
+    const m = { t: 28, r: 8, b: 28, l: 44 };
+    const order = s.sort ? [...data].sort((a, b) => val(b, s) - val(a, s)).map((d) => d.d) : decades;
+    const x = d3.scaleBand(order, [m.l, W - m.r]).padding(0.22);
+    const y = d3.scaleLinear([0, d3.max(data, (d) => val(d, s))], [H - m.b, m.t]).nice();
+    const svg = d3.select(el).selectAll("svg").data([0]).join("svg").attr("viewBox", `0 0 ${W} ${H}`)
+      .attr("role", "img").attr("aria-label", `${s.title}, illustrative data`);
+    // stage 1: axes
+    const t1 = svg.transition().duration(dur).ease(d3.easeCubicInOut);
+    svg.selectAll("g.ss-grid").data([0]).join("g").attr("class", "ss-grid").attr("transform", `translate(${m.l},0)`)
+      .transition(t1).call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat(""));
+    svg.selectAll("g.ss-y").data([0]).join("g").attr("class", "ss-axis ss-y").attr("transform", `translate(${m.l},0)`)
+      .transition(t1).call(d3.axisLeft(y).ticks(5).tickSize(0).tickPadding(6).tickFormat(d3.format(",")));
+    // stage 2: marks (keyed by decade = object constancy), staggered
+    const r = 4;
+    const barPath = (d) => {
+      const x0 = x(d.d), w = x.bandwidth(), y0 = y(0), y1 = Math.min(y(val(d, s)), y0 - r);
+      return `M${x0},${y0}V${y1 + r}Q${x0},${y1} ${x0 + r},${y1}H${x0 + w - r}Q${x0 + w},${y1} ${x0 + w},${y1 + r}V${y0}Z`;
+    };
+    svg.selectAll("path.bar").data(data, (d) => d.d).join("path").attr("class", "bar")
+      .style("fill", (d) => (d.d === s.focus ? v("data-highlight") : s.focus ? v("data-context") : v("data-story-1")))
+      .transition().delay((_, k) => (animate ? mo.base * 0.6 + k * mo.stagger : 0)).duration(dur).ease(d3.easeCubicInOut)
+      .attr("d", barPath);
+    // x labels move with their bars
+    svg.selectAll("text.xl").data(data, (d) => d.d).join("text").attr("class", "xl")
+      .attr("y", H - m.b + 18).attr("text-anchor", "middle").text((d) => d.d)
+      .transition().delay((_, k) => (animate ? mo.base * 0.6 + k * mo.stagger : 0)).duration(dur).ease(d3.easeCubicInOut)
+      .attr("x", (d) => x(d.d) + x.bandwidth() / 2);
+    // stage 3: annotation
+    const f = data.find((d) => d.d === s.focus);
+    const ann = svg.selectAll("text.ann").data(f ? [f] : [], (d) => d.d);
+    ann.exit().transition().duration(dur / 2).style("opacity", 0).remove();
+    ann.enter().append("text").attr("class", "ann ss-label ss-halo").attr("text-anchor", "middle").style("opacity", 0)
+      .merge(ann)
+      .text((d) => (s.measure === "count" ? `${d.count} discoveries` : `${fmt(val(d, s))} million ${UNITS[units.get()].short} on average`))
+      .attr("x", (d) => x(d.d) + x.bandwidth() / 2).attr("y", (d) => y(val(d, s)) - 8)
+      .transition().delay(animate ? mo.base * 1.4 : 0).duration(dur).style("opacity", 1);
+  }
+
+  const engine = story(document.getElementById("story"), { render });
+  responsive(el, (w) => { W = w; render(state); });
+  units.subscribe(() => render(state));
+  document.getElementById("present-btn").addEventListener("click", () => engine.setMode("present"));
+}
+</script>
+</body>
+</html>
