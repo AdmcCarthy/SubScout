@@ -246,6 +246,8 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-story { grid-template-columns: minmax(0, 1fr); gap: 0; }
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic,
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-steps { grid-row: 1; grid-column: 1; }
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic { align-items: flex-start; padding-top: 56px; box-sizing: border-box; }
+  :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic > .ss-layers { align-self: flex-start; }
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-steps { z-index: 2; pointer-events: none; width: var(--ss-lane, 21rem); padding-left: var(--ss-space-m); }
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-step-card { pointer-events: auto; max-width: none; }
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic > .ss-layers .ss-figure,
