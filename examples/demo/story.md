@@ -29,7 +29,7 @@ data:
 
 This page demonstrates the SubScout story format. Every number in the text is computed from the data
 when the page is built: hover one to see its exact value, and find all of them in
-[How we know](#how-we-know). The basin, its {{ n_fields }} fields and its operators are invented.
+[Basis of analysis](#basis-of-analysis). The basin, its {{ n_fields }} fields and its operators are invented.
 
 ::: step {beat=and}
 ### Most fields peak early, then fade

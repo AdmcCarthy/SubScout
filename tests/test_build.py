@@ -16,7 +16,8 @@ def test_demo_builds_without_errors_or_warnings(tmp_path):
     assert rep.errors == [] and rep.warnings == []
     html = (tmp_path / "out" / "index.html").read_text()
     report = json.loads((tmp_path / "out" / "build-report.json").read_text())
-    assert "How we know" in html
+    assert "Basis of analysis" in html and "How we know" not in html
+    assert 'id="basis-of-analysis"' in html and 'id="how-we-know"' in html  # the old anchor still resolves
     assert "{{" not in html.split('id="ss-payload"')[0], "unrendered expression in page"
     assert {r["name"] for r in report["ledger"]} >= {"n_fields", "longest_plateau", "wells_drop"}
     assert all(f["confidence"] in ("observed", "derived", "interpreted") for f in report["figures"])

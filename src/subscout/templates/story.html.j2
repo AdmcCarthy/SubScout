@@ -52,7 +52,7 @@
   <div class="ss-hero-grid">
     <div>
       {% if fm.dek %}<p class="ss-standfirst">{{ esc(fm.dek) }}</p>{% endif %}
-      <p class="ss-byline">{% if fm.byline %}{{ esc(fm.byline) }}{% endif %}{% if fm.date %} · {{ fm.date }}{% endif %} · <a href="#how-we-know">How we know</a></p>
+      <p class="ss-byline">{% if fm.byline %}{{ esc(fm.byline) }}{% endif %}{% if fm.date %} · {{ fm.date }}{% endif %} · <a href="#basis-of-analysis">Basis of analysis</a></p>
     </div>
     {% if kpis %}<div class="ss-kpis">{% for k in kpis %}<div><b class="ss-num">{{ k.html }}</b><span>{{ esc(k.label) }}</span></div>{% endfor %}</div>{% endif %}
   </div>
@@ -84,9 +84,10 @@
   {% endif %}
 {% endfor %}
 
-<section class="ss-wrap ss-appendix" id="how-we-know">
+<section class="ss-wrap ss-appendix" id="basis-of-analysis">
+  <span id="how-we-know"></span><!-- old anchor, so existing links keep working -->
   <span class="ss-kicker">Appendix</span>
-  <h2>How we know</h2>
+  <h2>Basis of analysis</h2>
   <div class="ss-appendix-grid">
     <div>
       <h3>Sources</h3>

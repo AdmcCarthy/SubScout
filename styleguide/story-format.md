@@ -172,5 +172,5 @@ confidence: observed
 
 ## Appendix (generated)
 
-"How we know" collects: sources, the numbers ledger, every figure's source and confidence, declared
+"Basis of analysis" (Appendix) collects: sources, the numbers ledger, every figure's source and confidence, declared
 exceptions, the arc and units conventions, and any `::: appendix` content you add.
