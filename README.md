@@ -54,6 +54,8 @@ algorithms) is ported from the [Equinor Design System colour palette generator](
 © Equinor ASA, MIT licence. SubScout is an independent project and is not affiliated with or endorsed
 by Equinor.
 
-## Licence
+## Licence and acknowledgement
 
-MIT. See [LICENSE](LICENSE).
+MIT License with Acknowledgement ([LICENSE](LICENSE)): the MIT terms plus one condition. Anything built with this work says so,
+visibly and in plain words, and does not imply endorsement: "Built with SubScout by Adam McCarthy (https://github.com/AdmcCarthy/SubScout)". The wording is custom, so
+the licence is not OSI-approved. Third-party data and vendored code keep their own terms.
