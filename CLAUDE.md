@@ -72,4 +72,11 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
   points there. Dependencies run one way: Plate -> SubScout. Changing the contract means bumping `CONTRACT_VERSION`.
 - Visual check before calling a page done: `uv run python scripts/build_pages.py && uv run python
   scripts/snapshot.py _site _snapshots [path]` then look at the screenshots; 0 console errors required.
+- Symbols (`styleguide/wellbores.md`): well, wellbore and installation symbols after the Sodir Geostandard 3.4 and
+  3.5, redrawn. Source of truth `src/subscout/tokens/symbols.toml`; after editing it run `uv run subscout symbols`
+  (generated `runtime/js/symbols-data.js` and `symbols.json` are committed, CI fails if stale). Shape carries meaning,
+  never colour; wells are composed from layers (base, fluid, technical status, function), not listed one by one.
+  Review sheet at `site/symbols/`; `uv run python scripts/symbols_check.py _site` after `scripts/build_pages.py`.
+  Source-specific vocabulary (Sodir purpose, status, content) is translated by the data pipeline that owns the source,
+  never in SubScout.
 - Stories must have tests for every number quoted in the prose (pattern from Viz_demo_generic).

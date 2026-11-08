@@ -30,6 +30,11 @@
 - **Cut the map:** a section line opens a cross-section.
 - Basemaps drawn from data (bathymetry, contours) in the room's palette.
 
+## Point symbols for wells and installations
+
+Wells, wellbore trajectories and installations use the symbol set in [wellbores.md](wellbores.md) (after the Sodir Geostandard 3.4 and 3.5), drawn from
+`runtime/js/symbols.js`: shape carries meaning, colour never does, and the legend lists every symbol and code a map uses.
+
 ## Technology
 
 | Data | Renderer |

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SubScout symbols</title>
+<meta name="description" content="Well, wellbore and installation symbols after the Sodir Geostandard, redrawn for SubScout: every symbol beside the standard's wording, composed combinations, sizes, and a builder.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../runtime/css/tokens.css">
+<link rel="stylesheet" href="../runtime/css/base.css">
+<style>
+  .topbar { position: sticky; top: 0; z-index: 40; background: color-mix(in oklab, var(--ss-canvas) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--ss-border-subtle); }
+  .topbar .ss-wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding-block: 10px; }
+  .brand { font-family: var(--ss-font-display); font-weight: var(--ss-display-weight); font-size: 1.15rem; }
+  .brand a { color: inherit; text-decoration: none; }
+  .ctl-label { font-size: 11px; color: var(--ss-text-muted); font-family: var(--ss-font-mono); text-transform: uppercase; letter-spacing: .08em; margin-right: 6px; }
+  .hero { padding-block: var(--ss-space-xxl) var(--ss-space-l); }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); margin: var(--ss-space-s) 0 var(--ss-space-m); }
+  section.blk { padding-block: var(--ss-space-xl) var(--ss-space-m); }
+  section.blk h2 { margin-bottom: 6px; }
+  .lead { color: var(--ss-text-subtle); max-width: 70ch; font-size: var(--ss-size-label); margin: 0 0 var(--ss-space-m); }
+  table.ex { border-collapse: collapse; width: 100%; background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: var(--ss-radius-l); overflow: hidden; font-size: var(--ss-size-label); }
+  table.ex td, table.ex th { padding: 6px 12px; border-bottom: 1px solid var(--ss-border-subtle); text-align: left; vertical-align: middle; }
+  table.ex th { background: var(--ss-surface-raised); font: 600 .72rem var(--ss-font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ss-text-muted); }
+  table.ex td.sym { width: 72px; text-align: center; color: var(--ss-text); }
+  table.ex td.std { width: 64px; font-family: var(--ss-font-mono); font-size: .8rem; color: var(--ss-text-muted); }
+  .tag { font: 500 .66rem var(--ss-font-mono); text-transform: uppercase; letter-spacing: .04em; background: var(--ss-surface-raised); color: var(--ss-text-muted); padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--ss-space-m); }
+  .cell { background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: var(--ss-radius-l); padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-size: var(--ss-size-caption); color: var(--ss-text-subtle); }
+  .cell .pair { display: flex; gap: 14px; color: var(--ss-text); }
+  .sizes { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: var(--ss-radius-l); padding: 16px; color: var(--ss-text); }
+  .sizes small { display: block; text-align: center; font: .7rem var(--ss-font-mono); color: var(--ss-text-muted); margin-top: 4px; }
+  .builder { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: var(--ss-space-l); background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: var(--ss-radius-l); padding: 16px; align-items: center; }
+  @media (max-width: 720px) { .builder { grid-template-columns: minmax(0, 1fr); } }
+  .builder fieldset { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 10px 16px; }
+  .builder label { display: flex; flex-direction: column; gap: 3px; font: 500 .72rem var(--ss-font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ss-text-muted); }
+  .builder select { font: 500 14px var(--ss-font-body); padding: 6px 8px; border-radius: var(--ss-radius-l); border: 1px solid var(--ss-border); background: var(--ss-surface); color: var(--ss-text); text-transform: none; letter-spacing: 0; }
+  .builder .out { text-align: center; color: var(--ss-text); }
+  .builder .out p { font-size: var(--ss-size-caption); color: var(--ss-text-subtle); margin: 8px 0 0; }
+  .traj { display: grid; gap: 10px; background: var(--ss-surface); border: 1px solid var(--ss-border-subtle); border-radius: var(--ss-radius-l); padding: 16px; color: var(--ss-text); }
+  .traj div { display: flex; align-items: center; gap: 14px; font-size: var(--ss-size-label); }
+  footer.foot { margin-block: var(--ss-space-xxl) var(--ss-space-xl); padding-top: var(--ss-space-m); border-top: 1px solid var(--ss-border-subtle); font-size: var(--ss-size-caption); color: var(--ss-text-muted); max-width: 80ch; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="ss-wrap">
+  <div class="brand"><a href="../">SubScout</a> <span style="color:var(--ss-text-muted);font:400 .85rem var(--ss-font-body)">symbols</span></div>
+  <div class="ss-controls"><span class="ctl-label">Scheme</span><span class="ss-seg" id="c-scheme"></span><span class="ctl-label">Ink</span><span class="ss-seg" id="c-ink"></span></div>
+</div></header>
+
+<main class="ss-wrap">
+  <section class="hero">
+    <div class="ss-kicker">Well, wellbore and installation symbols</div>
+    <h1>After the Geostandard, redrawn</h1>
+    <p class="ss-standfirst">Meaning is carried by shape, so a symbol reads in one ink on any background and for any reader. Wells are composed as the standard composes them: a base circle, a layer per fluid, technical status and function. The tables below are the standard's own selections; compare each row with the page cited.</p>
+  </section>
+  <div id="sheet"></div>
+</main>
+<footer class="ss-wrap foot" id="foot"></footer>
+
+<script type="module">
+import { data, wellSpec, classSpec, installationSpec, shallowBoreholeSpec, symbolSvg, trajectoryDash, describe, fluidInk, layersFor } from "../runtime/js/symbols.js";
+
+const $ = (s, el = document) => el.querySelector(s);
+const root = document.documentElement;
+const store = { get: (k, d) => { try { return localStorage.getItem(`ss-sym-${k}`) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(`ss-sym-${k}`, v); } catch {} } };
+root.dataset.type = "ledger"; root.dataset.surface = "nordic-cool";
+root.dataset.colourScheme = store.get("scheme", matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+let ink = store.get("ink", "ink");
+
+function seg(el, options, value, on) {
+  el.replaceChildren(...options.map(([v, label]) => { const b = document.createElement("button"); b.type = "button"; b.dataset.v = v; b.textContent = label; b.addEventListener("click", () => { on(v); mark(); }); return b; }));
+  const mark = () => el.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === (el.dataset.cur ?? value))));
+  el.dataset.cur = value; mark();
+  el.set = (v) => { el.dataset.cur = v; mark(); };
+}
+seg($("#c-scheme"), [["light", "Light"], ["dark", "Dark"]], root.dataset.colourScheme, (v) => { root.dataset.colourScheme = v; store.set("scheme", v); $("#c-scheme").set(v); });
+seg($("#c-ink"), [["ink", "One ink"], ["geostandard", "Geostandard colours"]], ink, (v) => { ink = v; store.set("ink", v); $("#c-ink").set(v); render(); });
+
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const wellInk = (w) => (ink === "geostandard" ? fluidInk(w) ?? "currentColor" : "currentColor");
+const sym = (spec, size = 36, inkc = "currentColor", title = "") => symbolSvg(spec, { size, ink: inkc, title });
+
+function examples() {
+  const by = {};
+  for (const e of data.examples) (by[e.std] ??= []).push(e);
+  const names = { "3.4.2": "Principal symbols", "3.4.3": "Combinations of principal symbols", "3.4.4": "Well functions", "3.4.7": "Active exploration wells" };
+  return Object.entries(by).map(([std, rows]) => `
+    <section class="blk"><h2>${std} ${names[std] ?? ""}</h2>
+    <table class="ex"><thead><tr><th>Geostandard</th><th>Symbol</th><th>As the standard names it</th><th>Composed of</th></tr></thead><tbody>
+    ${rows.map((e) => `<tr><td class="std">${e.std}</td><td class="sym">${sym(wellSpec(e.well), 40, wellInk(e.well), e.label)}</td><td>${esc(e.label)}${layersFor(e.well).some((k) => data.layers[k]?.simplified) ? '<span class="tag">simplified</span>' : ""}</td><td class="ss-mono" style="color:var(--ss-text-muted);font-size:.74rem">${layersFor(e.well).join(" + ")}</td></tr>`).join("")}
+    </tbody></table></section>`).join("");
+}
+
+function installations() {
+  return `<section class="blk"><h2>3.5 Installations</h2><p class="lead">Each is drawn once; the planned variant is the same shape in the muted tone, as in the standard (which greys it). Where the standard colours an installation, that colour appears under “Geostandard colours”. Anchors, subsea objects and DLA share one shape in the standard and stay distinct by name.</p>
+  <div class="grid">${Object.entries(data.installations).map(([k, v]) => {
+    const c = ink === "geostandard" && v.std_colour ? data.colours[v.std_colour] : "currentColor";
+    return `<div class="cell"><div class="pair">${sym(installationSpec(k), 44, c)}${sym(installationSpec(k, { planned: true }), 44, c)}</div><div>${esc(v.label)}${v.simplified ? '<span class="tag">simplified</span>' : ""}</div></div>`;
+  }).join("")}</div></section>`;
+}
+
+function others() {
+  const cls = ["development", "exploratory", "injector", "non_hydrocarbon"];
+  return `<section class="blk"><h2>3.4.9 Wells by general class, and the shallow borehole</h2><p class="lead">The standard shows class as coloured dots only. SubScout adds a shape to each so that class never rests on colour.</p>
+  <div class="grid">${cls.map((c) => `<div class="cell">${sym(classSpec(c), 44)}<div>${esc(data.layers[`class.${c}`].label)}<span class="tag">SubScout shape</span></div></div>`).join("")}
+  <div class="cell">${sym(shallowBoreholeSpec(), 44)}<div>${esc(data.layers.shallow_borehole.label)}<span class="tag">simplified</span></div></div></div></section>
+  <section class="blk"><h2>3.4.5 Trajectories</h2><p class="lead">Line styles for the path of a wellbore: solid, dotted (approximate), dashed (planned). Drawn by the map; the dash patterns are in the data.</p>
+  <div class="traj">${Object.entries(data.trajectories).map(([k, t]) => `<div><svg width="150" height="14" aria-hidden="true"><line x1="2" y1="7" x2="148" y2="7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${trajectoryDash(k)}"/></svg><span>${esc(t.label)} <span class="tag">${t.std}</span></span></div>`).join("")}</div></section>`;
+}
+
+function sizes() {
+  const w = { fluids: [["oil", "proven"], ["gas", "minor"]], technical: "plugged_abandoned", fn: { kind: "production" }, code: "F" };
+  return `<section class="blk"><h2>Sizes</h2><p class="lead">The standard asks that symbols and their codes be adjusted to the map scale. Below ${data.meta.code_min_size_px} px the letter code is dropped; below ${data.meta.min_size_px} px a symbol is a plain dot (use a dot, and say so in the legend).</p>
+  <div class="sizes">${[8, 12, 16, 18, 26, 40, 64].map((s) => `<div>${symbolSvg(wellSpec(w), { size: s })}<small>${s} px</small></div>`).join("")}</div></section>`;
+}
+
+function builder() {
+  const qs = ["", "proven", "minor", "trace"], opt = (list, cur) => list.map(([v, l]) => `<option value="${v}"${v === cur ? " selected" : ""}>${l}</option>`).join("");
+  const q = [["", "none"], ["proven", "proven"], ["minor", "minor"], ["trace", "residual or trace"]];
+  return `<section class="blk"><h2>Compose any combination</h2><p class="lead">The standard shows a selection and says the rest follow the same principle. Pick a fluid status, a technical status and a function.</p>
+  <div class="builder"><fieldset>
+    <label>Oil<select id="b-oil">${opt(q, "proven")}</select></label>
+    <label>Gas<select id="b-gas">${opt(q, "")}</select></label>
+    <label>Condensate<select id="b-cond">${opt(q, "")}</select></label>
+    <label>Technical status<select id="b-tech">${opt([["open", "open"], ["proposed", "proposed"], ["abandoned_technical", "abandoned, technical"], ["temporarily_abandoned", "temporarily abandoned or shut in"], ["plugged_abandoned", "plugged and abandoned"], ["not_observed", "mapped unit not observed"]], "open")}</select></label>
+    <label>Function<select id="b-fn">${opt([["", "none"], ["production", "production"], ["injection", "injection"], ["converted", "converted to injection"], ["observation", "observation"], ["dual_completion", "dual completion"], ["shut_in", "shut in"]], "")}</select></label>
+    <label>Code<select id="b-code">${opt([["", "none"], ["F", "F flowing"], ["P", "P pumping"], ["W", "W water cut"], ["R", "R repair"], ["G", "G gas-oil ratio"], ["S", "S sand"], ["E", "E exhausted"], ["T", "T technical"], ["NC", "NC non-commercial"]], "")}</select></label>
+  </fieldset><div class="out" id="b-out"></div></div></section>`;
+}
+
+function readBuilder() {
+  const v = (id) => $(id).value, fluids = [["oil", v("#b-oil")], ["gas", v("#b-gas")], ["condensate", v("#b-cond")]].filter(([, q]) => q);
+  const well = { fluids: fluids.length ? fluids : undefined, technical: v("#b-tech"), fn: v("#b-fn") ? { kind: v("#b-fn") } : undefined, code: v("#b-code") || undefined };
+  $("#b-out").innerHTML = `${sym(wellSpec(well), 120, wellInk(well))}<p>${esc(describe(well))}</p><p class="ss-mono" style="font-size:.72rem">${layersFor(well).join(" + ")}</p>`;
+}
+
+function render() {
+  const open = new Set([...document.querySelectorAll("#sheet select")].map((s) => s.id + "=" + s.value));
+  $("#sheet").innerHTML = builder() + examples() + installations() + others() + sizes();
+  for (const s of document.querySelectorAll("#sheet select")) { s.addEventListener("change", readBuilder); }
+  for (const o of open) { const [id, val] = o.split("="); const el = document.getElementById(id); if (el) el.value = val; }
+  readBuilder();
+  $("#foot").innerHTML = `<p>${esc(data.meta.source)}. Shapes are redrawn, not copied from the standard. ${data.colours.note}</p><p>SubScout is independent and not affiliated with or endorsed by Equinor, the Norwegian Offshore Directorate or the former Volve licence partners.</p>`;
+}
+render();
+</script>
+</body>
+</html>

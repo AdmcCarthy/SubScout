@@ -16,10 +16,14 @@ jobs:
       - run: uv run pytest -q
       - name: Generated tokens are up to date
         run: uv run subscout tokens && git diff --exit-code src/subscout/runtime/css
+      - name: Generated symbols are up to date
+        run: uv run subscout symbols && git diff --exit-code src/subscout/runtime/js/symbols-data.js src/subscout/runtime/js/symbols.json
       - name: Build site and stories
         run: uv run python scripts/build_pages.py _site
       - name: Install headless Chromium
         run: uv run playwright install --with-deps chromium
+      - name: Symbols (JS composition matches Python, every symbol draws)
+        run: uv run python scripts/symbols_check.py _site
       - name: Performance gate (4x CPU throttle)
         run: |
           uv run python scripts/perf.py _site demo/
