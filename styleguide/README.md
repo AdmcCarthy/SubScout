@@ -14,6 +14,7 @@ and Norwegian design. Where a rule can be checked by the build, the file says so
 | [arcs.md](arcs.md) | Narrative arcs, general and geology-native |
 | [tables.md](tables.md) | Tables as a narrative element |
 | [maps.md](maps.md) | Choropleths and alternatives, map storytelling, map technology |
+| [wellbores.md](wellbores.md) | Well, wellbore and installation symbols after the Sodir Geostandard: composition, codes, scale, what is not covered |
 | [motion.md](motion.md) | When and how things move |
 | [performance.md](performance.md) | Budgets and techniques; enforced in CI |
 

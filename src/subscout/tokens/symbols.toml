@@ -1,0 +1,578 @@
+# SubScout symbol source of truth: wellbores, wells and installations.
+#
+# Vocabulary and meaning follow the Sodir Geostandard, version 22.00 (2022), section 3.4 (well symbols) and 3.5 (installations).
+# The shapes are redrawn here, not copied. Where a drawing is simplified from the standard it says `simplified = true`.
+# Meaning is carried by SHAPE; colour is secondary and optional (styleguide/wellbores.md).
+#
+# Wells are COMPOSED, as the standard composes them: a base circle, a layer per fluid, a layer for technical status and a layer for
+# function. "Oil well, plugged and abandoned" is the oil layer plus the plugged-and-abandoned layer. The standard lists a selection of
+# combinations and says others follow the same principle; the [[example]] tables below are those selections, and they are tests.
+#
+# Drawing language: every symbol is a list of primitives in a box from -50 to 50 on both axes, y downwards, centre 0 0. Strings:
+#   "c cx cy r"            circle outline          "C cx cy r"        filled disc
+#   "l x1 y1 x2 y2"        line                    "r x y w h"        rectangle outline     "R x y w h"  filled rectangle
+#   "p d"                  path outline (SVG d)    "P d"              filled path
+#   "rays cx cy r0 r1 a0 da n"   n lines from radius r0 to r1, first at angle a0 (degrees, clockwise from +x, y down), step da
+#   "w cx cy r a0 a1"      sector outline          "W cx cy r a0 a1"  filled sector
+#   "t x y size text"      text
+# A leading "~" makes the stroke dashed ("~r -30 -30 60 60"). Stroke width is [meta].stroke unless a symbol sets its own.
+# Filled shapes use the ink colour; there is no other colour in a symbol.
+
+[meta]
+source = "Sodir Geostandard v22.00 (2022), sections 3.4 and 3.5; redrawn, not copied"
+box = 50            # symbols are drawn in -50..50
+stroke = 6          # stroke width in box units (6 is 1.4 px at 24 px)
+min_size_px = 10    # below this a symbol is not drawn: use a plain dot
+code_min_size_px = 18   # letter codes (F, P, W, R, ...) are dropped below this size, as the standard says to fit codes to scale
+sizes = { small = 12, medium = 18, large = 26 }
+
+# ------------------------------------------------------------------ wells: layers
+
+[layer.base]
+label = "Well position"
+std = "3.4.2"
+parts = ["c 0 0 16"]
+
+# fluids: three fluids, three qualifiers. proven = the main fluid; minor = minor amounts or uncertain producibility;
+# trace = residual or immobile, traces. "dry" is the absence of hydrocarbons.
+[layer."fluid.dry"]
+label = "Dry well (zone)"
+std = "3.4.2"
+parts = ["rays 0 0 16 28 0 90 4"]
+
+[layer."fluid.oil.proven"]
+label = "Oil well (oil-bearing zone)"
+std = "3.4.2"
+parts = ["C 0 0 16"]
+[layer."fluid.oil.minor"]
+label = "Minor oil, or oil of uncertain producibility"
+std = "3.4.2"
+parts = ["P M-16 0 A16 16 0 0 0 16 0 Z"]
+[layer."fluid.oil.trace"]
+label = "Residual oil, traces of oil"
+std = "3.4.2"
+parts = ["P M0 0 L16 0 A16 16 0 0 1 0 16 Z"]
+
+[layer."fluid.gas.proven"]
+label = "Gas well (gas-bearing zone)"
+std = "3.4.2"
+parts = ["rays 0 0 21 33 0 45 8"]
+[layer."fluid.gas.minor"]
+label = "Minor gas, or gas of uncertain producibility"
+std = "3.4.2"
+parts = ["rays 0 0 21 33 180 45 5"]
+[layer."fluid.gas.trace"]
+label = "Residual gas, traces of gas"
+std = "3.4.2"
+simplified = true   # the standard shows a small tab on top of the circle
+parts = ["rays 0 0 20 30 180 90 3"]
+
+[layer."fluid.condensate.proven"]
+label = "Condensate well (condensate-bearing zone)"
+std = "3.4.2"
+simplified = true   # four filled lobes; the standard's lobes are slightly rounder
+parts = ["W 0 0 30 20 70", "W 0 0 30 110 160", "W 0 0 30 200 250", "W 0 0 30 290 340"]
+[layer."fluid.condensate.minor"]
+label = "Minor condensate"
+std = "3.4.2"
+simplified = true
+parts = ["w 0 0 30 20 70", "w 0 0 30 110 160", "w 0 0 30 200 250", "w 0 0 30 290 340"]
+
+[layer."fluid.coal"]
+label = "Coal"
+std = "3.4.2"
+simplified = true
+parts = ["c 0 0 18", "p M8 -9 A11 11 0 1 0 8 9"]
+
+# technical status: what happened to the well. "open" (the default) adds nothing.
+[layer."tech.proposed"]
+label = "Proposed well"
+std = "3.4.2"
+parts = []
+[layer."tech.abandoned_technical"]
+label = "Abandoned for technical reasons (target not reached)"
+std = "3.4.2"
+parts = ["l -16 0 16 0", "l 0 -16 0 16"]
+[layer."tech.temporarily_abandoned"]
+label = "Temporarily abandoned or shut in"
+std = "3.4.2"
+parts = ["l -44 0 44 0"]
+[layer."tech.plugged_abandoned"]
+label = "Plugged and abandoned"
+std = "3.4.2"
+parts = ["l -44 0 44 0", "l 0 -44 0 44"]
+[layer."tech.not_observed"]
+label = "Mapped unit not observed (F faulted, NR not reached, NP not present)"
+std = "3.4.2"
+parts = ["l -16 -16 16 16"]
+
+# function: what the well does. Arrows point out of the symbol for production and into it for injection.
+[layer."fn.production"]
+label = "Production"
+std = "3.4.4"
+parts = ["l 12 -12 30 -30", "P M36 -36 L23 -32 L32 -23 Z"]
+[layer."fn.injection"]
+label = "Injection"
+std = "3.4.4"
+parts = ["l -12 12 -30 30", "P M-36 36 L-23 32 L-32 23 Z"]
+[layer."fn.converted"]
+label = "Converted well (former producer, now injector)"
+std = "3.4.4"
+parts = ["l -12 12 -30 30", "P M-36 36 L-23 32 L-32 23 Z", "c -38 38 3"]
+[layer."fn.observation"]
+label = "Observation well"
+std = "3.4.4"
+parts = ["l -11 -11 11 11", "l -11 11 11 -11"]
+[layer."fn.dual_completion"]
+label = "Dual completion (separate production from two zones)"
+std = "3.4.4"
+parts = ["c 0 0 25"]
+[layer."fn.shut_in"]
+label = "Shut in (reason code W, R, G, S or E)"
+std = "3.4.4"
+parts = ["l -44 0 44 0"]
+[layer."fn.injected.water"]
+label = "Water injection"
+std = "3.4.4"
+simplified = true
+parts = ["l -11 11 11 -11"]
+[layer."fn.injected.cuttings"]
+label = "Cuttings injection"
+std = "3.4.4"
+simplified = true
+parts = ["p M0 -9 L9 0 L0 9 L-9 0 Z"]
+[layer."fn.injected.co2"]
+label = "CO2 injection"
+std = "3.4.4"
+simplified = true
+parts = ["c 0 0 8", "C 0 0 3"]
+[layer."zone.above"]
+label = "Function applies to a level shallower than the mapped zone"
+std = "3.4.4"
+parts = ["l 0 -16 0 -38", "P M0 -44 L-6 -34 L6 -34 Z"]
+[layer."zone.below"]
+label = "Function applies to a level deeper than the mapped zone"
+std = "3.4.4"
+parts = ["l 0 16 0 38", "P M0 44 L-6 34 L6 34 Z"]
+
+# active exploration wells replace the base circle
+[layer."explore.wildcat"]
+label = "Wildcat"
+std = "3.4.7"
+parts = ["c 0 0 20", "C 0 0 8"]
+[layer."explore.appraisal"]
+label = "Appraisal"
+std = "3.4.7"
+parts = ["c 0 0 22", "c 0 0 12"]
+
+# a shallow borehole is its own symbol
+[layer.shallow_borehole]
+label = "Shallow borehole (25 to 200 m below seabed)"
+std = "3.4.2"
+simplified = true
+parts = ["c 0 0 8", "l -22 -22 22 22", "l -22 22 22 -22", "l -22 -22 22 -22", "l -22 22 22 22"]
+
+# general class of well: the standard uses coloured dots only (3.4.9). SubScout adds a shape to each so that class never rests on colour.
+[layer."class.development"]
+label = "Development or service well"
+std = "3.4.9"
+parts = ["C 0 0 11"]
+[layer."class.exploratory"]
+label = "Exploratory well"
+std = "3.4.9"
+parts = ["P M0 -14 L14 0 L0 14 L-14 0 Z"]
+[layer."class.injector"]
+label = "Injector"
+std = "3.4.9"
+parts = ["P M0 13 L14 -11 L-14 -11 Z"]
+[layer."class.non_hydrocarbon"]
+label = "Non-hydrocarbon well"
+std = "3.4.9"
+parts = ["R -11 -11 22 22"]
+
+# platform and subsea installation at the well level (3.4.2); the full installation list is below
+[layer."well.platform.proposed"]
+label = "Proposed platform or installation"
+std = "3.4.2"
+parts = ["~r -24 -24 48 48"]
+[layer."well.platform"]
+label = "Platform"
+std = "3.4.2"
+parts = ["r -24 -24 48 48"]
+[layer."well.subsea"]
+label = "Subsea installation"
+std = "3.4.2"
+parts = ["p M-24 -12 L-24 -24 L-12 -24", "p M12 -24 L24 -24 L24 -12", "p M24 12 L24 24 L12 24", "p M-12 24 L-24 24 L-24 12"]
+
+# trajectory line styles (3.4.5); drawn by the map, listed here so the legend has them
+[trajectory.actual]
+label = "Well trajectory"
+std = "3.4.5"
+dash = ""
+[trajectory.approximate]
+label = "Approximate well trajectory"
+std = "3.4.5"
+dash = "1 5"
+[trajectory.planned]
+label = "Planned well trajectory"
+std = "3.4.5"
+dash = "9 7"
+
+# ------------------------------------------------------------------ installations (Geostandard 3.5)
+# The standard draws each installation once and its planned variant in grey: here planned is the same shape in the muted tone.
+# `std_colour` is the colour the standard gives it; it applies only when the Geostandard colour preset is on.
+# Several installations share one shape in the standard (anchors and subsea objects); they stay distinct by name.
+
+[installation.dead_man_anchor]
+label = "Dead Man anchor (DMA)"
+parts = ["p M-24 -12 L-24 -24 L-12 -24", "p M12 -24 L24 -24 L24 -12", "p M24 12 L24 24 L12 24", "p M-12 24 L-24 24 L-24 12"]
+[installation.diverless_latch]
+label = "Diverless Latch Arrangement (DLA)"
+parts = ["p M-24 -12 L-24 -24 L-12 -24", "p M12 -24 L24 -24 L24 -12", "p M24 12 L24 24 L12 24", "p M-12 24 L-24 24 L-24 12"]
+[installation.start_end_point]
+label = "Start or end point"
+std_colour = "cyan"
+parts = ["p M0 -16 L16 0 L0 16 L-16 0 Z"]
+[installation.anchor]
+label = "Anchor"
+std_colour = "red"
+simplified = true
+parts = ["l 0 -28 0 24", "l -14 -14 14 -14", "p M-24 8 A24 24 0 0 0 24 8", "c 0 -32 4"]
+[installation.buoy_general]
+label = "Buoy, general"
+simplified = true
+parts = ["p M-24 8 A24 24 0 0 1 24 8 Z", "c 0 14 5"]
+[installation.buoy_loading]
+label = "Buoy, loading"
+parts = ["c 0 0 18", "C 0 0 4"]
+[installation.buoy_midline]
+label = "Buoy, midline"
+std_colour = "red"
+parts = ["P M0 -20 L20 16 L-20 16 Z"]
+[installation.buoy_stl]
+label = "Buoy, STL"
+parts = ["c 0 0 24", "c 0 0 13"]
+[installation.buoy_weather]
+label = "Buoy, weather"
+simplified = true
+parts = ["p M-24 8 A24 24 0 0 1 24 8 Z", "c 0 14 5"]
+[installation.central_distribution_unit]
+label = "Central Distribution Unit (CDU)"
+parts = ["p M0 -34 L18 0 L0 34 L-18 0 Z"]
+[installation.clamp]
+label = "Clamp"
+simplified = true
+parts = ["l -14 16 14 16", "l -8 16 -8 -14", "l 8 16 8 -14", "l -14 6 14 6"]
+[installation.clump_weight]
+label = "Clump weight"
+parts = ["c 0 0 22", "R -11 -11 22 22"]
+[installation.concrete_block]
+label = "Concrete block"
+parts = ["r -16 -16 32 32", "l -16 0 16 0", "l 0 -16 0 16"]
+[installation.counteract]
+label = "Counteract"
+parts = ["c 0 0 22", "l -22 0 22 0", "l 0 -22 0 22"]
+[installation.crossing_point]
+label = "Crossing point"
+parts = ["l -16 -16 16 16", "l -16 16 16 -16"]
+[installation.flange]
+label = "Flange"
+simplified = true
+parts = ["R -7 -24 14 30", "c 0 14 5"]
+[installation.flare_platform]
+label = "Flare platform"
+std_colour = "red"
+simplified = true
+parts = ["r -24 -24 48 48", "C 0 0 4", "C 24 -24 5"]
+[installation.hang_off]
+label = "Hang-off"
+parts = ["p M0 -14 L14 12 L-14 12 Z"]
+[installation.junction_point]
+label = "Junction point (T/Y)"
+parts = ["c 0 0 18"]
+[installation.land_valve_station]
+label = "Land valve station"
+parts = ["p M-24 -18 L24 18 L24 -18 L-24 18 Z"]
+[installation.manifold]
+label = "Manifold"
+parts = ["c 0 0 24", "c 0 0 13"]
+[installation.pile]
+label = "Pile"
+parts = ["C 0 0 16"]
+[installation.pipe_connection]
+label = "Pipe connection"
+parts = ["c 0 0 14", "l -26 0 26 0", "l 0 -26 0 26"]
+[installation.pipeline_end_plem]
+label = "Pipeline end (PLEM)"
+parts = ["p M0 -34 L18 0 L0 34 L-18 0 Z"]
+[installation.pipeline_end_plet]
+label = "Pipeline end (PLET)"
+parts = ["P M0 -26 L10 0 L0 26 L-10 0 Z"]
+[installation.platform]
+label = "Platform"
+std_colour = "red"
+parts = ["R -24 -24 48 48"]
+[installation.riser_base]
+label = "Riser base"
+parts = ["p M0 -14 L14 0 L0 14 L-14 0 Z", "C 0 0 3"]
+[installation.rig]
+label = "Rig"
+std_colour = "blue"
+parts = ["r -34 -16 68 32"]
+[installation.ship]
+label = "Ship"
+simplified = true
+parts = ["P M-38 6 L38 6 L30 18 L-30 18 Z", "R -10 -8 20 14", "R 14 -2 10 8"]
+[installation.subsea_object_other]
+label = "Subsea object, other"
+parts = ["p M-24 -12 L-24 -24 L-12 -24", "p M12 -24 L24 -24 L24 -12", "p M24 12 L24 24 L12 24", "p M-12 24 L-24 24 L-24 12"]
+[installation.subsea_template]
+label = "Subsea template"
+parts = ["r -22 -22 44 44"]
+[installation.subsea_valve]
+label = "Subsea valve"
+parts = ["p M-24 -18 L24 18 L24 -18 L-24 18 Z"]
+[installation.tank]
+label = "Tank"
+simplified = true
+parts = ["p M-20 -14 L-20 14", "p M20 -14 L20 14", "p M-20 14 A20 8 0 0 0 20 14", "p M-20 -14 A20 8 0 1 1 20 -14 A20 8 0 1 1 -20 -14"]
+[installation.terminal_supply_base]
+label = "Terminal or supply base"
+parts = ["c 0 0 24", "C 0 0 12"]
+[installation.touchdown_point]
+label = "Touchdown point (TDP)"
+parts = ["c 0 0 14"]
+[installation.transponder]
+label = "Transponder"
+simplified = true
+parts = ["R -12 8 24 14", "l -4 8 -4 -26", "P M-4 -26 L12 -20 L-4 -14 Z"]
+[installation.unknown]
+label = "Unknown installation"
+simplified = true
+parts = ["r -22 -22 44 44", "t 0 11 34 ?"]
+# a disused flare platform is the flare platform struck through
+[installation.flare_platform_disused]
+label = "Flare platform, disused"
+std_colour = "red"
+simplified = true
+parts = ["r -24 -24 48 48", "l -24 -24 24 24", "l -24 24 24 -24", "C 24 -24 5"]
+
+# ------------------------------------------------------------------ colour (optional, off by default)
+# Geostandard 6.12 hydrocarbon-type colours, for outputs that must follow the standard exactly. Oil green against gas red is not safe
+# for colour-blind readers, so the default is ink only and symbols never rely on these.
+[colours.geostandard]
+note = "Geostandard 6.12 and 6.4; for exchange outputs. Not colour-vision safe: oil green against gas red."
+oil = "#02db00"
+gas = "#ff0000"
+condensate = "#ffbee8"
+gas_hydrates = "#b03f97"
+hydrocarbons = "#ffcb05"
+unknown = "#6083a8"
+co2 = "#cdbd66"
+cyan = "#00c5ff"      # start/end point; the standard draws it light blue
+red = "#ff0000"       # platform, anchor, midline buoy, flare platform
+blue = "#6c8ebf"      # rig
+
+# ------------------------------------------------------------------ examples: the standard's own selections, as tests and as the review sheet
+# `well` gives the composition; `std` the section and what the standard calls it. Fluids are [fluid, qualifier] pairs, or "dry".
+
+[[example]]
+std = "3.4.2"
+label = "Proposed well"
+well = { technical = "proposed" }
+[[example]]
+std = "3.4.2"
+label = "Well abandoned for technical reasons"
+well = { technical = "abandoned_technical" }
+[[example]]
+std = "3.4.2"
+label = "Temporarily abandoned or shut-in well"
+well = { technical = "temporarily_abandoned" }
+[[example]]
+std = "3.4.2"
+label = "Plugged and abandoned well"
+well = { technical = "plugged_abandoned" }
+[[example]]
+std = "3.4.2"
+label = "Mapped unit not observed, faulted"
+well = { technical = "not_observed", code = "F" }
+[[example]]
+std = "3.4.2"
+label = "Dry well (zone)"
+well = { fluids = "dry" }
+[[example]]
+std = "3.4.2"
+label = "Oil well"
+well = { fluids = [["oil", "proven"]] }
+[[example]]
+std = "3.4.2"
+label = "Well with minor oil or oil of uncertain producibility"
+well = { fluids = [["oil", "minor"]] }
+[[example]]
+std = "3.4.2"
+label = "Well with residual oil, traces of oil"
+well = { fluids = [["oil", "trace"]] }
+[[example]]
+std = "3.4.2"
+label = "Gas well"
+well = { fluids = [["gas", "proven"]] }
+[[example]]
+std = "3.4.2"
+label = "Well with minor gas"
+well = { fluids = [["gas", "minor"]] }
+[[example]]
+std = "3.4.2"
+label = "Condensate well"
+well = { fluids = [["condensate", "proven"]] }
+[[example]]
+std = "3.4.2"
+label = "Well with minor condensate"
+well = { fluids = [["condensate", "minor"]] }
+[[example]]
+std = "3.4.2"
+label = "Well with residual gas, traces of gas"
+well = { fluids = [["gas", "trace"]] }
+[[example]]
+std = "3.4.3"
+label = "Dry well plugged and abandoned"
+well = { fluids = "dry", technical = "plugged_abandoned" }
+[[example]]
+std = "3.4.3"
+label = "Oil well plugged and abandoned"
+well = { fluids = [["oil", "proven"]], technical = "plugged_abandoned" }
+[[example]]
+std = "3.4.3"
+label = "Gas well plugged and abandoned"
+well = { fluids = [["gas", "proven"]], technical = "plugged_abandoned" }
+[[example]]
+std = "3.4.3"
+label = "Condensate well plugged and abandoned"
+well = { fluids = [["condensate", "proven"]], technical = "plugged_abandoned" }
+[[example]]
+std = "3.4.3"
+label = "Oil well temporarily abandoned or shut in"
+well = { fluids = [["oil", "proven"]], technical = "temporarily_abandoned" }
+[[example]]
+std = "3.4.3"
+label = "Gas well temporarily abandoned or shut in"
+well = { fluids = [["gas", "proven"]], technical = "temporarily_abandoned" }
+[[example]]
+std = "3.4.3"
+label = "Oil and gas well"
+well = { fluids = [["oil", "proven"], ["gas", "proven"]] }
+[[example]]
+std = "3.4.3"
+label = "Oil well with minor gas"
+well = { fluids = [["oil", "proven"], ["gas", "minor"]] }
+[[example]]
+std = "3.4.3"
+label = "Oil and condensate well"
+well = { fluids = [["oil", "proven"], ["condensate", "proven"]] }
+[[example]]
+std = "3.4.3"
+label = "Gas well with minor oil"
+well = { fluids = [["gas", "proven"], ["oil", "minor"]] }
+[[example]]
+std = "3.4.3"
+label = "Gas well with residual oil, traces of oil"
+well = { fluids = [["gas", "proven"], ["oil", "trace"]] }
+[[example]]
+std = "3.4.3"
+label = "Gas and condensate well"
+well = { fluids = [["gas", "proven"], ["condensate", "proven"]] }
+[[example]]
+std = "3.4.3"
+label = "Well with minor condensate and gas"
+well = { fluids = [["condensate", "minor"], ["gas", "proven"]] }
+[[example]]
+std = "3.4.3"
+label = "Oil, gas and condensate well"
+well = { fluids = [["oil", "proven"], ["gas", "proven"], ["condensate", "proven"]] }
+[[example]]
+std = "3.4.3"
+label = "Well with minor oil and gas"
+well = { fluids = [["oil", "minor"], ["gas", "minor"]] }
+[[example]]
+std = "3.4.3"
+label = "Well with minor gas and residual oil, traces of oil"
+well = { fluids = [["gas", "minor"], ["oil", "trace"]] }
+[[example]]
+std = "3.4.3"
+label = "Well with residual gas and oil, traces of gas and oil"
+well = { fluids = [["gas", "trace"], ["oil", "trace"]] }
+[[example]]
+std = "3.4.4"
+label = "Production, oil, by flowing"
+well = { fluids = [["oil", "proven"]], fn = { kind = "production" }, code = "F" }
+[[example]]
+std = "3.4.4"
+label = "Production, gas"
+well = { fluids = [["gas", "proven"]], fn = { kind = "production" } }
+[[example]]
+std = "3.4.4"
+label = "Production, gas and condensate"
+well = { fluids = [["gas", "proven"], ["condensate", "proven"]], fn = { kind = "production" } }
+[[example]]
+std = "3.4.4"
+label = "Production, water"
+well = { fluids = "dry", fn = { kind = "production" } }
+[[example]]
+std = "3.4.4"
+label = "Relief well"
+well = { fn = { kind = "production" } }
+[[example]]
+std = "3.4.4"
+label = "Observation well"
+well = { fn = { kind = "observation" } }
+[[example]]
+std = "3.4.4"
+label = "Dual completion, oil"
+well = { fluids = [["oil", "proven"]], fn = { kind = "dual_completion" } }
+[[example]]
+std = "3.4.4"
+label = "Dual completion, oil and gas"
+well = { fluids = [["oil", "proven"], ["gas", "proven"]], fn = { kind = "dual_completion" } }
+[[example]]
+std = "3.4.4"
+label = "Shut in, high water cut"
+well = { fluids = [["oil", "proven"]], fn = { kind = "shut_in" }, code = "W" }
+[[example]]
+std = "3.4.4"
+label = "Shut in, exhausted"
+well = { fluids = [["condensate", "proven"]], fn = { kind = "shut_in" }, code = "E" }
+[[example]]
+std = "3.4.4"
+label = "Water injection well"
+well = { fn = { kind = "injection", fluid = "water" } }
+[[example]]
+std = "3.4.4"
+label = "Injection, gas"
+well = { fluids = [["gas", "proven"]], fn = { kind = "injection" } }
+[[example]]
+std = "3.4.4"
+label = "Injection, cuttings"
+well = { fluids = [["gas", "minor"]], fn = { kind = "injection", fluid = "cuttings" } }
+[[example]]
+std = "3.4.4"
+label = "Injection, CO2"
+well = { fn = { kind = "injection", fluid = "co2" } }
+[[example]]
+std = "3.4.4"
+label = "Converted well (producer to injector)"
+well = { fluids = [["oil", "proven"]], fn = { kind = "converted" } }
+[[example]]
+std = "3.4.4"
+label = "Function applies to a level shallower than the mapped zone"
+well = { zone = "above" }
+[[example]]
+std = "3.4.4"
+label = "Function applies to a level deeper than the mapped zone"
+well = { zone = "below" }
+[[example]]
+std = "3.4.7"
+label = "Wildcat"
+well = { exploration = "wildcat" }
+[[example]]
+std = "3.4.7"
+label = "Appraisal"
+well = { exploration = "appraisal" }

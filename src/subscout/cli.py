@@ -16,6 +16,18 @@ def cmd_tokens(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_symbols(args: argparse.Namespace) -> int:
+    from . import symbols
+
+    try:
+        for p in symbols.write(Path(args.out) if args.out else None):
+            print(f"wrote {p}")
+    except symbols.SymbolError as e:
+        print(f"symbols.toml: {e}")
+        return 1
+    return 0
+
+
 def cmd_audit(args: argparse.Namespace) -> int:
     results = C.contrast_audit()
     bad = [r for r in results if not r.passed]
@@ -74,6 +86,9 @@ def main(argv: list[str] | None = None) -> int:
     t = sub.add_parser("tokens", help="generate CSS/JSON design tokens")
     t.add_argument("--out", help="output directory (default: packaged runtime/css)")
     t.set_defaults(func=cmd_tokens)
+    y = sub.add_parser("symbols", help="generate the well and installation symbol data (JS and JSON)")
+    y.add_argument("--out", help="output directory (default: packaged runtime/js)")
+    y.set_defaults(func=cmd_symbols)
     a = sub.add_parser("audit", help="check colour contrast and CVD separation")
     a.add_argument("--all", action="store_true", help="show passing rules too")
     a.set_defaults(func=cmd_audit)

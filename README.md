@@ -37,6 +37,16 @@ Data palettes use the "context in grey, story in colour" approach, plus:
 - sequential ramps (`fjord`, `cobalt`, `shale`)
 - a cobalt ↔ ochre diverging scale
 
+## Symbols
+
+Well, wellbore and installation symbols after the [Sodir Geostandard](https://www.sodir.no/globalassets/2-force/2022/dokumenter/geostandard-ekstern.pdf)
+(3.4 and 3.5), redrawn: shape-first, composed from layers, one ink on any background. Rules in [styleguide/wellbores.md](styleguide/wellbores.md),
+data in [`symbols.toml`](src/subscout/tokens/symbols.toml), review sheet at `site/symbols/`.
+
+```bash
+uv run subscout symbols   # regenerate src/subscout/runtime/js/symbols-data.js and symbols.json
+```
+
 ## Credits
 
 The palette method (lightness ladder, gaussian chroma, step roles, APCA targets and the data-palette
