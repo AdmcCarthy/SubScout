@@ -55,3 +55,23 @@ Inspired by Norwegian architecture and interiors rather than a generic "Scandina
 The rigour of Few and Tufte; the honesty of Cairo, expressed as observation versus interpretation;
 the delight of Bremer and Wu, drawn from the subject itself (strata, seismic, contours) rather than
 from decoration.
+
+## Variety: one device does not run the whole piece
+
+A catchy headline is a device, and a device works because it is rare. Adam's rule: **the article headline may be creative;
+the same technique must not be repeated in every text box and sub-story.** The same applies to structure.
+
+- **Headings.** Sub-story, panel and box headings are plain and say what is there. Do not give every one a clipped headline
+  ("Quicker wells", "Close to home"), a label and an image ("APA 2008: a mesh of partners"), a year lead, or a comma and a
+  twist. Two in a row of one construction is the most a reader should meet. Keep a catchy line for the one or two places it
+  earns its keep.
+- **Shape.** Do not build every step the same way: heading, one short paragraph of about fifty words, figure. Let some steps
+  run longer, merge neighbours, let some carry no heading of their own. A long chain of identical sub-sections reads as a
+  list, whatever the headings say.
+- **Paragraphs.** One idea each, three at most in a step; vary how they open. Do not start consecutive paragraphs or
+  headings with the same word.
+- **Checked by the build as advice** (`advice:` lines and `advice` in `build-report.json`; never an error): a run of
+  three or more headings built the same way, one device over 60% of headings, a run of headings opening with the same word,
+  five or more steps of one shape, more than twelve sub-sections, more than three paragraphs in a step. Thresholds are in
+  `src/subscout/advice.py`.
+

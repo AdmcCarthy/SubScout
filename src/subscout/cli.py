@@ -45,6 +45,8 @@ def cmd_build(args: argparse.Namespace) -> int:
     rep = build(Path(args.story), Path(args.out))
     for w in rep.warnings:
         print(f"warning: {w}")
+    for a in rep.advice:
+        print(f"advice: {a}")
     for e in rep.errors:
         print(f"error: {e}")
     if rep.errors:

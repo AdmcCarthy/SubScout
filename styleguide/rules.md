@@ -79,3 +79,4 @@ Before a story is published, answer for each step:
 6. **Content:** is the content worth the reader's time, and is it honest?
 
 Plus: does every step have one idea? Does the arc land? Is every Interpreted claim marked?
+7. **Variety:** does every step open the same way, with the same heading device and the same shape? One catchy device is good; repeated, it is a habit (see voice.md, Variety).

@@ -174,3 +174,6 @@ confidence: observed
 
 "Basis of analysis" (Appendix) collects: sources, the numbers ledger, every figure's source and confidence, declared
 exceptions, the arc and units conventions, and any `::: appendix` content you add.
+
+**Style advice.** `subscout build` prints `advice:` lines (and writes `advice` in `build-report.json`) where headings or step
+shapes repeat one device: see voice.md, "Variety". Advice never fails a build or counts as a warning.

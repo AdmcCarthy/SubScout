@@ -44,5 +44,6 @@ ignore = ["E741"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/subscout/build.py" = ["E501"]  # HTML fragments
+"src/subscout/advice.py" = ["E501"]  # advice messages
 "scripts/perf.py" = ["E501"]  # embedded JavaScript
 "tests/test_build.py" = ["E501"]  # inline story fixtures

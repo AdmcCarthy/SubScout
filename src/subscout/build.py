@@ -24,6 +24,7 @@ import yaml
 from markdown_it import MarkdownIt
 
 from . import colour as C
+from .advice import style_advice
 from .layout import network_layout
 
 PKG = Path(__file__).parent
@@ -85,6 +86,9 @@ def _py(v):
 class Report:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    advice: list[str] = field(
+        default_factory=list
+    )  # style advice (repetition habits): shown, never fails a build
 
     def error(self, msg: str) -> None:
         self.errors.append(msg)
@@ -737,6 +741,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
         pos = m.end()
     if body[pos:].strip():
         sections.append({"kind": "prose", "md": take_blocks(body[pos:], None)[0]})
+    report.advice.extend(style_advice(body))
 
     # render
     for s in sections:
@@ -904,7 +909,13 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     (out / ".nojekyll").touch()
     (out / "build-report.json").write_text(
         json.dumps(
-            {"errors": report.errors, "warnings": report.warnings, "ledger": ledger, "figures": figure_list},
+            {
+                "errors": report.errors,
+                "warnings": report.warnings,
+                "advice": report.advice,
+                "ledger": ledger,
+                "figures": figure_list,
+            },
             indent=1,
             ensure_ascii=False,
             default=_py,
