@@ -158,5 +158,19 @@ def test_export_page_lists_every_view(tmp_path):
     assert [s["name"] for s in payload["states"]] == ["First", "Second"]
     assert [s["state"] for s in payload["states"]] == [{"era": 0}, {"era": 1}]
     assert set(payload["sizes"]) == {"slide", "portrait", "square"}
-    assert (out / "export" / "c" / "renders.json").read_text() == "[]"
+    assert not (out / "export" / "c" / "renders.json").exists()  # rendering moved to Plate
+    contract = json.loads((out / "export" / "c" / "payload.json").read_text())
+    assert contract["contract"] == {"name": "subscout-export", "version": 1}
+    assert contract["id"] == "c" and contract["runtime"] == "runtime"
+    assert contract["meta"]["confidence"] == "observed" and contract["meta"]["notes"] == "n"
+    assert [k for k, _ in contract["facts"]] == ["Source", "Confidence"]
+    assert contract["story"]["palette"] and contract["fig"]["spec"]["module"] == "figures/c.js"
+    assert contract["states"] == payload["states"]
     assert 'href="export/c/"' in (out / "index.html").read_text()
+
+
+def test_export_command_points_to_plate(capsys):
+    from subscout.cli import main
+
+    assert main(["export", "_site"]) == 2
+    assert "plate render _site" in capsys.readouterr().out

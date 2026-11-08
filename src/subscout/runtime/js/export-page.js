@@ -1,5 +1,5 @@
 // Export page runtime: draws one figure on a fixed artboard (size, state, theme, units from the URL or
-// the toolbar), signals readiness for the renderer, and links the pre-rendered high-resolution PNGs.
+// the toolbar) and signals readiness. High-resolution output is Plate's job (see payload.json).
 import { theme, units, UNITS, bindSeg, refreshUnits, onSchemeChange } from "./subscout.js";
 import { lineChart, stackedBars, bubbles, heatmap, divergingBars, barChart, dotStrip, geoMap, networkChart } from "./charts.js";
 
@@ -86,16 +86,10 @@ units.subscribe(() => { refreshUnits(); chart?.repaint ? chart.repaint() : draw(
 onSchemeChange(() => (chart?.repaint ? chart.repaint() : draw()));
 addEventListener("resize", () => fit());
 
-let renders = null;
-fetch("renders.json").then((r) => (r.ok ? r.json() : [])).then((r) => { renders = r; links(); }).catch(() => { renders = []; links(); });
+// High-resolution files (PDF, PNG at A4 to A0) are made by Plate from payload.json: `plate render <site>`.
 function links() {
   const dl = document.getElementById("t-dl");
-  if (!dl || renders === null) return;
-  const th = document.documentElement.getAttribute("data-colour-scheme") || "light";
-  if (units.get() !== (P.units || "sm3")) { dl.innerHTML = `<span>PNG files use ${UNITS[P.units || "sm3"].label}; switch units back to download</span>`; return; }
-  const r = renders.find((x) => x.size === size && x.theme === th && x.state === si);
-  dl.innerHTML = r ? `<span>${r.px[0]} × ${r.px[1]} px</span><a href="${r.file}" download>Download PNG</a>`
-    : `<span>High-resolution PNGs are rendered with <code>subscout export</code></span>`;
+  if (dl) dl.innerHTML = `<span>Print-grade PDF and PNG: <code>plate render</code> (reads <code>payload.json</code>)</span>`;
 }
 theme.subscribe(() => setTimeout(links, 0));
 draw();

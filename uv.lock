@@ -606,7 +606,7 @@ wheels = [
 
 [[package]]
 name = "subscout"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "coloraide" },
@@ -616,11 +616,6 @@ dependencies = [
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "pyyaml" },
-]
-
-[package.optional-dependencies]
-export = [
-    { name = "playwright" },
 ]
 
 [package.dev-dependencies]
@@ -637,11 +632,9 @@ requires-dist = [
     { name = "markdown-it-py", specifier = ">=4.2.0" },
     { name = "mdit-py-plugins", specifier = ">=0.6.1" },
     { name = "pandas", specifier = ">=3.1.1" },
-    { name = "playwright", marker = "extra == 'export'", specifier = ">=1.44" },
     { name = "pyarrow", specifier = ">=26.0.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
 ]
-provides-extras = ["export"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -1,22 +1,24 @@
-"""Export pages: a figure on its own, on a fixed artboard, for high-resolution image export.
+"""Export pages and the export contract.
 
 A chart block opts in with `export:` (true, or `{sizes: [slide, portrait, square], themes: [light, dark]}`).
-The build writes `export/<figure id>/index.html`: the figure alone with a header, legend and footer
-(source, units, confidence, link), a toolbar to pick size, story state, theme and units, and download links
-for pre-rendered PNGs. `subscout export <site>` renders those PNGs in headless Chromium at 3x pixel
-density (a 1600 x 900 slide becomes 4800 x 2700) and lists them in `renders.json`.
+The build writes, for each such figure, `export/<figure id>/`:
+
+- `index.html`   the figure alone on a fixed artboard with header, legend and footer (source, units,
+                 confidence, link) and a toolbar for size, story state, theme and units. A proof page.
+- `payload.json` the **export contract** (version `CONTRACT_VERSION`): everything a renderer needs to draw the
+                 figure again at any size: spec and data, story states, units, palette, surface, kicker, the
+                 footer facts and credit. Schema in docs/export-contract.md.
+
+High-resolution output (PDF, PNG at physical paper sizes, A4 to A0) is rendered by **Plate**
+(github.com/AdmcCarthy/Plate: `plate render <site>`), which reads `payload.json`. SubScout no longer renders.
 """
 
 from __future__ import annotations
 
-import functools
 import html
-import http.server
 import json
 import re
-import threading
 from pathlib import Path
-from typing import Any
 
 SIZES = {  # artboard in CSS px; PNGs are rendered at `scale` x these
     "slide": {"label": "Slide 16:9", "w": 1600, "h": 900},
@@ -24,7 +26,8 @@ SIZES = {  # artboard in CSS px; PNGs are rendered at `scale` x these
     "square": {"label": "Square", "w": 1200, "h": 1200},
 }
 THEMES = ["light", "dark"]
-SCALE = 3
+CONTRACT_VERSION = 1
+PREVIEW_SCALE = 3  # the proof page quotes pixel sizes at this density
 
 
 def export_options(spec: dict) -> dict | None:
@@ -95,22 +98,47 @@ def write_export_page(
     src = sources.get(spec.get("source"), {})
     d = out / "export" / fig.id
     d.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "fig": payload_fig,
-        "datasets": datasets,
-        "states": states,
-        "units": fm.get("units", "sm3"),
-        "sizes": {k: SIZES[k] for k in opts["sizes"]},
-        "themes": opts["themes"],
-        "scale": SCALE,
-        "groups": fm.get("groups"),
-    }
     accessed = f", {src['accessed']}" if src.get("accessed") else ""
     labels = {"observed": "Observed", "derived": "Derived", "interpreted": "Interpreted"}
     facts = [("Source", f"{src.get('name', spec.get('source', ''))}{accessed}")]
     if spec.get("unit"):
         facts.append(("Units", spec["unit"]))
     facts.append(("Confidence", labels.get(spec.get("confidence"), "")))
+    payload = {
+        # the export contract (docs/export-contract.md); the proof page embeds the same object
+        "contract": {"name": "subscout-export", "version": CONTRACT_VERSION},
+        "id": fig.id,
+        "story": {
+            "title": fm.get("title", ""),
+            "kicker": fm.get("kicker", ""),
+            "palette": fm.get("palette", "tide"),
+            "surface": fm.get("surface", "nordic-cool"),
+            "byline": fm.get("byline", ""),
+            "url": fm.get("url", ""),
+        },
+        "meta": {
+            "title": spec.get("title", ""),
+            "subtitle": spec.get("subtitle", ""),
+            "source": src.get("name", spec.get("source", "")),
+            "accessed": src.get("accessed", ""),
+            "unit": spec.get("unit", ""),
+            "confidence": spec.get("confidence", ""),
+            "confidence_label": labels.get(spec.get("confidence"), ""),
+            "notes": spec.get("notes", ""),
+            "exception": spec.get("exception") or None,
+        },
+        "facts": [[k, v] for k, v in facts],
+        "credit": credit,
+        "runtime": runtime_href,
+        "fig": payload_fig,
+        "datasets": datasets,
+        "states": states,
+        "units": fm.get("units", "sm3"),
+        "sizes": {k: SIZES[k] for k in opts["sizes"]},
+        "themes": opts["themes"],
+        "scale": PREVIEW_SCALE,
+        "groups": fm.get("groups"),
+    }
     import jinja2
 
     env = jinja2.Environment(
@@ -127,69 +155,5 @@ def write_export_page(
         payload=json.dumps(payload, ensure_ascii=False, default=str).replace("</", "<\\/"),
     )
     (d / "index.html").write_text(page, encoding="utf-8")
-    if not (d / "renders.json").exists():
-        (d / "renders.json").write_text("[]")  # filled by `subscout export`
+    (d / "payload.json").write_text(json.dumps(payload, ensure_ascii=False, default=str), encoding="utf-8")
     return d
-
-
-# ---------------------------------------------------------------------------- rendering (Playwright)
-
-
-def _serve(directory: Path):
-    class Quiet(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, *a: Any) -> None:
-            pass
-
-    srv = http.server.ThreadingHTTPServer(
-        ("127.0.0.1", 0), functools.partial(Quiet, directory=str(directory))
-    )
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv, f"http://127.0.0.1:{srv.server_address[1]}/"
-
-
-def render(site: Path, scale: int = SCALE, only: list[str] | None = None) -> list[Path]:
-    """Render every export page x size x state x theme to PNG; write renders.json beside each page."""
-    from playwright.sync_api import sync_playwright
-
-    pages = sorted(p.parent for p in (site / "export").glob("*/index.html"))
-    if only:
-        pages = [p for p in pages if p.name in only]
-    srv, url = _serve(site)
-    written: list[Path] = []
-    try:
-        with sync_playwright() as pw:
-            b = pw.chromium.launch()
-            for d in pages:
-                text = (d / "index.html").read_text(encoding="utf-8")
-                payload = json.loads(
-                    text.split('id="ss-payload">')[1].split("</script>")[0].replace("<\\/", "</")
-                )
-                (d / "png").mkdir(exist_ok=True)
-                renders = []
-                for size, dim in payload["sizes"].items():
-                    for theme in payload["themes"]:
-                        ctx = b.new_context(
-                            viewport={"width": dim["w"], "height": dim["h"]}, device_scale_factor=scale
-                        )
-                        pg = ctx.new_page()
-                        for i, st in enumerate(payload["states"]):
-                            pg.goto(f"{url}export/{d.name}/?bare=1&size={size}&state={i}&theme={theme}")
-                            pg.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
-                            name = f"{size}-{theme}-{st['slug']}.png"
-                            pg.locator("#board").screenshot(path=str(d / "png" / name))
-                            renders.append(
-                                {
-                                    "size": size,
-                                    "theme": theme,
-                                    "state": i,
-                                    "file": f"png/{name}",
-                                    "px": [dim["w"] * scale, dim["h"] * scale],
-                                }
-                            )
-                            written.append(d / "png" / name)
-                        ctx.close()
-                (d / "renders.json").write_text(json.dumps(renders, indent=1))
-            b.close()
-    finally:
-        srv.shutdown()
-    return written
