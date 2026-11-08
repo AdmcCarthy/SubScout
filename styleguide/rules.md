@@ -77,6 +77,7 @@ Before a story is published, answer for each step:
 4. **Integration:** do words, numbers and images work together on the page?
 5. **Documentation:** are sources, methods and confidence visible?
 6. **Content:** is the content worth the reader's time, and is it honest?
+7. **Variety:** do the steps open and look different from one another? One catchy device is good; repeated, it is a habit
+   (see voice.md, Variety).
 
 Plus: does every step have one idea? Does the arc land? Is every Interpreted claim marked?
-7. **Variety:** does every step open the same way, with the same heading device and the same shape? One catchy device is good; repeated, it is a habit (see voice.md, Variety).
