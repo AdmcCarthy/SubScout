@@ -19,7 +19,7 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
 - Metric first (Sm³, km, °C), boe alongside or via the page-wide units toggle. Oil: 1 Sm³ = 6.29 bbl;
   oil-equivalent conversions follow Sodir (1 Sm³ o.e.). State the convention used on the page.
 - Every figure carries: title, units, source (with date), confidence level, notes where needed.
-- Confidence levels: **Observed** (measured or published, cited), **Derived** (our calculation, method
+- Confidence levels: **Observed** (measured or published, cited), **Derived** (calculated from observed data, method
   stated), **Interpreted** (depends on a model or judgement; give the range or assumption). Balance beauty
   and communication with key information; this is not a full EDA report, but never hide uncertainty.
 
