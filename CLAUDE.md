@@ -4,6 +4,10 @@
 uncertainty, arcs, tables, maps, motion and performance. Read the relevant file before building a
 story or component. This file summarises the engineering side.
 
+@../../shared/idiom/CORE.md
+
+Voice and structure of written work (README, docs, published pages) follow Idiom's CORE.md and house style: British English, impersonal, one creative headline then plain varied headings, a section ends on its last point. The import is harmless when the file is absent (CI).
+
 SubScout is a framework for **journalistic data narratives**: one Markdown story plus data produces a themed
 web page with two modes, **Read** (scrollytelling article) and **Present** (in-browser deck). Published on
 GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write for an informed reader.
