@@ -149,6 +149,77 @@ def load_data(root: Path, spec: dict, report: Report) -> dict[str, Any]:
     return out
 
 
+HEADER_KEYS = {"data", "highlight", "height", "label"}
+
+
+def check_header(fm: dict, data: dict, report: Report) -> dict | None:
+    """The hero's header band, if the front matter asks for one.
+
+    ``horizon: true`` keeps the procedural motif (returns ``None``). ``horizon: {data:
+    name, highlight: surface, height: px, label: bool}`` names a dataset in the
+    ``header`` contract (docs/header-contract.md): a dict with ``kind: header``, an
+    attribution, 8-bit amplitudes and the surfaces at the section's traces. Errors go
+    on the report; the dict returned feeds the template and the appendix.
+    """
+    spec = fm.get("horizon")
+    if not isinstance(spec, dict):
+        return None
+    extra = set(spec) - HEADER_KEYS
+    if extra:
+        report.error(f"horizon: unexpected key(s) {sorted(extra)}; allowed {sorted(HEADER_KEYS)}")
+    name = spec.get("data")
+    if not isinstance(name, str) or name not in data:
+        report.error(f"horizon: 'data' must name a dataset in the front matter data block, got {name!r}")
+        return None
+    P = data[name]
+    if not isinstance(P, dict) or P.get("kind") != "header":
+        report.error(f"horizon: dataset '{name}' is not a header export (kind: header)")
+        return None
+    for key in ("amp_b64", "n_traces", "n_samples", "samples", "surfaces"):
+        if key not in P:
+            report.error(f"horizon: dataset '{name}' lacks '{key}'")
+    if not str(P.get("attribution", "")).strip():
+        report.error(f"horizon: dataset '{name}' has no attribution; a real section must say whose it is")
+    labels = [s.get("label") for s in P.get("surfaces") or []]
+    highlight = spec.get("highlight", P.get("highlight"))
+    if highlight is not None and highlight not in labels:
+        report.error(f"horizon: highlight '{highlight}' is not one of the surfaces {labels}")
+    height = spec.get("height", 150)
+    if not isinstance(height, int) or not 80 <= height <= 400:
+        report.error(f"horizon: height must be a whole number of pixels from 80 to 400, got {height!r}")
+        height = 150
+    dom = P.get("domain") or {}
+    domain = (
+        f"{'TWT' if dom.get('vertical') == 'time' else dom.get('vertical', '')} [{dom.get('vertical_unit', '')}]"
+        if dom
+        else ""
+    )
+    text = P.get("label") or ""
+    return {
+        "name": name,
+        "highlight": highlight,
+        "height": height,
+        "label": bool(spec.get("label", True)),
+        "text": text,
+        "attribution": str(P.get("attribution", "")).strip(),
+        "source_file": P.get("source_file", ""),
+        "domain": domain,
+        "polarity": P.get("polarity", ""),
+        "aria": f"{text or 'seismic section'}. {str(P.get('attribution', '')).strip()}",
+    }
+
+
+def copy_header_data(root: Path, out: Path, fm: dict, header: dict | None) -> None:
+    """The header export goes to the site as ``data/<name>.json``, fetched by the page
+    after first paint (it is not inlined in the payload: a section is a few hundred kB)."""
+    if not header:
+        return
+    src = (root / fm["data"][header["name"]]).resolve()
+    dest = out / "data" / f"{header['name']}.json"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dest)
+
+
 def load_story_module(root: Path):
     p = root / "story.py"
     if not p.exists():
@@ -656,6 +727,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
         report.error(f"front matter: unknown surface '{fm.get('surface')}'")
 
     data = load_data(root, fm.get("data"), report)
+    header = check_header(fm, data, report)
     mod = load_story_module(root)
     if mod and hasattr(mod, "datasets"):
         data.update(mod.datasets(data) or {})
@@ -895,6 +967,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     tpl = env.get_template("story.html.j2")
     ctx = dict(
         fm=fm,
+        header=header,
         sections=sections,
         figures={f.id: f for f in figures},
         kpis=kpis,
@@ -938,6 +1011,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.html").write_text(page, encoding="utf-8")
     copy_custom_modules(root, out, figures, report)
+    copy_header_data(root, out, fm, header)
     write_exports(out, figures, figs_payload, data, steps_meta, fm, sources, runtime_href, report)
     if runtime_href == "runtime":
         from . import tokens

@@ -37,6 +37,16 @@ Data palettes use the "context in grey, story in colour" approach, plus:
 - sequential ramps (`fjord`, `cobalt`, `shale`)
 - a cobalt ↔ ochre diverging scale
 
+## The header band
+
+A story's hero can open on the seismic itself instead of the drawn horizon motif: a window of a real
+section with its interpreted surfaces, the story's own surface in the highlight colour, drawn in the
+page's tokens (`runtime/js/horizon-band.js`). The story supplies one JSON file in the contract of
+[docs/header-contract.md](docs/header-contract.md) and names it in the front matter
+(`horizon: { data: header, highlight: ... }`); the build reserves the band's height, copies the file
+to the site and lists it in the appendix with its attribution and confidence. `horizon: true` keeps
+the motif.
+
 ## Symbols
 
 Well, wellbore and installation symbols after the [Sodir Geostandard](https://www.sodir.no/globalassets/2-force/2022/dokumenter/geostandard-ekstern.pdf)

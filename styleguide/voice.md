@@ -25,7 +25,7 @@ Inspired by Norwegian architecture and interiors rather than a generic "Scandina
 | Function first, made to last | Few and Tufte at the core; timeless type, stable tokens, no trend effects |
 | *Lagom*: just enough | One accent, one highlight; registers as three measures of "enough" |
 | Truth to materials | Observed / Derived / Interpreted; the rock itself is the texture, never imitation |
-| The horizon (Sverre Fehn) | Horizontal compositions, strong baselines, the horizon motif; a seismic horizon is an interpreted surface |
+| The horizon (Sverre Fehn) | Horizontal compositions, strong baselines, the horizon motif; a seismic horizon is an interpreted surface. When the story has seismic, the hero carries the real thing: a window of the section with its interpreted surfaces, the story's own in the highlight (the header band, `docs/header-contract.md`); the drawn motif is for stories without it |
 | The platform in the landscape (Fehn; the Scenic Routes) | Annotation as a viewpoint: frame the data, don't dominate it. One dramatic platform per story at most |
 | Democratic design (Oslo Opera House roof) | Accessible, open, readable on a phone, free to read; glossary for domain terms |
 | Restraint, never cold | One warm light in a cool room: the ochre highlight, *koselig* |

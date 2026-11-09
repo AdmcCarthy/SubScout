@@ -27,7 +27,8 @@ register: section         # core | section | outcrop
 palette: tide             # data-colour preset
 surface: nordic-cool      # room
 units: sm3                # starting unit; the reader can toggle
-horizon: true             # horizon motif in the hero
+horizon: true             # horizon motif in the hero; or a real section:
+# horizon: { data: header, highlight: Hugin Fm top, height: 150 }   (docs/header-contract.md)
 kpis:                     # hero ledger: metric + label
   - { metric: n_licences, label: production licences granted }
 sources:
