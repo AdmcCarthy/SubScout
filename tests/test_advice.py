@@ -84,4 +84,4 @@ def test_advice_is_in_the_report_and_never_an_error(tmp_path):
     out = tmp_path / "out"
     rep = build(d, out)
     assert rep.errors == [] and rep.advice
-    assert json.loads((out / "build-report.json").read_text())["advice"] == rep.advice
+    assert json.loads((out / "build-report.json").read_text(encoding="utf-8"))["advice"] == rep.advice

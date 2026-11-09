@@ -59,7 +59,7 @@ def test_network_chart_builds(tmp_path):
     (d / "story.py").write_text("def metrics(d):\n    return {}\n")
     rep = build(d, tmp_path / "o")
     assert rep.errors == []
-    html = (tmp_path / "o" / "index.html").read_text()
+    html = (tmp_path / "o" / "index.html").read_text(encoding="utf-8")
     payload = json.loads(html.split('id="ss-payload"')[1].split(">", 1)[1].split("</script>")[0])
     fig = payload["figures"]["net"]["data"]
     assert fig["frames"] == ["a", "b"] and len(fig["nodes"]["b"]) == 4
