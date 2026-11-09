@@ -13,7 +13,7 @@ overridden per figure (`register:` in a block). The truth gate applies in all th
 | Motion | State changes only | Staged d3 transitions | Choreographed: explode and regroup, force layouts |
 | Obligations | Action titles; exact values available | Annotation and fact strip | A "how to read this" step, and a **standard view** toggle showing the same data as a conventional chart |
 
-## Guidance
+## Guidance **[Default]**
 
 - **One Outcrop moment per story** is usually enough: typically the opening hook (Bremer: draw people
   in before insight can land). Wu's caution applies: flashy is not the goal; the story has to resonate.

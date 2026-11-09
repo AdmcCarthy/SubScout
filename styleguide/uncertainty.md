@@ -27,7 +27,7 @@ Uncertainty is native to subsurface work, so it is a first-class feature, not a 
   charge and timing); show it as a product, so the reader sees which element dominates the risk.
 - Pre-drill predictions and post-drill results are shown together whenever both exist.
 
-## Rules
+## Rules **[Law]** for Interpreted values, **[Default]** for the forms above
 
 - Interpreted values never appear without a range or a stated assumption.
 - Ranges use the same colour as their P50, lighter; never a new hue.

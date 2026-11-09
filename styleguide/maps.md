@@ -1,6 +1,6 @@
 # Maps
 
-## Choropleth honesty (truth gate)
+## Choropleth honesty (truth gate) **[Law]**
 
 - **Normalise:** shade rates or densities, never raw counts; counts use symbols.
 - **Area bias:** large regions dominate the eye. On the shelf, big Barents Sea blocks outweigh the
@@ -9,7 +9,7 @@
   strip: it changes the story.
 - **Smooth small-sample areas** or flag them.
 
-## Forms by job
+## Forms by job **[Default]**
 
 | Form | Use for |
 |---|---|

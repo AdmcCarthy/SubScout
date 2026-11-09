@@ -56,7 +56,7 @@ The rigour of Few and Tufte; the honesty of Cairo, expressed as observation vers
 the delight of Bremer and Wu, drawn from the subject itself (strata, seismic, contours) rather than
 from decoration.
 
-## Variety: one device does not run the whole piece
+## Variety: one device does not run the whole piece **[Default]**
 
 A catchy headline is a device, and a device works because it is rare. Adam's rule: **the article headline may be creative;
 the same technique must not be repeated in every text box and sub-story.** The same applies to structure.
