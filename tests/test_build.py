@@ -6,7 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from subscout.build import about, build, untraced_numbers
+from subscout.build import (
+    CONFIDENCE_DOC,
+    STORE_GRADES,
+    about,
+    build,
+    grade_of,
+    norm_conf,
+    store_grades,
+    untraced_numbers,
+)
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo"
 
@@ -175,3 +184,30 @@ def test_export_command_points_to_plate(capsys):
 
     assert main(["export", "_site"]) == 2
     assert "plate render _site" in capsys.readouterr().out
+
+
+def test_store_grades_read_from_the_vendored_confidence_table():
+    assert CONFIDENCE_DOC.exists()
+    assert store_grades() == STORE_GRADES  # the built-in fallback has not drifted from Idiom's table
+
+
+def test_store_grade_maps_to_reader_level(tmp_path):
+    assert [norm_conf(g) for g in ("exact", "verified", "inferred")] == ["observed", "derived", "interpreted"]
+    assert grade_of("placeholder") == "placeholder" and grade_of("observed") is None
+    assert store_grades(tmp_path / "missing.md") == STORE_GRADES
+
+
+def test_placeholder_grade_warns_and_builds_as_interpreted(tmp_path):
+    body = """```chart
+type: bars
+data: decades
+label: decade
+value: discoveries
+title: T
+source: s
+confidence: placeholder
+```
+{{ n }}"""
+    rep = build(_story(tmp_path, body), tmp_path / "o")
+    assert not any("confidence" in e for e in rep.errors)
+    assert any("placeholder" in w for w in rep.warnings)

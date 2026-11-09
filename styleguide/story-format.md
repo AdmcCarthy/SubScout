@@ -112,7 +112,7 @@ Text outside steps flows as normal article content; chart and table blocks there
 ## Chart blocks
 
 Common keys: `id`, `type`, `data`, `title` (an action title), `subtitle`, `source`, `confidence`
-(`observed | derived | interpreted`), `notes`, `register`, `exception: {rule, reason}`, `unit`.
+(`observed | derived | interpreted`, or a knowledge-store grade such as `verified` or `placeholder`, which the build maps to its level using the vendored `vendor/idiom/house/confidence.md`), `notes`, `register`, `exception: {rule, reason}`, `unit`.
 
 | `type` | Data | Encoding keys | State keys (for `use:`) |
 |---|---|---|---|
