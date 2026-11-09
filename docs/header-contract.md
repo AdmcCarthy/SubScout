@@ -14,7 +14,11 @@ data:
 `data` names the dataset; `highlight` is the surface drawn in the highlight colour
 (default: the file's own `highlight`); `height` is the band's height in css pixels (80 to
 400, default 150), reserved in the layout so nothing shifts when the data arrive; `label`
-turns the one-line label under the band off. The build copies the file to `data/<name>.json`
+turns the one-line label under the band off; `palette` is `shale` (default: neutral,
+positive lobes dark, negative light) or `fjord` (each reflector down a trace takes the next
+ink in turn from the saturated fjord and cobalt steps, so the layers alternate in colour;
+seismic does not do that, a header may). A hero at the minimum height with the fade, no
+label and the fjord palette is the house setting. The build copies the file to `data/<name>.json`
 in the site and the page fetches it after first paint. The appendix gains a "Header band"
 source line with the attribution, the source file, and the confidence of what is shown.
 

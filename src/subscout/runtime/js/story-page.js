@@ -26,6 +26,7 @@ if (hz && hz.dataset.header) {
       height: hz.clientHeight || 150,
       highlight: hz.dataset.highlight || P.highlight,
       caption: hz.dataset.label !== "0",
+      palette: hz.dataset.bandPalette || "shale",
     });
     let w = 0, queued = false;
     new ResizeObserver(([e]) => {
