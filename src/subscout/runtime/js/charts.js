@@ -363,7 +363,11 @@ export function dotStrip(el, data, { label = "Dot strip", legendEl = null, spec 
       legendEl.innerHTML = `<span><i style="background:var(--ss-text-subtle);border-radius:50%"></i>${spec.value_label ?? "one dot per item"}</span>`
         + `<span><i style="border:2px solid var(--ss-text-subtle);border-radius:50%;width:10px;height:10px"></i>${spec.flag_label}</span>`;
     }
-    const rh = 28, m = { t: 8, r: 14, b: 28, l: W < 420 ? 96 : 124 };
+    const m = { t: 8, r: 14, b: 28, l: W < 420 ? 96 : 124 };
+    // rows are at least 28 px, and grow so a strip with few rows still fills about a fifth of the
+    // screen (the readability gate's floor); capped so one row does not become a void
+    const minH = Math.round((window.innerHeight || 800) * 0.22);
+    const rh = Math.min(96, Math.max(28, Math.floor((minH - m.t - m.b) / rows.length)));
     const H = m.t + m.b + rows.length * rh;
     const max = d3.max(data, (d) => d.value) || 1;
     const x = (spec.scale === "symlog" ? d3.scaleSymlog().constant(1) : spec.scale === "sqrt" ? d3.scaleSqrt() : d3.scaleLinear())
