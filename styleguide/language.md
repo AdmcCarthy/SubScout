@@ -33,6 +33,9 @@ same words.
 | **Derived** | Calculated from observed data | "Calculated from…", plus the method | ring |
 | **Interpreted** | Depends on a model, assumption or judgement | Calibrated hedges ("likely", "around", "roughly") plus the assumption | diamond |
 
+- The build also accepts a knowledge-store grade in place of the level (`exact`, `official` → Observed; `verified` → Derived;
+  `published`, `contested`, `inferred`, `placeholder` → Interpreted), reading the mapping from `vendor/idiom/house/confidence.md`.
+  A `placeholder` raises a build warning: it waits for data and stays out of headline figures and KPIs.
 - Interpreted values carry their range or assumption (see [uncertainty.md](uncertainty.md)).
 - Certainty words ("will", "proves", "certainly") are flagged when attached to Interpreted figures
   *(language check)*.

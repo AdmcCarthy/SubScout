@@ -30,6 +30,18 @@ from .layout import network_layout
 PKG = Path(__file__).parent
 CONFIDENCE = ("observed", "derived", "interpreted")
 CONFIDENCE_ALIASES = {"reported": "observed", "estimated": "interpreted"}
+# Knowledge-store grades and the reader level each becomes: the table in Idiom's house/confidence.md, read from the
+# vendored copy at build time. This fallback must match it (tests/test_build.py checks).
+STORE_GRADES = {
+    "exact": "observed",
+    "official": "observed",
+    "verified": "derived",
+    "published": "interpreted",
+    "contested": "interpreted",
+    "inferred": "interpreted",
+    "placeholder": "interpreted",
+}
+CONFIDENCE_DOC = PKG.parent.parent / "vendor" / "idiom" / "house" / "confidence.md"
 REGISTERS = ("core", "section", "outcrop")
 TRUTH_GATE = {"dual-axis", "area-scaling", "source", "confidence", "lie-factor"}
 CHART_TYPES = {"line", "bars", "stack", "dots", "map", "heat", "diverging", "network", "custom"}
@@ -298,9 +310,29 @@ def parse_attrs(s: str | None) -> dict:
     return {k: q or b for k, q, b in re.findall(r'(\w[\w-]*)=(?:"([^"]*)"|([\w\-]+))', s or "")}
 
 
+def store_grades(doc: Path = CONFIDENCE_DOC) -> dict[str, str]:
+    """Store grade → reader level, from the grade table in Idiom's confidence.md; the built-in table if it is absent."""
+    try:
+        text = doc.read_text(encoding="utf-8")
+    except OSError:
+        return dict(STORE_GRADES)
+    rows = re.findall(r"^\|\s*`(\w+)`\s*\|[^|]*\|\s*(Observed|Derived|Interpreted)", text, re.M)
+    return {g: lv.lower() for g, lv in rows} or dict(STORE_GRADES)
+
+
+GRADES = store_grades()
+
+
 def norm_conf(c: str | None) -> str | None:
+    """A reader level from a level, an alias or a knowledge-store grade (`verified` → derived, `inferred` → interpreted)."""
     c = (c or "").lower() or None
-    return CONFIDENCE_ALIASES.get(c, c)
+    return GRADES.get(c) or CONFIDENCE_ALIASES.get(c, c)
+
+
+def grade_of(c: str | None) -> str | None:
+    """The store grade if `c` is one (so the page can say `placeholder`, `published`...), else None."""
+    c = (c or "").lower()
+    return c if c in GRADES else None
 
 
 # ------------------------------------------------------------------ data preparation per chart type
@@ -633,6 +665,10 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
             k: (v if isinstance(v, Metric) else metric(v)) for k, v in (mod.metrics(data) or {}).items()
         }
     for k, m in metrics.items():
+        if grade_of(m.confidence) == "placeholder":
+            report.warn(
+                f"metric '{k}': a placeholder waits for data; keep it out of headline figures and KPIs"
+            )
         m.confidence = norm_conf(m.confidence) or "derived"
         if m.confidence not in CONFIDENCE:
             report.error(f"metric '{k}': confidence '{m.confidence}' invalid")
@@ -679,6 +715,10 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
                 ids.append(fid)
                 return ""
             fid = spec.get("id") or f"fig{len(figures) + 1}"
+            if grade_of(spec.get("confidence")) == "placeholder":
+                report.warn(
+                    f"{where} ({fid}): a placeholder waits for data; label it so and keep it out of headlines"
+                )
             spec["confidence"] = norm_conf(spec.get("confidence"))
             if not spec.get("title"):
                 report.error(f"{where} ({fid}): an action title is required")
