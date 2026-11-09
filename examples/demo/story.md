@@ -10,7 +10,7 @@ register: section
 palette: tide
 surface: nordic-cool
 units: sm3
-horizon: true
+horizon: { data: header, highlight: reservoir top, height: 140 }
 kpis:
   - { metric: n_fields, label: fields in the synthetic basin }
   - { metric: longest_plateau, label: years on plateau for the longest-lived field }
@@ -25,6 +25,7 @@ data:
   fields: data/fields.csv
   decades: data/decades.csv
   wells: data/wells.csv
+  header: data/header.json
 ---
 
 This page demonstrates the SubScout story format. Every number in the text is computed from the data

@@ -56,7 +56,8 @@
     </div>
     {% if kpis %}<div class="ss-kpis">{% for k in kpis %}<div><b class="ss-num">{{ k.html }}</b><span>{{ esc(k.label) }}</span></div>{% endfor %}</div>{% endif %}
   </div>
-  {% if fm.horizon %}<div class="ss-horizon" id="ss-hero-horizon" aria-hidden="true"></div>{% endif %}
+  {% if header %}<div class="ss-horizon ss-horizon--data" id="ss-hero-horizon" role="img" aria-label="{{ esc(header.aria) }}" data-header="{{ esc(header.name) }}" data-highlight="{{ esc(header.highlight or '') }}" data-label="{{ 1 if header.label else 0 }}" style="height:{{ header.height }}px"></div>
+  {% elif fm.horizon %}<div class="ss-horizon" id="ss-hero-horizon" aria-hidden="true"></div>{% endif %}
 </header>
 
 <main>
@@ -91,7 +92,7 @@
   <div class="ss-appendix-grid">
     <div>
       <h3>Sources</h3>
-      <ul class="ss-sources">{% for k, s in sources.items() %}<li><b>{{ esc(s.name or k) }}</b>{% if s.url %}, <a href="{{ esc(s.url) }}">{{ esc(s.url) }}</a>{% endif %}{% if s.accessed %}, accessed {{ s.accessed }}{% endif %}{% if s.licence %}. Licence: {{ esc(s.licence) }}{% endif %}{% if s.note %}. {{ esc(s.note) }}{% endif %}</li>{% endfor %}</ul>
+      <ul class="ss-sources">{% for k, s in sources.items() %}<li><b>{{ esc(s.name or k) }}</b>{% if s.url %}, <a href="{{ esc(s.url) }}">{{ esc(s.url) }}</a>{% endif %}{% if s.accessed %}, accessed {{ s.accessed }}{% endif %}{% if s.licence %}. Licence: {{ esc(s.licence) }}{% endif %}{% if s.note %}. {{ esc(s.note) }}{% endif %}</li>{% endfor %}{% if header %}<li><b>Header band</b>{% if header.text %}, {{ esc(header.text) }}{% endif %}. {{ esc(header.attribution) }}{% if header.source_file %} Source file: {{ esc(header.source_file) }}.{% endif %} The seismic texture is <span class="ss-conf" data-level="observed">Observed</span> (relative amplitude{% if header.domain %}, {{ esc(header.domain) }}{% endif %}{% if header.polarity %}, polarity {{ esc(header.polarity) }}{% endif %}); the surfaces are <span class="ss-conf" data-level="interpreted">Interpreted</span> picks drawn where they exist, nothing smoothed.</li>{% endif %}</ul>
       <h3>Conventions</h3>
       <ul class="ss-sources">
         <li><b>Confidence.</b> <span class="ss-conf" data-level="observed">Observed</span> measured or published by the source; <span class="ss-conf" data-level="derived">Derived</span> our calculation from observed data, method stated; <span class="ss-conf" data-level="interpreted">Interpreted</span> depends on a model, assumption or judgement.</li>

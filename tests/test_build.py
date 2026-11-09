@@ -211,3 +211,72 @@ confidence: placeholder
     rep = build(_story(tmp_path, body), tmp_path / "o")
     assert not any("confidence" in e for e in rep.errors)
     assert any("placeholder" in w for w in rep.warnings)
+
+
+def _header_json(n=6, ns=8, attribution="Synthetic section", surfaces=("top", "base")):
+    import base64
+
+    amp = bytes([(i * 37) % 256 for i in range(n * ns)])
+    return json.dumps(
+        {
+            "kind": "header",
+            "attribution": attribution,
+            "label": "a tiny section",
+            "source_file": "x.sgy",
+            "domain": {"vertical": "time", "vertical_unit": "ms"},
+            "polarity": "normal",
+            "n_traces": n,
+            "n_samples": ns,
+            "samples": [100 + 4 * j for j in range(ns)],
+            "amp_b64": base64.b64encode(amp).decode(),
+            "highlight": surfaces[0],
+            "surfaces": [{"label": s, "time": [110.0 + 5 * k] * n} for k, s in enumerate(surfaces)],
+        }
+    )
+
+
+def _header_story(tmp_path, front, header=None):
+    d = _story(tmp_path, "{{ n }}", front=front)
+    (d / "data" / "header.json").write_text(header or _header_json(), encoding="utf-8")
+    text = (d / "story.md").read_text()
+    (d / "story.md").write_text(
+        text.replace(
+            "data: { decades: data/decades.csv }",
+            "data: { decades: data/decades.csv, header: data/header.json }",
+        )
+    )
+    return d
+
+
+def test_header_band_is_reserved_fetched_and_declared(tmp_path):
+    d = _header_story(tmp_path, "horizon: { data: header, highlight: base, height: 120 }\n")
+    rep = build(d, tmp_path / "o")
+    assert rep.errors == []
+    html = (tmp_path / "o" / "index.html").read_text(encoding="utf-8")
+    assert 'data-header="header"' in html and 'data-highlight="base"' in html and "height:120px" in html
+    assert "aria-hidden" not in html.split('id="ss-hero-horizon"')[1].split(">")[0]
+    assert "Header band" in html and "Synthetic section" in html and "x.sgy" in html
+    assert (tmp_path / "o" / "data" / "header.json").exists()  # fetched by the page, not inlined
+    assert "amp_b64" not in html.split('id="ss-payload"')[1].split("</script>")[0]
+
+
+def test_header_band_checks_its_data(tmp_path):
+    d = _header_story(tmp_path / "a", "horizon: { data: header, highlight: nope }\n")
+    rep = build(d, tmp_path / "o")
+    assert any("highlight 'nope'" in e for e in rep.errors)
+    d = _header_story(tmp_path / "b", "horizon: { data: header }\n", header=_header_json(attribution="  "))
+    rep = build(d, tmp_path / "o2")
+    assert any("no attribution" in e for e in rep.errors)
+    d = _header_story(tmp_path / "c", "horizon: { data: missing }\n")
+    rep = build(d, tmp_path / "o3")
+    assert any("'data' must name a dataset" in e for e in rep.errors)
+    d = _header_story(tmp_path / "d", "horizon: { data: header, height: 20 }\n")
+    rep = build(d, tmp_path / "o4")
+    assert any("height" in e for e in rep.errors)
+
+
+def test_horizon_true_still_draws_the_motif(tmp_path):
+    rep = build(_story(tmp_path, "{{ n }}", front="horizon: true\n"), tmp_path / "o")
+    assert rep.errors == []
+    html = (tmp_path / "o" / "index.html").read_text(encoding="utf-8")
+    assert 'id="ss-hero-horizon" aria-hidden="true"' in html and "data-header" not in html

@@ -10,8 +10,33 @@ bindSeg(document.getElementById("ctl-units"), units);
 refreshUnits();
 
 // ---------------------------------------------------------------- hero horizon
+// `horizon: true` draws the procedural motif; `horizon: {data: name}` fetches the story's
+// header export after first paint (its height is reserved by the template) and draws
+// the real section with its surfaces (horizon-band.js).
 const hz = document.getElementById("ss-hero-horizon");
-if (hz) {
+if (hz && hz.dataset.header) {
+  (async () => {
+    const [{ horizonBand }, r] = await Promise.all([
+      import("./horizon-band.js"),
+      fetch(new URL(`data/${hz.dataset.header}.json`, document.baseURI)),
+    ]);
+    if (!r.ok) throw new Error(`header data ${r.status}`);
+    const P = await r.json();
+    const band = horizonBand(hz, P, {
+      height: hz.clientHeight || 150,
+      highlight: hz.dataset.highlight || P.highlight,
+      caption: hz.dataset.label !== "0",
+    });
+    let w = 0, queued = false;
+    new ResizeObserver(([e]) => {
+      const nw = Math.round(e.contentRect.width);
+      if (!nw || nw === w || queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; band.draw((w = Math.round(hz.clientWidth))); });
+    }).observe(hz);
+    onSchemeChange(() => band.repaint());
+  })().catch((e) => console.error("horizon band:", e));
+} else if (hz) {
   const h = horizon(hz, { seed: 7, height: 100, label: "Horizon motif" });
   let w = 0;
   new ResizeObserver(([e]) => { const nw = Math.round(e.contentRect.width); if (nw && nw !== w) h.draw((w = nw)); }).observe(hz);

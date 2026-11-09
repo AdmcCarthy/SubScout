@@ -20,6 +20,8 @@
 .ss-kpis b { display: block; font-family: var(--ss-font-display); font-weight: 500; font-size: clamp(1.8rem, 3.4vw, 2.5rem); line-height: 1.05; }
 .ss-kpis div > span { font-size: var(--ss-size-caption); color: var(--ss-text-subtle); display: block; margin-top: 2px; line-height: 1.35; }
 .ss-hero .ss-horizon { margin-top: var(--ss-space-xl); }
+.ss-horizon--data { width: 100%; overflow: hidden; }  /* height set inline: reserved before the data arrive */
+.ss-horizon--data canvas { display: block; width: 100%; }
 
 /* numbers from data */
 .ss-n { text-decoration: underline dotted var(--ss-border); text-underline-offset: 3px; cursor: help; font-variant-numeric: tabular-nums lining-nums; }
