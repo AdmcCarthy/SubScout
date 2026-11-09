@@ -4,7 +4,7 @@ Three layers: a **truth gate** that applies everywhere, **functional rules** tha
 relax, and a **review checklist**. Rules marked *(build)* are checked automatically; the rest are
 reviewed. Any rule except the truth gate can be bent with a **declared exception**.
 
-## 1. The truth gate (all registers, never relaxed)
+## 1. The truth gate (all registers, never relaxed) **[Law]**
 
 Cairo puts *truthful* first of his five qualities. One rule per failure mode in *How Charts Lie*:
 
@@ -16,7 +16,7 @@ Cairo puts *truthful* first of his five qualities. One rule per failure mode in 
 | Hidden uncertainty | Show ranges where they exist (see [uncertainty.md](uncertainty.md)). Interpreted values never appear without their range or assumption. |
 | Misleading patterns | Correlation is described as association unless a mechanism is shown *(language check)*. |
 
-**Numbers in prose are computed from data** (`{{ … }}` expressions) *(build)*. Hand-typed numbers are
+**[Default] Numbers in prose are computed from data** (`{{ … }}` expressions) *(build)*. Hand-typed numbers are
 listed as "untraced" in the build report; a cited external figure uses `{{ 57 | cite: source }}`.
 
 **The disclosure rule.** Any persuasive choice that changes how a reader sees the data is visible on
@@ -25,7 +25,7 @@ fact strip or notes, and in the appendix.
 
 **Simulated or illustrative data** is labelled as such on the figure.
 
-## 2. Functional rules (Few, Tufte, Schwabish)
+## 2. Functional rules (Few, Tufte, Schwabish) **[Default]**
 
 - **Choose the form by the relationship** (Few): time series, ranking, part-to-whole, deviation,
   distribution, correlation, nominal comparison, plus *geographic* and *depth*. A chart block declares
@@ -39,7 +39,7 @@ fact strip or notes, and in the appendix.
 - **No pie or donut** by default (exception allowed for two- or three-part wholes).
 - **3D** only when it is the right encoding (surfaces, structure, trajectories), with a one-line reason.
 
-## 3. Colour rules
+## 3. Colour rules **[Default]**
 
 Few's nine rules (2008), mostly enforced by the palette engine and tests:
 
@@ -56,7 +56,7 @@ Few's nine rules (2008), mostly enforced by the palette engine and tests:
 SubScout additions: colour follows the entity, never its rank; identity palettes in fixed order; more
 entities than slots fold into "Other" (context grey); pages use role tokens, never raw hex.
 
-## 4. Declared exceptions
+## 4. Declared exceptions (how a Default is bent)
 
 A chart or table block may bend a functional or colour rule, openly:
 
@@ -67,7 +67,7 @@ exception: { rule: zero-baseline, reason: "Differences of a few percent are the 
 The figure shows a small note, and the appendix lists every exception. Truth-gate rules cannot be
 excepted.
 
-## 5. Review checklist (Tufte, *Beautiful Evidence*)
+## 5. Review checklist (Tufte, *Beautiful Evidence*) **[Default]**
 
 Before a story is published, answer for each step:
 
