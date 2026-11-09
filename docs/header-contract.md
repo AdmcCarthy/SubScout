@@ -1,4 +1,4 @@
-# The header contract
+﻿# The header contract
 
 A story may open with a **header band**: a window of a real seismic section with its
 interpreted surfaces, drawn by `runtime/js/horizon-band.js` in the page's tokens, in place
