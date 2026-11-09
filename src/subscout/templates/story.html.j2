@@ -56,7 +56,7 @@
     </div>
     {% if kpis %}<div class="ss-kpis">{% for k in kpis %}<div><b class="ss-num">{{ k.html }}</b><span>{{ esc(k.label) }}</span></div>{% endfor %}</div>{% endif %}
   </div>
-  {% if header %}<div class="ss-horizon ss-horizon--data" id="ss-hero-horizon" role="img" aria-label="{{ esc(header.aria) }}" data-header="{{ esc(header.name) }}" data-highlight="{{ esc(header.highlight or '') }}" data-label="{{ 1 if header.label else 0 }}" style="height:{{ header.height }}px"></div>
+  {% if header %}<div class="ss-horizon ss-horizon--data" id="ss-hero-horizon" role="img" aria-label="{{ esc(header.aria) }}" data-header="{{ esc(header.name) }}" data-highlight="{{ esc(header.highlight or '') }}" data-label="{{ 1 if header.label else 0 }}" data-band-palette="{{ header.palette }}" style="height:{{ header.height }}px"></div>
   {% elif fm.horizon %}<div class="ss-horizon" id="ss-hero-horizon" aria-hidden="true"></div>{% endif %}
 </header>
 

@@ -149,7 +149,8 @@ def load_data(root: Path, spec: dict, report: Report) -> dict[str, Any]:
     return out
 
 
-HEADER_KEYS = {"data", "highlight", "height", "label"}
+HEADER_KEYS = {"data", "highlight", "height", "label", "palette"}
+HEADER_PALETTES = ("shale", "fjord")
 
 
 def check_header(fm: dict, data: dict, report: Report) -> dict | None:
@@ -188,6 +189,10 @@ def check_header(fm: dict, data: dict, report: Report) -> dict | None:
     if not isinstance(height, int) or not 80 <= height <= 400:
         report.error(f"horizon: height must be a whole number of pixels from 80 to 400, got {height!r}")
         height = 150
+    palette = spec.get("palette", "shale")
+    if palette not in HEADER_PALETTES:
+        report.error(f"horizon: palette must be one of {HEADER_PALETTES}, got {palette!r}")
+        palette = "shale"
     dom = P.get("domain") or {}
     domain = (
         f"{'TWT' if dom.get('vertical') == 'time' else dom.get('vertical', '')} [{dom.get('vertical_unit', '')}]"
@@ -200,6 +205,7 @@ def check_header(fm: dict, data: dict, report: Report) -> dict | None:
         "highlight": highlight,
         "height": height,
         "label": bool(spec.get("label", True)),
+        "palette": palette,
         "text": text,
         "attribution": str(P.get("attribution", "")).strip(),
         "source_file": P.get("source_file", ""),
