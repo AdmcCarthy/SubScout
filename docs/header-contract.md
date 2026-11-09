@@ -1,4 +1,4 @@
-# The header contract
+﻿# The header contract
 
 A story may open with a **header band**: a window of a real seismic section with its
 interpreted surfaces, drawn by `runtime/js/horizon-band.js` in the page's tokens, in place
@@ -18,7 +18,7 @@ turns the one-line label under the band off; `palette` is `shale` (default: neut
 positive lobes dark, negative light) or `fjord` (each reflector down a trace takes the next
 ink in turn from the saturated fjord and cobalt steps, so the layers alternate in colour;
 seismic does not do that, a header may). A hero at the minimum height with the fade, no
-label and the fjord palette is the house setting. The build copies the file to `data/<name>.json`
+label and the shale palette (a detuned wash, never past half opacity) is the house setting. The build copies the file to `data/<name>.json`
 in the site and the page fetches it after first paint. The appendix gains a "Header band"
 source line with the attribution, the source file, and the confidence of what is shown.
 

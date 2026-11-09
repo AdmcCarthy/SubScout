@@ -1,16 +1,16 @@
-# Story format (v0.1)
+﻿# Story format (v0.1)
 
 A story is a folder:
 
 ```
 my-story/
-├── story.md     narrative: front matter + Markdown + steps + chart/table blocks
-├── story.py     optional: metrics (numbers for the prose) and derived datasets
-└── data/        inputs: CSV, Parquet, JSON, GeoJSON
+â”œâ”€â”€ story.md     narrative: front matter + Markdown + steps + chart/table blocks
+â”œâ”€â”€ story.py     optional: metrics (numbers for the prose) and derived datasets
+â””â”€â”€ data/        inputs: CSV, Parquet, JSON, GeoJSON
 ```
 
 Build it with `uv run subscout build my-story --out _site`. The build fails on errors (unknown
-metric, missing source, figure without confidence…) and prints warnings (untraced numbers, missing
+metric, missing source, figure without confidenceâ€¦) and prints warnings (untraced numbers, missing
 beats).
 
 ## Front matter
@@ -19,7 +19,7 @@ beats).
 ---
 title: Close to home
 dek: Norway's latest licensing round was about filling gaps.
-kicker: NCS · APA 2025 · granted 20 March 2026
+kicker: NCS Â· APA 2025 Â· granted 20 March 2026
 byline: Adam McCarthy
 date: 2026-11-07
 arc: scqa                 # see arcs.md; steps are checked against its beats
@@ -28,7 +28,7 @@ palette: tide             # data-colour preset
 surface: nordic-cool      # room
 units: sm3                # starting unit; the reader can toggle
 horizon: true             # horizon motif in the hero; or a real section:
-# horizon: { data: header, height: 80, label: false, palette: fjord }   (docs/header-contract.md)
+# horizon: { data: header, height: 80, label: false }   (docs/header-contract.md)
 kpis:                     # hero ledger: metric + label
   - { metric: n_licences, label: production licences granted }
 sources:
@@ -48,10 +48,10 @@ used appears in the appendix numbers ledger with its value, method, source and c
 |---|---|
 | `int` | 1,234 |
 | `round:1` | 12.3 |
-| `pct` | 0.63 → 63% (a share in 0–1) |
+| `pct` | 0.63 â†’ 63% (a share in 0â€“1) |
 | `about` | rounds to two significant figures and prefixes "about" |
-| `signed` | +3.4 / −2.1 |
-| `volume` | Sm³ value, shown in the reader's unit (Sm³ ⇄ boe toggle) |
+| `signed` | +3.4 / âˆ’2.1 |
+| `volume` | SmÂ³ value, shown in the reader's unit (SmÂ³ â‡„ boe toggle) |
 | `km`, `km2` | appends the unit |
 | `cite:<source>` | a literal external figure, cited (use for numbers not computed here) |
 | `param` | a literal threshold or definition chosen for the story (`{{ 25 \| param }} km`); listed in the ledger as a parameter |
@@ -77,7 +77,7 @@ def metrics(d):  # numbers the prose may use
         ),
         "near_1km": metric(
             (a.dist_km <= 1).sum(),
-            "Licences ≤ 1 km from a producing field",
+            "Licences â‰¤ 1 km from a producing field",
             source="sodir",
             confidence="derived",
         ),
@@ -90,7 +90,7 @@ available as `<name>_props`.
 ## Steps
 
 Consecutive steps form one scrolly sequence that also plays as a deck in Present mode. Put `layout=wide` on the
-first step (`::: step {beat=… layout=wide}`) for a showpiece figure: its frame spans the page and the
+first step (`::: step {beat=â€¦ layout=wide}`) for a showpiece figure: its frame spans the page and the
 step cards scroll in a lane inside it (phones and Present mode are unchanged). Each step may
 contain one chart block; a block with `use: <id>` changes the state of an earlier chart, so it
 transitions instead of being replaced.
@@ -98,12 +98,12 @@ transitions instead of being replaced.
 ````markdown
 ::: step {beat=situation}
 ### 56 new licences among hundreds of old ones
-Prose…
+Proseâ€¦
 
 ```chart
 id: shelf
 type: map
-…
+â€¦
 ```
 :::
 ````
@@ -119,16 +119,16 @@ Common keys: `id`, `type`, `data`, `title` (an action title), `subtitle`, `sourc
 |---|---|---|---|
 | `line` | tidy table | `x`, `y`, `series` | `focus: [series]`, `note: {series, x, text}` |
 | `bars` | table | `label`, `value`, optional `part` (stack), `colour_by` | `highlight: [labels]`, `sort` |
-| `stack` | tidy table | `x`, `y`, `series` | — |
+| `stack` | tidy table | `x`, `y`, `series` | â€” |
 | `dots` | table | `row`, `value`, `label`, `flag`, `scale: linear | sqrt | symlog` | `highlight: [labels]` |
 | `map` | GeoJSON layers | `layers: [{data, role, colour_by}]`, `labels` | `view: [w, s, e, n]`, `filter: {prop: value}`, `colour_by` |
-| `heat` | tidy table | `x`, `y`, `value`, `rows` (list, or `data` for data order), `value_label` | — |
+| `heat` | tidy table | `x`, `y`, `value`, `rows` (list, or `data` for data order), `value_label` | â€” |
 | `diverging` | table | `label`, `value` | `sort` |
 | `custom` | any datasets (`data: name` or a list) | `module: figures/x.js` (a story-supplied ES module) | anything in `state:`; `use:` steps pass their keys through |
 
 **Export pages.** Add `export: true` (or `export: {sizes: [slide, portrait, square], themes: [light, dark]}`)
 to a detailed figure that readers will want as an image. The build writes `export/<id>/`: the figure alone on
-a fixed artboard (slide 1600×900, portrait 1200×1500, square 1200×1200) with title, legend, source, units,
+a fixed artboard (slide 1600Ã—900, portrait 1200Ã—1500, square 1200Ã—1200) with title, legend, source, units,
 confidence and byline, a toolbar for size, view (the figure's own state and every `use:` step, named after
 the step), theme and units. `payload.json` beside it is the export contract (docs/export-contract.md): **Plate**
 (`uv run plate render _site`) reads it and renders PDF and PNG at real paper sizes, A4 to A0, with the same chart code.
@@ -161,7 +161,7 @@ kind: league            # league | ledger
 data: awards_props
 columns:
   - { field: name, label: Licence }
-  - { field: km2, label: Area, unit: km², bar: true, format: int }
+  - { field: km2, label: Area, unit: kmÂ², bar: true, format: int }
 sort: -km2
 highlight: { operator: Aker BP }
 fold: 10
