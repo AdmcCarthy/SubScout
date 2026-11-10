@@ -26,6 +26,8 @@ from markdown_it import MarkdownIt
 from . import colour as C
 from .advice import style_advice
 from .layout import network_layout
+from .layouts import choose as choose_layout
+from .layouts import normalise as normalise_layout
 
 PKG = Path(__file__).parent
 CONFIDENCE = ("observed", "derived", "interpreted")
@@ -875,6 +877,22 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
                 if not st["figs"]:
                     report.warn(f"step {st['index'] + 1} has no chart; it will keep the previous view")
             s["figs"] = list(dict.fromkeys(f.split("@")[0] for st in s["steps"] for f in st["figs"]))
+            named = []
+            for st in s["steps"]:
+                try:
+                    named.append(normalise_layout(st["attrs"].get("layout")))
+                except ValueError as e:
+                    report.error(f"step {st['index'] + 1}: {e}")
+            base = []
+            for fid in s["figs"]:
+                f = by_id.get(fid)
+                f = by_id.get(f.spec.get("use"), f) if f is not None and f.kind == "state" else f
+                if f is not None and f.kind == "chart":
+                    base.append((f.spec, f.payload))
+            s["layout"], why = choose_layout(next((n for n in named if n), None), base)
+            report.advice.append(
+                f"scrolly starting at step {s['steps'][0]['index'] + 1}: layout {s['layout']} ({why})"
+            )
 
     # arc check
     arc = fm.get("arc")

@@ -276,6 +276,28 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
   :root:not([data-mode="present"]) .ss-scrolly--wide .ss-graphic > .ss-figure { padding-left: calc(var(--ss-lane, 21rem) + var(--ss-space-l)); }
 }
 
+/* full scrolly (`layout=full`, or chosen when a figure needs the width): the figure is pinned at the top at the page's full width and
+   the step cards scroll up beneath it, one at a time, as on a phone. --ss-gfx is the pinned figure's height, set by the runtime. */
+@media (min-width: 761px) {
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-story { grid-template-columns: minmax(0, 1fr); gap: 0; --ss-gfx: 56vh; --ss-trigger: 80; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic {
+    grid-row: 1; grid-column: 1; position: sticky; top: var(--ss-topbar-h, 0px); z-index: 3; height: auto; display: block;
+    padding-block: 6px 0; background: var(--ss-canvas); align-self: start;
+  }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic::after { content: ""; position: absolute; left: 0; right: 0; bottom: -18px; height: 18px; pointer-events: none;
+    background: linear-gradient(var(--ss-canvas), color-mix(in oklab, var(--ss-canvas) 0%, transparent)); }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-layers { position: relative; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-layers > .ss-layer:not(.is-on) { position: absolute; inset: 0 0 auto 0; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-figure { padding: 10px 0 6px; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-facts > div:not(:first-child) { display: none; }  /* full notes stay in the appendix */
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-facts { display: block; margin-top: 4px; padding-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-facts > div, :root:not([data-mode="present"]) .ss-scrolly--full .ss-graphic .ss-facts dd { display: inline; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-steps { grid-row: 1; grid-column: 1; z-index: 1; padding-top: calc(var(--ss-gfx) + 6vh); padding-bottom: 20vh; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-step { min-height: 0; display: block; padding-bottom: 40vh; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-step:last-child { padding-bottom: 10vh; }
+  :root:not([data-mode="present"]) .ss-scrolly--full .ss-step-card { opacity: 1; max-width: 46rem; }
+}
+
 /* ------------------------------------------------------------ story: Present mode (deck) */
 .ss-deck-bar { display: none; }
 :root[data-mode="present"] body { overflow: hidden; }
@@ -309,3 +331,8 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
   :root[data-mode="present"] .ss-steps { grid-row: 2; align-items: start; }
   :root[data-mode="present"] .ss-step-card { font-size: 1rem; }
 }
+
+:root[data-mode="present"] .ss-scrolly--full .ss-story { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; padding-top: 3vh; gap: 2vh; }
+:root[data-mode="present"] .ss-scrolly--full .ss-graphic { grid-row: 1; }
+:root[data-mode="present"] .ss-scrolly--full .ss-steps { grid-row: 2; align-items: start; }
+:root[data-mode="present"] .ss-scrolly--full .ss-step-card { font-size: 1.05rem; max-width: 52rem; }
