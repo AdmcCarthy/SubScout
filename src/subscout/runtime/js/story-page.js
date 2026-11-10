@@ -51,7 +51,9 @@ function make(figEl, fig) {
   const legendEl = figEl.querySelector(".ss-legend");
   // vhShare: the share of the screen's height a figure may take. A full-width section pins its figure above the text, so it gets less.
   const full = !!figEl.closest(".ss-scrolly--full");
-  const o = { label: spec.title?.replace(/<[^>]+>/g, "") ?? "", legendEl, unitLabel: unitLabel(spec), spec, groups: spec.groups || payload.groups, layout: full ? "full" : "side", vhShare: full ? 0.6 : null };
+  // 0.42 leaves room beneath the pinned figure (its title, subtitle and source line add about 130 px) for a card of up to
+  // six lines on an 800 px screen, which is what the readability gate asks of every step
+  const o = { label: spec.title?.replace(/<[^>]+>/g, "") ?? "", legendEl, unitLabel: unitLabel(spec), spec, groups: spec.groups || payload.groups, layout: full ? "full" : "side", vhShare: full ? 0.42 : null };
   switch (spec.type) {
     case "line": return lineChart(el, data, { ...o, yFormat: spec.y_format, unitScaled: !!spec.volume });
     case "stack": return stackedBars(el, data, { ...o, colours: spec.colours, unitScaled: !!spec.volume });
