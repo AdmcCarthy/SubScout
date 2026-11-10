@@ -9,6 +9,12 @@
   strip: it changes the story.
 - **Smooth small-sample areas** or flag them.
 
+## Frame for the screen **[Default]**
+
+Map-heavy stories are designed for the web page on a wide screen first and the phone second. Cut map frames at 2:1, never
+narrower than 16:9, and ship images at twice the page frame (1,152 px), so a `full` layout map fills its width instead of
+being limited by the viewport height. The reference screens are in `vendor/idiom/house/screens.md`.
+
 ## Forms by job **[Default]**
 
 | Form | Use for |
