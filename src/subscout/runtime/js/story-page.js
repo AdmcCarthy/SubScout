@@ -49,7 +49,9 @@ function make(figEl, fig) {
   const { spec, data } = fig;
   const el = figEl.querySelector(".ss-chart");
   const legendEl = figEl.querySelector(".ss-legend");
-  const o = { label: spec.title?.replace(/<[^>]+>/g, "") ?? "", legendEl, unitLabel: unitLabel(spec), spec, groups: spec.groups || payload.groups };
+  // vhShare: the share of the screen's height a figure may take. A full-width section pins its figure above the text, so it gets less.
+  const full = !!figEl.closest(".ss-scrolly--full");
+  const o = { label: spec.title?.replace(/<[^>]+>/g, "") ?? "", legendEl, unitLabel: unitLabel(spec), spec, groups: spec.groups || payload.groups, layout: full ? "full" : "side", vhShare: full ? 0.6 : null };
   switch (spec.type) {
     case "line": return lineChart(el, data, { ...o, yFormat: spec.y_format, unitScaled: !!spec.volume });
     case "stack": return stackedBars(el, data, { ...o, colours: spec.colours, unitScaled: !!spec.volume });
@@ -125,6 +127,14 @@ onSchemeChange(() => charts.forEach((r, id) => {
 }));
 
 // ---------------------------------------------------------------- scrolly groups
+// full-width sections: the cards start below the pinned figure, whatever its height
+document.querySelectorAll(".ss-scrolly--full .ss-story").forEach((storyEl) => {
+  const gfx = storyEl.querySelector(".ss-graphic");
+  if (gfx) new ResizeObserver(() => {
+    if (matchMedia("(min-width: 761px)").matches) storyEl.style.setProperty("--ss-gfx", `${Math.round(gfx.getBoundingClientRect().height)}px`);
+    else storyEl.style.removeProperty("--ss-gfx"); // phones keep the fixed panel
+  }).observe(gfx);
+});
 document.querySelectorAll(".ss-story").forEach((storyEl) => {
   const stepEls = [...storyEl.querySelectorAll(".ss-step")];
   const layers = [...storyEl.querySelectorAll(".ss-layer")];

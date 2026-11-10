@@ -89,9 +89,16 @@ available as `<name>_props`.
 
 ## Steps
 
-Consecutive steps form one scrolly sequence that also plays as a deck in Present mode. Put `layout=wide` on the
-first step (`::: step {beat=â€¦ layout=wide}`) for a showpiece figure: its frame spans the page and the
-step cards scroll in a lane inside it (phones and Present mode are unchanged). Each step may
+Consecutive steps form one scrolly sequence that also plays as a deck in Present mode. A section has one of three layouts, named with `layout=` on its steps. `side` puts the text left and the figure right: the
+default for simple charts. `lane` (the old `wide`) spans the page with the cards in a lane at the left, for a showpiece
+figure that has room beside the lane. `full` pins the figure at the page's full width and scrolls the text beneath it, for
+a large map or a figure with a lot of detail. With no `layout=` the build chooses (`src/subscout/layouts.py`): `full` when
+any figure in the section is a map, network or heatmap, declares `detail: high` or a `min_width` above 650 px or an
+`aspect` of 1.6 or more (custom figures, in the chart block), or is a bar, dot or diverging chart with more than 12 rows;
+otherwise `side`. One such figure takes the whole section, so the figure does not change size between steps. The build prints
+each section's layout and the reason as advice. On a phone every section pins the figure at the top and Present mode stacks
+the figure over the text, so only wide screens differ. A custom figure in a `full` section gets `opts.layout` (`"full"`)
+and `opts.vhShare` (the share of the screen's height it may take, 0.6) and should size its height from that. Each step may
 contain one chart block; a block with `use: <id>` changes the state of an earlier chart, so it
 transitions instead of being replaced.
 

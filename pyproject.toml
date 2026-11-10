@@ -1,6 +1,6 @@
-﻿[project]
+[project]
 name = "subscout"
-version = "0.7.2"
+version = "0.8.0"
 description = "Themed, journalistic data narratives with Read and Present modes"
 readme = "README.md"
 authors = [
