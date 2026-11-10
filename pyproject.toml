@@ -1,4 +1,4 @@
-﻿[project]
+[project]
 name = "subscout"
 version = "0.8.0"
 description = "Themed, journalistic data narratives with Read and Present modes"
