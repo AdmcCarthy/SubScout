@@ -98,8 +98,8 @@ any figure in the section is a map, network or heatmap, declares `detail: high` 
 otherwise `side`. One such figure takes the whole section, so the figure does not change size between steps. The build prints
 each section's layout and the reason as advice. On a phone every section pins the figure at the top and Present mode stacks
 the figure over the text, so only wide screens differ. A custom figure in a `full` section gets `opts.layout` (`"full"`)
-and `opts.vhShare` (the share of the screen's height it may take, 0.42: the figure's title, subtitle and source line sit
-above and below it, and the step card has to fit beneath the whole pinned block on an 800 px screen) and should size its
+and `opts.vhShare` (the share of the screen's height it may take: the screen less 470 px for the figure's title, subtitle
+and source line and the step card beneath, between 0.42 and 0.62, so an 800 px screen gets 0.42 and a 1080 px one 0.56) and should size its
 height from that. Each step may
 contain one chart block; a block with `use: <id>` changes the state of an earlier chart, so it
 transitions instead of being replaced.
