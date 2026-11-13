@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en-GB" data-type="ledger" data-palette="{{ palette }}" data-surface="{{ surface }}">
+<head>
+{% set page_title = fm.title %}{% include "_head.html.j2" %}
+</head>
+<body class="landing">
+
+<header class="topbar">
+  <a class="brand" href="index.html">{{ esc(brand) }}</a>
+  <nav class="crumb"><a class="crumb-link" href="basis.html">Basis of the work</a></nav>
+  <div class="controls">
+    <div class="ss-seg" id="ctl-theme" role="group" aria-label="Colour scheme"><button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="hero-text">
+      {% if fm.kicker %}<span class="kicker">{{ esc(fm.kicker) }}</span>{% endif %}
+      <h1>{{ esc(fm.title) }}</h1>
+      <div class="hero-lead">{{ lead }}</div>
+      <p class="hero-actions"><a class="btn btn--primary" href="{{ nav[0].slug }}.html">{{ esc(start) }} <span aria-hidden="true">→</span></a> <a class="btn" href="basis.html">What it rests on</a></p>
+      <p class="byline">{% if fm.byline %}{{ esc(fm.byline) }}{% endif %}{% if fm.date %} · {{ fm.date }}{% endif %}</p>
+    </div>
+    <dl class="hero-kpis">
+      {% for k in kpis %}<div><dt class="ss-num">{{ k.html }}</dt><dd>{{ esc(k.label) }}</dd></div>{% endfor %}
+    </dl>
+  </section>
+
+  <section class="cats" aria-label="Categories">
+    {% for p in nav %}
+    <a class="card" href="{{ p.slug }}.html">
+      <div class="card-thumb{% if not p.thumb_svg %} card-thumb--num{% endif %}">{{ p.thumb_svg or p.num }}</div>
+      <div class="card-body">
+        <span class="card-num mono">{{ p.num }}</span>
+        <h2>{{ esc(p.title) }}</h2>
+        <p>{{ esc(p.blurb or "") }}</p>
+        <span class="card-meta">{{ p.n_slides }} views · {{ p.n_figs }} figures <span class="card-go" aria-hidden="true">→</span></span>
+      </div>
+    </a>
+    {% endfor %}
+  </section>
+
+  <footer class="foot">
+    {% if footer %}<p>{{ footer }}</p>{% endif %}
+    {% include "_credit.html.j2" %}
+  </footer>
+</main>
+
+<script type="module" src="{{ runtime }}/js/deck-shell.js"></script>
+</body>
+</html>

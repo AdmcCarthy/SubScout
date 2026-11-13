@@ -24,6 +24,7 @@ byline: Adam McCarthy
 date: 2026-11-07
 arc: scqa                 # see arcs.md; steps are checked against its beats
 register: section         # core | section | outcrop
+mode: story               # story (default) | deck: see deck-format.md
 palette: tide             # data-colour preset
 surface: nordic-cool      # room
 units: sm3                # starting unit; the reader can toggle

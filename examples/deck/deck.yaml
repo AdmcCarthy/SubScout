@@ -1,0 +1,14 @@
+# Deck mode: the categories of the site, in the order they are taught (styleguide/deck-format.md).
+# `sections` are the `##` headings of story.md, each used once and kept in the order of that file.
+brand: SubScout deck demo
+start: Start with production
+footer: Synthetic data from `examples/demo/make_data.py`. Not real fields, operators or volumes.
+categories:
+  - slug: production
+    title: How a field produces
+    blurb: Ramp, plateau and decline, and what a tie-back does to the tail.
+    sections: ["How a field produces"]
+  - slug: finds
+    title: Finds and drilling
+    blurb: Why finds shrink as a basin matures, and why the wells follow the price.
+    sections: ["What is still found", "When the wells are drilled"]
