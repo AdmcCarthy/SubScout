@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en-GB" data-type="ledger" data-palette="{{ palette }}" data-surface="{{ surface }}">
+<head>
+{% set page_title = c.title ~ " · " ~ brand %}{% include "_head.html.j2" %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body class="deck">
+
+<header class="topbar">
+  <a class="brand" href="index.html">{{ esc(brand) }}</a>
+  <nav class="crumb" aria-label="Category">
+    <a class="crumb-adj" id="cat-prev" aria-label="Previous category">‹</a>
+    <button class="crumb-here" id="contents-btn" type="button" aria-haspopup="dialog"><span class="mono">{{ c.num }} / {{ "%02d"|format(total) }}</span> {{ esc(c.title) }} <span class="caret" aria-hidden="true">▾</span></button>
+    <a class="crumb-adj" id="cat-next" aria-label="Next category">›</a>
+  </nav>
+  <div class="controls">
+    <div class="ss-seg" id="ctl-theme" role="group" aria-label="Colour scheme"><button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+  </div>
+</header>
+
+<main class="slide" id="slide" data-layout="cover">
+  <div class="slide-head">
+    <p class="kicker" id="kicker"></p>
+    <h1 id="title"></h1>
+  </div>
+  <div class="slide-body">
+    <figure class="stage" id="stage">
+      <p class="fig-title" id="fig-title"></p>
+      <p class="fig-sub" id="fig-sub"></p>
+      <div class="layers" id="layers"></div>
+    </figure>
+    <div class="prose" id="prose"></div>
+  </div>
+  <aside class="facts" id="facts" hidden></aside>
+</main>
+
+<footer class="navbar">
+  <button class="btn" id="prev" type="button" aria-label="Previous view"><span aria-hidden="true">←</span></button>
+  <div class="ticks" id="ticks" role="tablist" aria-label="Views in this category"></div>
+  <span class="count mono" id="count"></span>
+  <button class="btn btn--quiet" id="facts-btn" type="button" aria-expanded="false">Source and method</button>
+  <a class="btn btn--primary" id="next" href="#">Next <span aria-hidden="true">→</span></a>
+</footer>
+
+<div class="overlay" id="contents" hidden>
+  <div class="overlay-panel" role="dialog" aria-label="Contents">
+    <div class="overlay-head"><span class="kicker">Contents</span><button class="btn btn--quiet" id="contents-close" type="button">Close</button></div>
+    <ol class="menu">
+      {% for p in nav %}<li><a href="{{ p.slug }}.html"{% if p.slug == c.slug %} aria-current="page"{% endif %}><span class="mono">{{ p.num }}</span><b>{{ esc(p.title) }}</b><small>{{ p.n_slides }} views</small></a></li>{% endfor %}
+    </ol>
+    <p class="overlay-foot"><a href="index.html">Overview</a> · <a href="basis.html">Basis of the work: sources, limits and every number</a></p>
+  </div>
+</div>
+
+<script type="application/json" id="deck-data">{{ payload }}</script>
+<script type="module" src="{{ runtime }}/js/deck.js"></script>
+</body>
+</html>

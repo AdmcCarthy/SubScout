@@ -1,7 +1,7 @@
 [project]
 name = "subscout"
-version = "0.8.1"
-description = "Themed, journalistic data narratives with Read and Present modes"
+version = "0.9.0"
+description = "Themed data narratives in two modes: a journalistic story, and a deck for presentation and teaching"
 readme = "README.md"
 authors = [
     { name = "Adam McCarthy", email = "24669992+AdmcCarthy@users.noreply.github.com" }
@@ -44,6 +44,9 @@ ignore = ["E741"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/subscout/build.py" = ["E501"]  # HTML fragments
+"src/subscout/modes/*.py" = ["E501"]  # HTML fragments and messages
+"src/subscout/fit.py" = ["E501"]  # embedded JavaScript and messages
 "src/subscout/advice.py" = ["E501"]  # advice messages
 "scripts/perf.py" = ["E501"]  # embedded JavaScript
 "tests/test_build.py" = ["E501"]  # inline story fixtures
+"tests/test_modes.py" = ["E501"]  # inline story fixtures

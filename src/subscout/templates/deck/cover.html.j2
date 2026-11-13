@@ -1,0 +1,19 @@
+<div class="cover-grid">
+  <div class="cover-lead">
+    <span class="cover-num">{{ c.num }}</span>
+    <h1>{{ esc(c.title) }}</h1>
+    <p class="cover-blurb">{{ esc(c.blurb or '') }}</p>
+    <p class="cover-meta">{{ c.n_slides }} views · {{ c.n_figs }} figures</p>
+    <a class="btn btn--primary" href="#2">Start <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="cover-toc">
+    {% for g in c.groups %}
+    <section>
+      {% if c.groups|length > 1 %}<h2>{{ esc(g.title) }}</h2>{% endif %}
+      <ol>
+        {% for t in g.topics %}<li><a href="#{{ t.index }}">{{ t.title }}</a></li>{% endfor %}
+      </ol>
+    </section>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en-GB" data-type="ledger" data-palette="{{ palette }}" data-surface="{{ surface }}">
+<head>
+{% set page_title = "Basis of the work · " ~ brand %}{% include "_head.html.j2" %}
+</head>
+<body class="landing basis">
+
+<header class="topbar">
+  <a class="brand" href="index.html">{{ esc(brand) }}</a>
+  <nav class="crumb"><a class="crumb-link" href="index.html">Overview</a></nav>
+  <div class="controls">
+    <div class="ss-seg" id="ctl-theme" role="group" aria-label="Colour scheme"><button data-value="system">Auto</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero hero--plain">
+    <div class="hero-text">
+      <span class="kicker">Reference</span>
+      <h1>Basis of the work</h1>
+    </div>
+  </section>
+
+  <section class="basis-grid">
+    <div class="basis-prose">
+      {{ appendix }}
+      <h3>Conventions</h3>
+      <p><span class="ss-conf" data-level="observed">Observed</span> measured or published by the source. <span class="ss-conf" data-level="derived">Derived</span> calculated here from observed data, method stated. <span class="ss-conf" data-level="interpreted">Interpreted</span> depends on a model, an assumption or a judgement.</p>
+    </div>
+    <div>
+      <h3>Sources</h3>
+      <ul class="sources">{% for k, s in sources.items() %}<li><b>{{ esc(s.name or k) }}</b>{% if s.url %} <a href="{{ esc(s.url) }}">{{ esc(s.url) }}</a>{% endif %}{% if s.accessed %}, {{ s.accessed }}{% endif %}{% if s.note %}<br>{{ esc(s.note) }}{% endif %}</li>{% endfor %}</ul>
+    </div>
+  </section>
+
+  <section>
+    <h3>Figures</h3>
+    <div class="ss-table-wrap"><table class="ss-table" data-kind="ledger">
+      <thead><tr><th>Figure</th><th>Source</th><th>Confidence</th><th>Notes and exceptions</th></tr></thead>
+      <tbody>{% for f in figure_list %}<tr><td>{{ esc(f.title) }}</td><td>{{ esc(f.source or "") }}</td><td><span class="ss-conf" data-level="{{ f.confidence }}">{{ conf_label[f.confidence] }}</span></td><td>{{ f.notes or "" }}{% if f.exception %} <b>Exception</b> ({{ esc(f.exception.rule) }}): {{ esc(f.exception.reason) }}{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h3>Every number in the text</h3>
+    <div class="ss-table-wrap"><table class="ss-table ss-ledger" data-kind="ledger">
+      <thead><tr><th>Number</th><th class="num">Exact value</th><th>Shown as</th><th>Method</th><th>Confidence</th></tr></thead>
+      <tbody>{% for l in ledger %}<tr><td><code>{{ esc(l.name) }}</code></td><td class="num">{{ l.value }}{% if l.unit %} {{ esc(l.unit) }}{% endif %}</td><td>{{ l.shown|join(", ") }}</td><td>{{ esc(l.method) }}{% if l.source %} <small>({{ esc(l.source) }})</small>{% endif %}</td><td><span class="ss-conf" data-level="{{ l.confidence }}">{{ conf_label[l.confidence] }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+
+  <footer class="foot"><p><a href="index.html">Back to the overview</a></p>{% include "_credit.html.j2" %}</footer>
+</main>
+
+<script type="module" src="{{ runtime }}/js/deck-shell.js"></script>
+</body>
+</html>

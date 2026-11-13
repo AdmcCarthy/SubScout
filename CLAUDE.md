@@ -8,15 +8,32 @@ story or component. This file summarises the engineering side.
 
 Voice and structure of written work (README, docs, published pages) follow Idiom's CORE.md and house style: British English, impersonal, one creative headline then plain varied headings, a section ends on its last point. The import is harmless when the file is absent (CI).
 
-SubScout is a framework for **journalistic data narratives**: one Markdown story plus data produces a themed
-web page with two modes, **Read** (scrollytelling article) and **Present** (in-browser deck). Published on
-GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write for an informed reader.
+SubScout is a framework for **themed data narratives**: one Markdown story plus data is built in one of two
+**modes**. **Story** (the default) is a journalistic data story: one argument on one page, with two views, **Read**
+(scrollytelling article) and **Present** (stepped through on a screen). **Deck** (`mode: deck` in the front matter)
+is presentation and teaching material: a landing page of categories and one page per category, each view a slide
+the size of the screen. Published on GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert.
+Write for an informed reader.
+
+## Modes
+- Choose by purpose, not by length alone: one argument read once is a story; a subject taught in parts, entered
+  at any point, is a deck. `styleguide/story-format.md` and `styleguide/deck-format.md` are the two formats.
+- `src/subscout/build.py` holds what every mode shares (front matter, data, metrics, `{{ }}` numbers, block checks,
+  chart preparation, tables) and the `build()` entry point, which dispatches on the mode. `src/subscout/modes/`
+  holds one module per mode (`story.py`, `deck.py`): a function `(root, out, runtime_href) -> Report` that owns its
+  templates (`templates/story.html.j2`, `templates/deck/`), page script (`runtime/js/story-page.js`, `deck.js`) and
+  style (`runtime/css/story.css`, `deck.css`). A new mode is a new module registered in `modes/__init__.py`.
+- A rule that binds every figure (truth gate, source, confidence) goes in `build.py`, never in one mode.
+- Deck mode's gate is `uv run subscout fit <site>` (`src/subscout/fit.py`): no slide scrolls, no text overflows,
+  every figure draws, at three desktop sizes. Deck mode is desktop only. Arcs, registers, the header band, export
+  pages and the readability gate belong to story mode.
+- Keep one small example of each mode in `examples/` (`demo` is the story, `deck` the deck, on the same data).
 
 ## Scope
 - SubScout does theming, layout, charts, maps, the state engine and the build. It does **not** do heavy
   ingestion: data arrives as Parquet/CSV/GeoJSON from separate pipelines. Demo-specific fetch/clean logic
   lives in each demo repo (e.g. `APA_awards`), not here.
-- Keep a single lightweight demo story inside this repo (`examples/`). Bigger stories are separate repos.
+- Keep the examples in this repo (`examples/`) small: one per mode. Bigger stories and decks are separate repos.
 
 ## Language and units
 - British English (colour, licence (noun), visualise, metre). Sentence-case headings.
@@ -56,7 +73,7 @@ GitHub Pages. Owner: Adam McCarthy, a petroleum geoscience domain expert. Write 
 - 3D is allowed when it is the right encoding (surfaces, structure, trajectories); state why in the story.
 - Motion follows d3 practice, not EDS: animate **state changes that carry meaning**, keep object constancy
   (keyed joins), stage transitions (axes → marks → labels), use the duration/easing tokens, and honour
-  `prefers-reduced-motion`. Read and Present modes drive the same state sequence.
+  `prefers-reduced-motion`. The Read and Present views of a story drive the same state sequence.
 
 ## Engineering
 - Python ≥3.12 via uv. `uv run pytest`, `uv run ruff check . && uv run ruff format .`

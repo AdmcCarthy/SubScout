@@ -1,13 +1,25 @@
 # SubScout
 
-A framework for consistent, themed, journalistic data narratives. One Markdown story and its data
-produce a web page with two modes:
+A framework for consistent, themed data narratives. One Markdown story and its data are built in one
+of two modes:
 
-- **Read**: a scrollytelling article, with charts and maps that change as you scroll.
-- **Present**: the same story as an in-browser deck with animated transitions.
+- **Story**: a data story told as journalism. One argument on one page, with two views: **Read**, a
+  scrollytelling article with charts and maps that change as you scroll, and **Present**, the same
+  story stepped through on a screen.
+- **Deck**: presentation and teaching material. A landing page of categories and one page per
+  category, in which each view is a slide the size of the screen and nothing scrolls.
 
-The look, colour logic, chart defaults and writing rules are shared by every story, so each new
-dataset and narrative comes out in the same house style. Stories are published on GitHub Pages.
+The look, colour logic, chart defaults, number tracing and truth checks are shared by both modes, so
+each new dataset comes out in the same house style. Stories are published on GitHub Pages.
+
+```bash
+uv run subscout build my-story --out _site   # the mode is `mode:` in the front matter; a story by default
+uv run subscout fit _site                    # deck mode: every slide holds on one screen
+```
+
+The formats are set out in [styleguide/story-format.md](styleguide/story-format.md) and
+[styleguide/deck-format.md](styleguide/deck-format.md); `examples/demo` is a story and `examples/deck` a
+deck, on the same synthetic data.
 
 > Status: early. v0.1 is the colour engine and design tokens; layout, charts, the state engine and
 > the build follow.
