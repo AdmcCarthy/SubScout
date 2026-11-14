@@ -18,6 +18,7 @@ from pathlib import Path
 import jinja2
 import pandas as pd
 import yaml
+from latex2mathml.converter import convert as latex_to_mathml
 from markdown_it import MarkdownIt
 
 from ..build import (
@@ -48,6 +49,8 @@ CONF = {"observed": "Observed", "derived": "Derived", "interpreted": "Interprete
 MASTERS = ("side", "full")  # a figure beside its text, or across the slide with the text beneath
 STATE_KEYS = ("focus", "note", "highlight", "sort", "view", "filter", "frame")
 TOPIC = re.compile(r"(?m)^### (.+)\n")
+CONCEPT = re.compile(r"^```concept\s*\n(.*?)\n```\s*$", re.S | re.M)
+CONCEPT_KEYS = {"name", "formula", "where"}
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 RESERVED = {"index", "basis"}
 CONFIG_KEYS = {"brand", "categories", "full", "labels", "start", "footer", "noindex"}
@@ -104,6 +107,7 @@ class Deck:
         self.md = MarkdownIt("commonmark", {"html": True, "typographer": True}).enable("table")
         self.figs: dict[str, dict] = {}
         self.figures: list[Figure] = []
+        self.concepts: list[dict] = []
         body = src.body
         self.appendix = "\n\n".join(m.group(1) for m in APPENDIX.finditer(body))
         body = APPENDIX.sub("", body)
@@ -122,6 +126,41 @@ class Deck:
 
     def render(self, md_text: str, where: str) -> str:
         return self.md.render(self.sub(md_text, where)) if md_text.strip() else ""
+
+    def concept(self, text: str, where: str) -> str:
+        """A `concept` block as the card that heads a slide's text: the name the literature gives the process, its
+        governing relation set as mathematics, and what the symbols stand for. `formula` is LaTeX, one string or a
+        list of them; it is turned into MathML here, so the page needs no script to show it."""
+        try:
+            spec = yaml.safe_load(text) or {}
+        except yaml.YAMLError as e:
+            self.report.error(f"{where}: concept: YAML error: {e}")
+            return ""
+        if not isinstance(spec, dict) or set(spec) - CONCEPT_KEYS:
+            self.report.error(f"{where}: a concept block takes {sorted(CONCEPT_KEYS)}")
+            return ""
+        out = []
+        if spec.get("name"):
+            out.append(f'<p class="concept-name">{html.escape(str(spec["name"]))}</p>')
+        formulas = spec.get("formula") or []
+        for f in [formulas] if isinstance(formulas, str) else formulas:
+            try:
+                out.append(f'<div class="concept-formula">{latex_to_mathml(str(f), display="block")}</div>')
+            except Exception as e:  # the converter raises its own errors for malformed LaTeX
+                self.report.error(f"{where}: concept: formula not understood ({e}): {f}")
+        if spec.get("where"):
+            # symbols between dollar signs are set as mathematics, so that they match the formula above
+            parts = re.split(r"\$(.+?)\$", str(spec["where"]))
+            try:
+                text = "".join(
+                    latex_to_mathml(p) if i % 2 else self.md.renderInline(p) for i, p in enumerate(parts)
+                )
+            except Exception as e:
+                self.report.error(f"{where}: concept: symbol not understood ({e})")
+                text = ""
+            out.append(f'<p class="concept-where">{text}</p>')
+        self.concepts.append({"name": str(spec.get("name", "")), "where": where})
+        return f'<div class="concept">{"".join(out)}</div>' if out else ""
 
     # ---------------------------------------------------------------- figures
     def master(self, spec: dict, where: str) -> str:
@@ -222,6 +261,7 @@ class Deck:
         """One section as slides: a slide per step, and one for each run of text or figure between steps."""
         slides: list[dict] = []
         topic = None
+        concept = ""  # the card of the current topic: it stays until the next topic or the next card
         last_view = None
 
         def loose(text: str) -> None:
@@ -256,11 +296,18 @@ class Deck:
             loose(chunk[pos : m.start()])
             self.n_steps += 1
             where = f"step {self.n_steps}"
-            content, views = self.blocks(m.group(2), where)
+            raw = m.group(2)
+            card = CONCEPT.search(raw)
+            if card:
+                raw = raw.replace(card.group(0), "", 1)
+            content, views = self.blocks(raw, where)
             t = TOPIC.search(content + "\n")
             if t:
                 topic = t.group(1).strip()
                 content = content.replace(t.group(0).rstrip("\n"), "", 1)
+                concept = ""
+            if card:
+                concept = self.concept(card.group(1), where)
             view = views[-1] if views else last_view
             if not view:
                 self.report.warn(f"{where} has no chart")
@@ -272,7 +319,7 @@ class Deck:
                     "section": section,
                     "topic": topic,
                     "step": self.n_steps,
-                    "html": self.render(content, where),
+                    "html": concept + self.render(content, where),
                     **view,
                 }
             )

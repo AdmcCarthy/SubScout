@@ -73,8 +73,23 @@ body.deck { display: grid; grid-template-rows: 56px minmax(0, 1fr) 60px; height:
 .prose { --fs: 1; font-size: calc(1.0625rem * var(--fs)); line-height: 1.58; color: var(--ss-text); min-height: 0; overflow: hidden; }
 .prose p { margin: 0 0 0.8em; }
 .prose p:last-child { margin-bottom: 0; }
+
+/* the concept card: the name of the process and its governing relation, at the head of a slide's text */
+.concept { margin: 0 0 1.1em; padding: 0 0 0.9em; border-bottom: 1px solid var(--ss-border-subtle); break-inside: avoid; }
+.prose .concept-name { font-family: var(--ss-font-mono, ui-monospace, monospace); font-size: 0.72em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ss-text-subtle); margin: 0 0 0.6em; }
+.concept-formula { margin: 0.55em 0; overflow: hidden; }
+.concept-formula math { font-size: 1.08em; font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", math; }
+.concept-formula math[display="block"] { display: block math; width: fit-content; margin: 0; }
+.prose .concept-where { font-size: 0.8em; line-height: 1.4; color: var(--ss-text-subtle); margin: 0.5em 0 0; }
 .slide[data-layout="side"] .prose { border-left: 1px solid var(--ss-border-subtle); padding-left: 36px; font-size: calc(1.16rem * var(--fs)); }
 .slide[data-layout="full"] .prose { height: 8.4rem; columns: 2; column-gap: 56px; max-width: 86rem; }
+/* beneath a figure the card is one strip across both columns: name and relation, without the line of symbols */
+.slide[data-layout="full"] .prose:has(.concept) { height: 12rem; }
+.slide[data-layout="full"] .prose:has(.concept):not(:has(.concept-formula)) { height: 10.2rem; }
+.slide[data-layout="full"] .concept { column-span: all; display: flex; flex-wrap: wrap; align-items: center; gap: 0 2.4em; margin: 0 0 0.55em; padding: 0 0 0.4em; }
+.slide[data-layout="full"] .concept-name { margin: 0; }
+.slide[data-layout="full"] .concept-formula { margin: 0; }
+.slide[data-layout="full"] .concept-where { display: none; }
 /* a built-in chart keeps its own proportions and is scaled into the box; a custom figure is given the height and fills it */
 .fig-layer:not([data-type="custom"], [data-type="map"]) .ss-chart svg { width: auto; height: auto; max-width: 100%; max-height: 100%; }
 

@@ -34,6 +34,12 @@ by the capacity of the installation, and a decline once the wells can no longer 
 ::: step
 ### Ramp, plateau and decline
 
+```concept
+name: Exponential decline
+formula: 'q_t = q_{t-1}\,(1 - d)'
+where: '$q_t$ production in year $t$, $d$ the share lost each year'
+```
+
 Field A is typical of the basin. Production climbs for three years, holds for a short plateau and then falls
 by a constant share each year. The typical plateau here lasts {{ typical_plateau | round:0 }} years.
 
