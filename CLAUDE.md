@@ -27,6 +27,8 @@ Write for an informed reader.
 - Deck mode's gate is `uv run subscout fit <site>` (`src/subscout/fit.py`): no slide scrolls, no text overflows,
   every figure draws, at three desktop sizes. Deck mode is desktop only. Arcs, registers, the header band, export
   pages and the readability gate belong to story mode.
+- `uv run subscout hub hub.yaml --out _hub` (`src/subscout/hub.py`) writes one landing page over several built decks and
+  replaces their own; it reads only built pages. Its format is in `styleguide/deck-format.md`.
 - Keep one small example of each mode in `examples/` (`demo` is the story, `deck` the deck, on the same data).
 
 ## Scope

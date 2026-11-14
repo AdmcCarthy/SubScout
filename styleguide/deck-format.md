@@ -144,6 +144,54 @@ fails on text that overflows, a page that scrolls, a figure that did not draw or
 console error. `--size`, `--pages`, `--slides` and `--dark` narrow or change the run; `--shots <folder>` keeps a
 screenshot of every slide visited. It needs Playwright among the development dependencies.
 
+## A hub over several decks
+
+Several decks that are one piece of work can share one landing page. `uv run subscout hub hub.yaml --out _hub`
+reads the decks named in `hub.yaml`, each already built, and writes a site of its own: `index.html`, and a copy
+of each deck under its key, whose own landing page is replaced by a redirect to the hub.
+
+```yaml
+title: From first principles          # required
+headline: From first principles       # required: the heading of the core module
+brand: First principles
+kicker: Basin and well · rebuilt, graded, tested
+tagline: One sentence under the screen of the core module.
+decks:                                # required
+  - key: basin                        # folder of the deck inside the hub; lower-case letters, digits, hyphens
+    site: _site                       # the built deck, relative to this file
+    name: Basin fundamentals
+    line: One sentence for the deck's card.
+data:                                 # modules of the left column: what was measured
+  - { chip: WELL, title: A well, text: What it holds, num: "4,641 m drilled" }
+store: { chip: STORE, title: A knowledge store, text: …, num: … }   # a last module of the right column
+screen: [d_flexure, d_well]           # diagrams the core module cycles through; default: the first eight
+wide: [d_flexure]                     # diagrams given a double tile
+order: [d_flexure, d_well]            # diagrams placed first on the wall
+wall: { title: …, text: … }           # heading of the wall of diagrams
+found: { title: …, text: … }          # heading of the findings
+findings:
+  - { grade: disagrees, big: 29.9 against 20.07, text: One sentence. }
+sets: { title: …, text: … }           # heading of the decks
+how: { title: …, text: … }            # heading of the method
+method:
+  - { title: Balance law, text: One sentence. }
+footer: Credits and terms.
+```
+
+The page is a board in three columns: the `data` modules on the left, a core module in the middle, and on the
+right one module per deck and the `store`. Traces join them. Below it come a wall of diagrams, the findings, the
+categories of every deck, and the method; a part with nothing to show is left out.
+
+Nothing on the page is computed. Categories, slide counts, the number of named relations and every link are read
+from the built pages. A **diagram** is any dataset of a deck that is a mapping with `box: [x0, y0, x1, y1]` (y
+upward) and `shapes`, a list of `poly`, `line`, `arrow`, `circle` and `text` items with colours named `c1` to
+`c5`, `context`, `text`, `muted` and `surface`; the hub draws each as static SVG without its labels and links it
+to the first slide that shows it. The text of findings is typed in the config and is not checked against the
+decks.
+
+The hub carries its own style in one file, with no external font or script, and follows the system's colour
+scheme. The decks load ES modules, so the hub is opened through a web server, not as a file.
+
 ## Not yet in deck mode
 
 - Export pages (`export:` on a block is ignored), the units toggle and a phone layout.

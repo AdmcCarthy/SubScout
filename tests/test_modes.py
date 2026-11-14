@@ -198,3 +198,65 @@ def test_a_concept_card_is_checked(tmp_path):
         )
         report = build(_deck(tmp_path / said[:4].strip(), body=body), tmp_path / "o")
         assert any(said in e for e in report.errors), report.errors
+
+
+def test_a_hub_stands_over_built_decks_and_replaces_their_landing_pages(tmp_path):
+    from subscout.hub import build_hub
+
+    site = tmp_path / "site"
+    assert build(DECK, site).errors == []
+    cfg = tmp_path / "hub.yaml"
+    cfg.write_text(
+        "title: T\nheadline: H\ndecks:\n  - { key: one, site: site, name: One deck, line: A line }\n"
+        "data:\n  - { chip: D, title: Data, text: measured, num: '3' }\n",
+        encoding="utf-8",
+    )
+    res = build_hub(cfg, tmp_path / "hub")
+    assert res["decks"] == 1 and res["slides"] > 0 and res["diagrams"] == 0
+    page = (tmp_path / "hub" / "index.html").read_text(encoding="utf-8")
+    # every category of the deck is linked, under the deck's key
+    for slug in ("production", "finds"):
+        assert f'href="one/{slug}.html"' in page and (tmp_path / "hub" / "one" / f"{slug}.html").exists()
+    assert (
+        "Exponential decline" not in page and "1 relations named" in page
+    )  # the one concept card of the example is counted
+    # the deck's own landing page gives way to the hub
+    assert "url=../index.html#decks" in (tmp_path / "hub" / "one" / "index.html").read_text(encoding="utf-8")
+    assert 'id="diagrams"' not in page  # no diagrams, so no wall
+
+
+def test_a_hub_draws_the_diagrams_of_its_decks(tmp_path):
+    from subscout import hub
+
+    d = {
+        "box": [0, 0, 10, 5],
+        "shapes": [
+            {"id": "p", "kind": "poly", "group": "g", "pts": [[1, 1], [9, 1], [9, 4]], "fill": "c1"},
+            {
+                "id": "a",
+                "kind": "arrow",
+                "group": "g",
+                "from": [1, 4],
+                "to": [5, 4],
+                "colour": "c3",
+                "double": True,
+            },
+            {"id": "t", "kind": "text", "group": "g", "at": [5, 2], "text": "label"},
+        ],
+    }
+    assert hub.is_diagram(d) and not hub.is_diagram({"x": {}, "series": []})
+    tile = hub.svg(d, text=False, uid="u")
+    assert tile.startswith('<svg viewBox="0 0 10.000 5.000"') and "<polygon" in tile and "label" not in tile
+    assert tile.count("url(#a-u-c3)") == 2 and "label" in hub.svg(d, text=True)
+    assert hub.traces(3, 2).count('class="live"') == 5
+
+
+def test_hub_config_is_checked(tmp_path, capsys):
+    cfg = tmp_path / "hub.yaml"
+    cfg.write_text(
+        "title: T\nheadline: H\ndecks:\n  - { key: one, site: nowhere, name: One }\n", encoding="utf-8"
+    )
+    assert main(["hub", str(cfg), "--out", str(tmp_path / "o")]) == 2
+    assert "no built deck" in capsys.readouterr().out
+    cfg.write_text("title: T\n", encoding="utf-8")
+    assert main(["hub", str(cfg), "--out", str(tmp_path / "o")]) == 2
