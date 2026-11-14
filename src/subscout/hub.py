@@ -31,8 +31,8 @@ INK = {
 }
 PAYLOAD = re.compile(r'<script type="application/json" id="deck-data">(.*?)</script>', re.S)
 REDIRECT = (
-    '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=../index.html#decks">'
-    '<title>{name}</title><a href="../index.html#decks">{name}</a>\n'
+    '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=../index.html#learn">'
+    '<title>{name}</title><a href="../index.html#learn">{name}</a>\n'
 )
 REQUIRED = ("title", "headline", "decks")
 
@@ -159,6 +159,9 @@ CSS = """
 --d1:#ff8a63;--d2:#6fb1e6;--d3:#ef6a8a;--d4:#a990d6;--d5:#4fc0b4;--dc:#6c737d;--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 18px 40px -22px #000,0 2px 6px -2px #000}}
 :root[data-theme=dark]{--bg:#121418;--panel:#181b20;--module:#22262c;--ink:#e9ecef;--muted:#8b929c;--line:#343941;--accent:#ff7a52;--accent-soft:#5a2e22;--glow:rgba(255,122,82,.2);
 --d1:#ff8a63;--d2:#6fb1e6;--d3:#ef6a8a;--d4:#a990d6;--d5:#4fc0b4;--dc:#6c737d;--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 18px 40px -22px #000,0 2px 6px -2px #000}
+:root[data-drawing=pencil]{--bg:#e9e4d8;--panel:#f1ebdc;--module:#f7f2e6;--ink:#34312d;--muted:#6f695f;--line:#cfc7b4;--accent:#a8674a;--accent-soft:#e4cdb9;--glow:rgba(168,103,74,.16);
+--d1:#b07a52;--d2:#6f8fa6;--d3:#a8605e;--d4:#8a789c;--d5:#74906e;--dc:#a39d90}
+:root[data-drawing=pencil] .tile svg,:root[data-drawing=pencil] .screen svg,:root[data-drawing=pencil] .map svg{filter:url(#ss-pencil)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;
 background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;background-position:-1px -1px;background-attachment:fixed}
@@ -208,18 +211,30 @@ section{padding:74px 0 0}h2{font-size:clamp(1.5rem,2.4vw,2.1rem);margin:8px 0 10
 .tile span{position:absolute;left:0;right:0;bottom:0;padding:18px 10px 8px;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:linear-gradient(transparent,var(--module) 55%);opacity:0;transition:opacity .25s}
 .tile:hover,.tile:focus-visible{border-color:var(--accent);box-shadow:0 0 0 4px var(--glow);transform:translateY(-2px)}.tile:hover span,.tile:focus-visible span{opacity:1}.tile:hover svg{transform:scale(1.04)}
 .tile b{position:absolute;top:8px;left:10px;font-family:var(--mono);font-size:.58rem;color:var(--muted);font-weight:500;letter-spacing:.1em}
+.map{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px 10px;overflow-x:auto}
+.map svg{width:100%;min-width:980px;height:auto;display:block}
+.map .stage{font-family:var(--mono);font-size:11px;letter-spacing:.16em;fill:var(--muted)}
+.map .edge{fill:none;stroke-width:1.3;opacity:.38;transition:opacity .2s,stroke-width .2s}
+.map .node rect:first-of-type{fill:var(--module);stroke:var(--line);stroke-width:1;transition:stroke .2s}
+.map .node text{font-size:11.5px;fill:var(--ink);font-family:var(--sans)}.map .node{text-decoration:none;cursor:pointer}
+.map.lit .edge{opacity:.06}.map.lit .node{opacity:.28}.map.lit .edge.on{opacity:.95;stroke-width:2.2}.map.lit .node.on{opacity:1}
+.map.lit .node.me rect:first-of-type{stroke:var(--accent);stroke-width:2}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 10px;font-size:.78rem;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
 .find{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
 .card{background:var(--module);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
-.card .big{font-size:1.9rem;font-weight:650;letter-spacing:-.02em;line-height:1.1;margin:10px 0 6px}.card p{margin:0;color:var(--muted);font-size:.9rem}
+a.card{text-decoration:none;display:block;transition:transform .25s,border-color .25s}a.card:hover{transform:translateY(-3px);border-color:var(--accent)}.find.src .mod{min-height:150px}.card .big{font-size:1.9rem;font-weight:650;letter-spacing:-.02em;line-height:1.1;margin:10px 0 6px}.card p{margin:0;color:var(--muted);font-size:.9rem}
 .grade{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid currentColor;border-radius:999px;padding:2px 8px}
 .grade.disagrees{color:var(--d3)}.grade.reproduced{color:var(--d5)}.grade.derived{color:var(--d2)}.grade.tested{color:var(--accent)}
-.decks{display:grid;grid-template-columns:1fr 1fr;gap:22px}@media (max-width:980px){.decks{grid-template-columns:1fr}}
+.decks{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:22px}@media (max-width:980px){.decks{grid-template-columns:1fr}}
 .deck{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
 .deck h3{font-size:1.35rem;margin:6px 0 4px}.deck>p{color:var(--muted);margin:0 0 16px;font-size:.92rem}
 .cats{display:grid;gap:6px}
 .cat{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:baseline;padding:9px 12px;border-radius:10px;text-decoration:none;border:1px solid transparent}
 .cat:hover{background:var(--module);border-color:var(--line)}.cat i{font-family:var(--mono);font-style:normal;font-size:.7rem;color:var(--muted)}
 .cat em{font-family:var(--mono);font-style:normal;font-size:.66rem;color:var(--muted);letter-spacing:.06em}
+.cat span{font-weight:600}.cat small{display:block;font-weight:400;font-size:.8rem;line-height:1.4;color:var(--muted);margin-top:2px}
+.set{display:contents}.set[hidden]{display:none}.set .mod{animation:pop .45s ease both}@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.set .mod{animation:none}}
 .go{display:inline-block;margin-top:16px;background:var(--ink);color:var(--module);border-radius:10px;padding:10px 16px;text-decoration:none;font-size:.88rem}
 .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--module)}
 .steps div{padding:18px;border-right:1px solid var(--line)}.steps div:last-child{border:0}.steps b{display:block;margin:8px 0 4px}.steps p{margin:0;font-size:.84rem;color:var(--muted)}
@@ -231,12 +246,19 @@ footer{padding:60px 0 50px;color:var(--muted);font-size:.8rem}
 
 JS = """
 const figs=[...document.querySelectorAll('.screen figure')],link=document.getElementById('sel');let i=0,timer;
-function show(n){if(!figs.length)return;i=(n+figs.length)%figs.length;figs.forEach((f,k)=>f.classList.toggle('on',k===i));link.textContent=figs[i].dataset.name;link.href=figs[i].dataset.href;}
-function play(){clearInterval(timer);if(!matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(i+1),4200);}
+function show(n){if(!figs.length)return;i=(n+figs.length)%figs.length;figs.forEach((f,k)=>f.classList.toggle('on',k===i));link.textContent=figs[i].dataset.name;link.href=figs[i].dataset.href;document.querySelectorAll('.set').forEach(e=>e.hidden=+e.dataset.i!==i);}
+function play(){clearInterval(timer);if(!matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(i+1),document.querySelector('.set')?7000:4200);}
 if(figs.length){document.getElementById('prev').onclick=()=>{show(i-1);play()};document.getElementById('next').onclick=()=>{show(i+1);play()};show(0);play();}
 const root=document.documentElement,btn=document.getElementById('theme');
 btn.onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('hub-theme',root.dataset.theme)}catch(e){}};
 try{const t=localStorage.getItem('hub-theme');if(t)root.dataset.theme=t}catch(e){}
+document.querySelectorAll('.map').forEach(m=>{const E=[...m.querySelectorAll('.edge')],N=[...m.querySelectorAll('.node')];
+function walk(id,from,to,seen){E.forEach(e=>{if(e.dataset[from]===id){e.classList.add('on');const nx=e.dataset[to];if(!seen.has(nx)){seen.add(nx);walk(nx,from,to,seen)}}})}
+function light(id){const seen=new Set([id]);E.forEach(e=>e.classList.remove('on'));walk(id,'b','a',seen);walk(id,'a','b',seen);N.forEach(n=>{n.classList.toggle('on',seen.has(n.dataset.id));n.classList.toggle('me',n.dataset.id===id)});m.classList.add('lit')}
+N.forEach(n=>{n.addEventListener('mouseenter',()=>light(n.dataset.id));n.addEventListener('focus',()=>light(n.dataset.id));n.addEventListener('mouseleave',()=>m.classList.remove('lit'));n.addEventListener('blur',()=>m.classList.remove('lit'))})});
+const pen=document.getElementById('pencil');function draw(on){if(on){root.dataset.drawing='pencil';root.dataset.theme='light'}else{delete root.dataset.drawing}}
+pen.onclick=()=>{const on=root.dataset.drawing!=='pencil';draw(on);try{localStorage.setItem('ss:drawing',on?'pencil':'system')}catch(e){}};
+try{draw(localStorage.getItem('ss:drawing')==='pencil')}catch(e){}
 """
 
 
@@ -257,6 +279,102 @@ def traces(n_left: int, n_right: int) -> str:
         d = f"M630,{m:.0f} H648 L678,{y:.0f} H700"
         out.append(f'<path d="{d}"/><path class="live" d="{d}"/>')
     return f'<svg class="traces" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">{"".join(out)}</svg>'
+
+
+MAP_INK = ["#3f8fcf", "#e4572e", "#1f8a80", "#7a5cab", "#c0264d", "#b8860b", "#5a8f3c", "#6b7280"]
+
+
+def ontology(spec: dict, decks: list[dict], name: str) -> tuple[str, dict]:
+    """The map of what depends on what: quantities as boxes in columns (one column per stage, from what is measured
+    to what is decided), a line for every relation that turns one into another. Each box links to the page that
+    teaches it; pointing at one lights everything it rests on and everything that rests on it.
+
+    `spec` is {stages: [names], nodes: [{id, label, stage, deck, href}], relations: [{from: [ids], to: id, by: name}]}.
+    The layout is computed here; the page only highlights."""
+    stages, nodes, rels = spec.get("stages") or [], spec.get("nodes") or [], spec.get("relations") or []
+    ids = [n["id"] for n in nodes]
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"{name}: map: node ids must be unique")
+    by_id = {n["id"]: n for n in nodes}
+    keys = [d["key"] for d in decks]
+    edges = []
+    for r in rels:
+        for a in r.get("from") or []:
+            if a not in by_id or r.get("to") not in by_id:
+                raise ValueError(f"{name}: map: relation '{r.get('by')}' names an unknown node")
+            if by_id[a]["stage"] > by_id[r["to"]]["stage"]:
+                raise ValueError(f"{name}: map: relation '{r.get('by')}' runs backwards ({a} to {r['to']})")
+            edges.append((a, r["to"], r.get("by", "")))
+    for n in nodes:
+        if n.get("deck") not in keys:
+            raise ValueError(f"{name}: map: node '{n['id']}' names an unknown deck '{n.get('deck')}'")
+    esc = html.escape
+    w, bw, bh, gap, top = 1260, 196, 30, 9, 40
+    cols = [[n for n in nodes if n["stage"] == s] for s in range(len(stages))]
+    for col in cols:
+        col.sort(key=lambda n: keys.index(n["deck"]))
+    # two sweeps that pull each box towards the mean height of what it is joined to, keeping decks together
+    height = top + max(len(c) for c in cols) * (bh + gap) + 10
+    pos = {}
+
+    def place():
+        for s, col in enumerate(cols):
+            x = (w - bw) * s / max(len(cols) - 1, 1)
+            free = height - top - 10 - len(col) * bh
+            step = free / (len(col) + 1)
+            for i, n in enumerate(col):
+                pos[n["id"]] = (x, top + step * (i + 1) + bh * i)
+
+    place()
+    for _ in range(3):
+        for col in cols:
+
+            def pull(n):
+                ys = [pos[b][1] for a, b, _ in edges if a == n["id"]] + [
+                    pos[a][1] for a, b, _ in edges if b == n["id"]
+                ]
+                return (keys.index(n["deck"]), sum(ys) / len(ys) if ys else pos[n["id"]][1])
+
+            col.sort(key=pull)
+        place()
+    out = [
+        f'<svg viewBox="0 0 {w} {height:.0f}" role="img" aria-label="Map of dependencies between quantities">'
+    ]
+    for s, label in enumerate(stages):
+        x = (w - bw) * s / max(len(cols) - 1, 1)
+        out.append(
+            f'<text class="stage" x="{x + bw / 2:.0f}" y="16" text-anchor="middle">{esc(str(label).upper())}</text>'
+        )
+    for a, b, by in edges:
+        (xa, ya), (xb, yb) = pos[a], pos[b]
+        x0, y0, x1, y1 = xa + bw, ya + bh / 2, xb, yb + bh / 2
+        mid = (x0 + x1) / 2
+        if by_id[a]["stage"] == by_id[b]["stage"]:  # within one column: an arc round the right-hand side
+            x1 = x0
+            mid = x0 + 34 + 0.12 * abs(y1 - y0)
+        colour = MAP_INK[keys.index(by_id[b]["deck"]) % len(MAP_INK)]
+        out.append(
+            f'<path class="edge" data-a="{esc(a)}" data-b="{esc(b)}" stroke="{colour}" d="M{x0:.0f},{y0:.0f} C{mid:.0f},{y0:.0f} {mid:.0f},{y1:.0f} {x1:.0f},{y1:.0f}"><title>{esc(by)}</title></path>'
+        )
+    for n in nodes:
+        x, y = pos[n["id"]]
+        colour = MAP_INK[keys.index(n["deck"]) % len(MAP_INK)]
+        made = "; ".join(sorted({by for _, b, by in edges if b == n["id"] and by}))
+        tip = f"{n['label']}" + (f": {made}" if made else ": measured")
+        out.append(
+            f'<a class="node" data-id="{esc(n["id"])}" href="{esc(n.get("href", "#"))}"><title>{esc(tip)}</title>'
+            f'<rect x="{x:.0f}" y="{y:.0f}" width="{bw}" height="{bh}" rx="7"/><rect x="{x:.0f}" y="{y:.0f}" width="5" height="{bh}" rx="2" fill="{colour}" stroke="none"/>'
+            f'<text x="{x + 13:.0f}" y="{y + bh / 2 + 4:.0f}">{esc(n["label"])}</text></a>'
+        )
+    out.append("</svg>")
+    used = [k for k in keys if any(n["deck"] == k for n in nodes)]
+    names = {d["key"]: d["name"] for d in decks}
+    legend = "".join(
+        f'<span><i style="background:{MAP_INK[keys.index(k) % len(MAP_INK)]}"></i>{esc(names[k])}</span>'
+        for k in used
+    )
+    body = f'<div class="map rise"><div class="legend">{legend}</div>{"".join(out)}</div>'
+    return body, {"nodes": len(nodes), "relations": len(rels), "links": len(edges)}
 
 
 def build_hub(config: Path, out: Path) -> dict:
@@ -312,7 +430,11 @@ def build_hub(config: Path, out: Path) -> dict:
             f'<div class="num">{esc(m.get("num", ""))}</div></{tag}>'
         )
 
-    know = [
+    def column(key, default_head, default_modules):
+        c = hub.get(key) or {}
+        return c.get("head", default_head), c.get("modules") or default_modules
+
+    by_deck = [
         {
             "chip": f"DECK {i:02d}",
             "title": d["name"],
@@ -321,13 +443,54 @@ def build_hub(config: Path, out: Path) -> dict:
             "href": f"{d['href']}{d['categories'][0]['slug']}.html",
         }
         for i, d in enumerate(decks, 1)
-    ] + ([hub["store"]] if hub.get("store") else [])
-    left = hub.get("data") or []
-    rows = max(len(left), len(know), 1)
+    ]
+    left_head, left = column("left", "", [])
+    right_head, right = column("right", "DECKS", by_deck)
+    rows = max(len(left), len(right), 1)
+    left_html = "".join(module(m, "d") for m in left)
+    right_html = "".join(module(m, "k") for m in right)
+    # revolving examples: each shows one diagram in the core with what goes into it on the left and what it
+    # gives on the right; the two columns change with the diagram
+    examples = hub.get("examples") or []
+    if examples:
+        by_key = {d["key"]: d for d in decks}
+        screen, ins, outs = [], [], []
+        for k, ex in enumerate(examples):
+            d = by_key.get(ex.get("deck"))
+            w = d and d["where"].get(ex.get("diagram"))
+            if not w:
+                raise ValueError(
+                    f"{config.name}: example {k + 1}: no diagram '{ex.get('diagram')}' in deck '{ex.get('deck')}'"
+                )
+            label = ex.get("name") or w["name"] or w["title"]
+            fig = svg(d["diagrams"][ex["diagram"]], text=False, uid=f"e{k}")
+            screen.append((k, f'<figure data-name="{esc(label)}" data-href="{w["href"]}">{fig}</figure>'))
+            hide = "" if k == 0 else " hidden"
+            ins.append(
+                f'<div class="set" data-i="{k}"{hide}>{"".join(module(m, "d") for m in ex.get("in") or [])}</div>'
+            )
+            outs.append(
+                f'<div class="set" data-i="{k}"{hide}>{"".join(module(m, "k") for m in ex.get("out") or [])}</div>'
+            )
+        rows = max(
+            max(len(ex.get("in") or []) for ex in examples),
+            max(len(ex.get("out") or []) for ex in examples),
+            1,
+        )
+        left_n = right_n = rows
+        left_html, right_html = "".join(ins), "".join(outs)
+        left_head, right_head = hub.get("in_head", "WHAT GOES IN"), hub.get("out_head", "WHAT IT EXPLAINS")
+    else:
+        left_n, right_n = len(left), len(right)
+
+    def sub(d, c):
+        text = ((hub.get("subtitles") or {}).get(d["key"]) or {}).get(c["slug"])
+        return f"<small>{esc(text)}</small>" if text else ""
+
     deck_html = []
     for d in decks:
         cats = "".join(
-            f'<a class="cat" href="{d["href"]}{c["slug"]}.html"><i>{c["n"]:02d}</i><span>{esc(c["title"])}</span>'
+            f'<a class="cat" href="{d["href"]}{c["slug"]}.html"><i>{c["n"]:02d}</i><span>{esc(c["title"])}{sub(d, c)}</span>'
             f"<em>{c['slides']} slides</em></a>"
             for c in d["categories"]
         )
@@ -337,7 +500,7 @@ def build_hub(config: Path, out: Path) -> dict:
         deck_html.append(
             f'<div class="deck rise" id="{d["key"]}"><span class="mono">{count}</span><h3>{esc(d["name"])}</h3>'
             f'<p>{esc(d.get("line", ""))}</p><div class="cats">{cats}</div>'
-            f'<a class="go" href="{d["href"]}{d["categories"][0]["slug"]}.html">Open the deck →</a></div>'
+            f'<a class="go" href="{d["href"]}{d["categories"][0]["slug"]}.html">Start at the beginning →</a></div>'
         )
     total = sum(d["slides"] for d in decks)
 
@@ -350,33 +513,75 @@ def build_hub(config: Path, out: Path) -> dict:
             f'<p class="lead">{esc(s.get("text", ""))}</p>{body}</section>'
         )
 
-    finds = "".join(
-        f'<div class="card rise"><span class="grade {esc(f["grade"])}">{esc(f["grade"])}</span>'
-        f'<div class="big">{esc(f["big"])}</div><p>{esc(f["text"])}</p></div>'
-        for f in hub.get("findings") or []
-    )
+    def cards(key):
+        items = (hub.get(key) or {}).get("items") or []
+        body = "".join(
+            f'<{"a" if f.get("href") else "div"} class="card rise"{" href=" + chr(34) + esc(f["href"]) + chr(34) if f.get("href") else ""}>'
+            f'<span class="grade {esc(f["grade"])}">{esc(f["grade"])}</span>'
+            f'<div class="big">{esc(f["big"])}</div><p>{esc(f["text"])}</p></{"a" if f.get("href") else "div"}>'
+            for f in items
+        )
+        return f'<div class="find">{body}</div>' if body else ""
+
+    map_html, map_kicker, map_counts = "", "", {}
+    if (hub.get("map") or {}).get("file"):
+        spec = yaml.safe_load((config.parent / hub["map"]["file"]).read_text(encoding="utf-8")) or {}
+        map_html, map_counts = ontology(spec, decks, config.name)
+        map_kicker = f"{map_counts['nodes']} quantities · {map_counts['relations']} relations"
     steps = "".join(
         f'<div><span class="mono">{i:02d}</span><b>{esc(s["title"])}</b><p>{esc(s["text"])}</p></div>'
-        for i, s in enumerate(hub.get("method") or [], 1)
+        for i, s in enumerate((hub.get("how") or {}).get("items") or [], 1)
     )
-    ids = ("diagrams", "findings", "decks", "method")
-    sections = [
-        section(
+    src = "".join(module(m, "d") for m in (hub.get("sources") or {}).get("items") or [])
+    # the reader who comes to learn is served first: where to go, then what the topics look like; how the material
+    # was checked, what is left to follow up, the method and the data come after, as support
+    parts = [
+        (
+            "learn",
+            "Learn",
+            section(
+                "learn",
+                f"{len(decks)} decks · {total} slides",
+                "learn",
+                f'<div class="decks">{"".join(deck_html)}</div>',
+            ),
+        ),
+        ("map", "Map", section("map", map_kicker, "map", map_html)),
+        (
             "diagrams",
-            f"{n} diagrams · {total} slides",
-            "wall",
-            f'<div class="wall">{"".join(t for _, t in tiles)}</div>' if tiles else "",
+            "Diagrams",
+            section(
+                "diagrams",
+                f"{n} diagrams",
+                "wall",
+                f'<div class="wall">{"".join(t for _, t in tiles)}</div>' if tiles else "",
+            ),
         ),
-        section(
-            "findings",
-            "Knowledge set against data",
-            "found",
-            f'<div class="find">{finds}</div>' if finds else "",
+        (
+            "verified",
+            "Verified",
+            section("verified", "Reproduced and verified", "verified", cards("verified")),
         ),
-        section("decks", f"{len(decks)} decks", "sets", f'<div class="decks">{"".join(deck_html)}</div>'),
-        section("method", "Method", "how", f'<div class="steps rise">{steps}</div>' if steps else ""),
+        (
+            "followup",
+            "Follow-up",
+            section("followup", "Disagreements and open points", "followup", cards("followup")),
+        ),
+        (
+            "method",
+            "Method",
+            section("method", "Method", "how", f'<div class="steps rise">{steps}</div>' if steps else ""),
+        ),
+        (
+            "sources",
+            "Data",
+            section(
+                "sources", "Measured data", "sources", f'<div class="find src">{src}</div>' if src else ""
+            ),
+        ),
     ]
-    nav = "".join(f'<a href="#{i}">{i.capitalize()}</a>' for i, s in zip(ids, sections, strict=True) if s)
+    sections = [p[2] for p in parts]
+    nav = "".join(f'<a href="#{i}">{label}</a>' for i, label, body in parts if body)
     selector = (
         '<div class="sel"><button id="prev" type="button" aria-label="Previous diagram">‹</button><a id="sel" href="#"></a>'
         '<button id="next" type="button" aria-label="Next diagram">›</button></div>'
@@ -386,24 +591,29 @@ def build_hub(config: Path, out: Path) -> dict:
     panel = f'<div class="screen">{"".join(f for _, f in screen)}</div>' if screen else ""
     page = f"""<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
 <title>{esc(hub["title"])}</title><style>{CSS}.col{{grid-template-rows:repeat({rows},1fr)}}</style></head><body><div class="wrap">
-<header><a class="brand" href="#top"><i></i>{esc(hub.get("brand") or hub["title"])}</a><nav>{nav}<button class="theme" id="theme" type="button">LIGHT / DARK</button></nav></header>
+<header><a class="brand" href="#top"><i></i>{esc(hub.get("brand") or hub["title"])}</a><nav>{nav}<button class="theme" id="pencil" type="button">INK / PENCIL</button><button class="theme" id="theme" type="button">LIGHT / DARK</button></nav></header>
 <main id="top">
-<div class="board"><div class="grid">{traces(len(left), len(know))}
-<div class="col l"><span class="colhead" style="left:4%">{esc(hub.get("left", "MEASURED DATA"))}</span>{"".join(module(m, "d") for m in left)}</div>
+<div class="board"><div class="grid">{traces(left_n, right_n)}
+<div class="col l"><span class="colhead" style="left:4%">{esc(left_head)}</span>{left_html}</div>
 <div class="col c"><div class="mod core"><span class="mono">{esc(hub.get("kicker", ""))}</span><h1>{esc(hub["headline"])}</h1>{panel}
 <p class="tag">{esc(hub.get("tagline", ""))}</p>{selector}</div></div>
-<div class="col r"><span class="colhead" style="left:70%">{esc(hub.get("right", "KNOWLEDGE"))}</span>{"".join(module(m, "k") for m in know)}</div>
+<div class="col r"><span class="colhead" style="left:70%">{esc(right_head)}</span>{right_html}</div>
 </div></div>
 {"".join(sections)}
-</main><footer>{esc(hub.get("footer", ""))}</footer></div><script>{JS}</script></body></html>"""
+</main><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="ss-pencil" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="4" result="slow"/><feDisplacementMap in="SourceGraphic" in2="slow" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="wob"/><feTurbulence type="fractalNoise" baseFrequency="0.55 0.045" numOctaves="2" seed="11" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.62" result="strokes"/><feComposite in="wob" in2="strokes" operator="in" result="drawn"/><feComponentTransfer in="wob" result="wash"><feFuncA type="linear" slope="0.5"/></feComponentTransfer><feMerge><feMergeNode in="wash"/><feMergeNode in="drawn"/></feMerge></filter></svg><footer>{esc(hub.get("footer", ""))}</footer></div><script>{JS}</script></body></html>"""
     out = Path(out)
-    if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
+    out.mkdir(parents=True, exist_ok=True)
+    for old in out.iterdir():  # emptied, not removed: a web server may be serving the folder
+        shutil.rmtree(old) if old.is_dir() else old.unlink()
     for d in decks:
         shutil.copytree(d["path"], out / d["key"])
         (out / d["key"] / "index.html").write_text(
             REDIRECT.format(name=esc(d["name"])), encoding="utf-8", newline="\n"
         )
     (out / "index.html").write_text(page, encoding="utf-8", newline="\n")
-    return {"decks": len(decks), "diagrams": n, "slides": total}
+    return {
+        "decks": len(decks),
+        "diagrams": n,
+        "slides": total,
+        **({"map": map_counts} if map_counts else {}),
+    }

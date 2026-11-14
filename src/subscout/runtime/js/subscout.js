@@ -59,6 +59,8 @@ function pref(key, attr, fallback, onApply) {
 }
 
 export const theme = pref("theme", "data-colour-scheme", "system");
+// Drawing style of figures: as drawn ("system"), or "pencil": graphite on paper, by a filter and a muted palette.
+export const drawing = pref("drawing", "data-drawing", "system");
 export const typePairing = pref("type", "data-type", "ledger");
 export const palettePreset = pref("palette", "data-palette", "tide");
 export const surfaceOption = pref("surface", "data-surface", "nordic-cool");
@@ -67,6 +69,7 @@ export const surfaceOption = pref("surface", "data-surface", "nordic-cool");
 const schemeSubs = new Set();
 export const onSchemeChange = (f) => schemeSubs.add(f);
 theme.subscribe(() => requestAnimationFrame(() => schemeSubs.forEach((f) => f())));
+drawing.subscribe(() => requestAnimationFrame(() => schemeSubs.forEach((f) => f())));
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => schemeSubs.forEach((f) => f()));
 
 // ---------------------------------------------------------------- units

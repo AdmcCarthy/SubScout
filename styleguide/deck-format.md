@@ -111,6 +111,10 @@ Prose of the slide.
 - `formula`: LaTeX, one string or a list. It is turned into MathML when the deck is built; the page loads no
   mathematics script. Single-quoted YAML keeps the backslashes as written.
 - `where`: one line of text; symbols between dollar signs are set as mathematics.
+- `analogue`: one line on where the same physics or reasoning appears in another science, shown as "Elsewhere in
+  science". It helps a reader who knows that field, and tells the others where to look.
+- `reading`: one line of names or works under which the topic is found elsewhere, shown as "Further reading".
+  It is a pointer for the reader, not a source: a source belongs on the figure.
 - The card lasts until the next `###` topic. A later step of the same topic may carry a card of its own, which
   replaces it from that step on.
 - The card takes room from the prose, and the fit gate applies to both. Two formulas and one line of symbols is
@@ -119,6 +123,14 @@ Prose of the slide.
   line of symbols is left out; the text beneath has the height it has without a card.
 
 A fenced `concept` block is read in deck mode only.
+
+## Drawing style
+
+Every deck page carries a control with two settings. **Ink** is the figure as its module draws it. **Pencil**
+redraws every figure as graphite on paper, after the older practice of technical drawing in pencil: a firm
+outline with a slight unevenness of the hand, tone laid in fine strokes, and muted pastel where colour carries
+meaning. It is a filter and a palette, so it applies to graphs and diagrams alike and no figure module changes.
+Pencil holds the page in the light scheme, since paper is light. The hub has the same control.
 
 ## Text must fit
 
@@ -150,44 +162,90 @@ Several decks that are one piece of work can share one landing page. `uv run sub
 reads the decks named in `hub.yaml`, each already built, and writes a site of its own: `index.html`, and a copy
 of each deck under its key, whose own landing page is replaced by a redirect to the hub.
 
+The page is written for a reader who comes to learn a subject, and its order follows that. First a board that
+asks where to go, or with `examples` shows one worked case at a time, what is measured on the left, the
+diagram in the middle and what it explains on the right, changing together; then every category of every deck; then a wall of the decks' diagrams. What supports the
+material comes after, in this order: what was reproduced and verified, what disagrees or is to be followed up,
+the method, and the measured data. A part with nothing to show is left out.
+
 ```yaml
 title: From first principles          # required
-headline: From first principles       # required: the heading of the core module
+headline: What do you want to learn about?   # required: the heading of the core module of the board
 brand: First principles
-kicker: Basin and well · rebuilt, graded, tested
+kicker: Basin and well · from first principles
 tagline: One sentence under the screen of the core module.
 decks:                                # required
   - key: basin                        # folder of the deck inside the hub; lower-case letters, digits, hyphens
     site: _site                       # the built deck, relative to this file
     name: Basin fundamentals
     line: One sentence for the deck's card.
-data:                                 # modules of the left column: what was measured
-  - { chip: WELL, title: A well, text: What it holds, num: "4,641 m drilled" }
-store: { chip: STORE, title: A knowledge store, text: …, num: … }   # a last module of the right column
+left:                                 # the left column of the board; default: empty
+  head: THE BASIN
+  modules:
+    - { chip: FORM, title: How a basin forms, text: …, num: …, href: basin/heat.html }
+right:                                # the right column; default: one module per deck
+  head: THE WELL
+  modules: […]
 screen: [d_flexure, d_well]           # diagrams the core module cycles through; default: the first eight
 wide: [d_flexure]                     # diagrams given a double tile
 order: [d_flexure, d_well]            # diagrams placed first on the wall
+examples:                             # revolving examples on the board; replaces `left`, `right` and `screen`
+  - deck: basin                       # each shows one diagram in the core module,
+    diagram: d_flexure                # with what goes into it on the left
+    name: Flexure of a plate          # and what it explains on the right
+    in:  [ { chip: LOAD, title: …, text: …, num: …, href: … }, … ]
+    out: [ { chip: BASIN, title: …, text: …, num: …, href: … }, … ]
+in_head: WHAT GOES IN                 # headings of the two columns when examples are given
+out_head: WHAT IT EXPLAINS
+subtitles:                            # a second line under a category, by deck key and category slug
+  basin: { heat: "Steady-state conductive geotherms and radiogenic heat production" }
+learn: { title: …, text: … }          # heading over the categories of the decks
+map: { file: ontology.yaml, title: …, text: … }   # a map of what depends on what (see below)
 wall: { title: …, text: … }           # heading of the wall of diagrams
-found: { title: …, text: … }          # heading of the findings
-findings:
-  - { grade: disagrees, big: 29.9 against 20.07, text: One sentence. }
-sets: { title: …, text: … }           # heading of the decks
-how: { title: …, text: … }            # heading of the method
-method:
-  - { title: Balance law, text: One sentence. }
+verified:                             # what was reproduced and verified: shown before any disagreement
+  title: …
+  text: …
+  items:
+    - { grade: reproduced, big: within 3 per cent, text: One sentence., href: well/probe.html#6 }
+followup:                             # disagreements and open points, in the same form
+  title: …
+  items: […]
+how:                                  # the method, as numbered steps
+  title: …
+  items:
+    - { title: Balance law, text: One sentence. }
+sources:                              # the measured data, as modules
+  title: …
+  items:
+    - { chip: WELL, title: A well, text: What it holds, num: "4,641 m drilled" }
 footer: Credits and terms.
 ```
 
-The page is a board in three columns: the `data` modules on the left, a core module in the middle, and on the
-right one module per deck and the `store`. Traces join them. Below it come a wall of diagrams, the findings, the
-categories of every deck, and the method; a part with nothing to show is left out.
+Nothing on the page is computed. Categories, slide counts, the number of named relations and every link into a
+deck are read from the built pages. A **diagram** is any dataset of a deck that is a mapping with
+`box: [x0, y0, x1, y1]` (y upward) and `shapes`, a list of `poly`, `line`, `arrow`, `circle` and `text` items
+with colours named `c1` to `c5`, `context`, `text`, `muted` and `surface`; the hub draws each as static SVG
+without its labels and links it to the first slide that shows it. The text of `verified` and `followup` is typed
+in the config and is not checked against the decks; an `href` on an item makes its card a link to the slide.
 
-Nothing on the page is computed. Categories, slide counts, the number of named relations and every link are read
-from the built pages. A **diagram** is any dataset of a deck that is a mapping with `box: [x0, y0, x1, y1]` (y
-upward) and `shapes`, a list of `poly`, `line`, `arrow`, `circle` and `text` items with colours named `c1` to
-`c5`, `context`, `text`, `muted` and `surface`; the hub draws each as static SVG without its labels and links it
-to the first slide that shows it. The text of findings is typed in the config and is not checked against the
-decks.
+### The map of dependencies
+
+`map.file` names a YAML file beside the config that says how the quantities taught in the decks depend on one
+another. The hub draws it after the list of decks: one column per stage, a box for each quantity in the colour of
+its deck, a line for each relation. Pointing at a box lights everything it rests on and everything that rests on
+it; selecting it opens its page.
+
+```yaml
+stages: [Measured, Rock and fluid, The field, Behaviour, Value]     # the columns, left to right
+nodes:
+  - { id: phi, label: Porosity, stage: 1, deck: petrophysics, href: petrophysics/logs.html }
+relations:
+  - { from: [rhob, core], to: phi, by: "Density porosity, tied to core" }
+```
+
+A node's `deck` is the key of a deck of the hub. A relation runs from earlier stages to the same or a later one;
+the build fails on one that runs backwards, on an unknown node and on an unknown deck. The layout is computed at
+build time (boxes of one deck are kept together and pulled towards what they join); the page only highlights.
 
 The hub carries its own style in one file, with no external font or script, and follows the system's colour
 scheme. The decks load ES modules, so the hub is opened through a web server, not as a file.
