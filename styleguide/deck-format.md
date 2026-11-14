@@ -86,6 +86,40 @@ chart of many rows stays `side`: the side master is the tall one.
 the slide gives them, read on every draw, and should fill it. `opts.states` lists every state the deck will ask
 for. **Built-in chart forms** keep their own proportions and are scaled into the box.
 
+## The concept card
+
+A topic that teaches a named process can carry a card: the name the literature gives the process, its governing
+relation, and what the symbols stand for. The card heads the text of every slide of the topic, so the relation
+stays in view while the figure moves between states.
+
+````
+::: step
+### At rest, each component obeys its own barometric law
+
+```concept
+name: Gravity and chemical equilibrium
+formula:
+  - 'f_i(h) = f_i(h_0)\,\exp\!\left(-\dfrac{M_i g (h-h_0)}{RT}\right)'
+where: '$f_i$ fugacity of component i, $M_i$ its molar mass, $h$ height'
+```
+
+Prose of the slide.
+:::
+````
+
+- `name`: the academic name, shown small above the formula. The `###` heading stays the point being taught.
+- `formula`: LaTeX, one string or a list. It is turned into MathML when the deck is built; the page loads no
+  mathematics script. Single-quoted YAML keeps the backslashes as written.
+- `where`: one line of text; symbols between dollar signs are set as mathematics.
+- The card lasts until the next `###` topic. A later step of the same topic may carry a card of its own, which
+  replaces it from that step on.
+- The card takes room from the prose, and the fit gate applies to both. Two formulas and one line of symbols is
+  about what a slide beside a figure holds.
+- On the full master the card is one strip across both columns of text, name and formulas side by side, and the
+  line of symbols is left out; the text beneath has the height it has without a card.
+
+A fenced `concept` block is read in deck mode only.
+
 ## Text must fit
 
 Nothing on a slide scrolls. Text that does not fit its box steps down in size, to a floor of 0.8 of its size, and

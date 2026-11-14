@@ -160,3 +160,41 @@ def test_fit_refuses_a_story(tmp_path, capsys):
     assert build(EXAMPLES / "demo", tmp_path / "o").errors == []
     assert main(["fit", str(tmp_path / "o")]) == 2
     assert "not a deck" in capsys.readouterr().out
+
+
+CHART = "```chart\nid: finds\ntype: bars\ndata: decades\nlabel: decade\nvalue: avg_msm3\ntitle: Finds shrink\nsource: s\nconfidence: derived\n```\n"
+
+
+def test_a_concept_card_heads_the_text_of_its_topic(tmp_path):
+    card = "```concept\nname: Exponential decline\nformula: 'q = q_0\\,e^{-Dt}'\nwhere: '$q$ rate, $D$ decline'\n```\n"
+    body = (
+        "Lead.\n\n## One\n\n::: step\n### First topic\n\n" + card + "\nText.\n\n" + CHART + ":::\n\n"
+        "::: step\nSecond view.\n\n```chart\nuse: finds\n```\n:::\n\n"
+        "::: step\n### Second topic\n\nNo card.\n\n```chart\nuse: finds\n```\n:::\n\n"
+        "## Two\n\n::: step\n### Other topic\n\nText.\n\n```chart\nuse: finds\n```\n:::\n"
+    )
+    out = tmp_path / "o"
+    assert build(_deck(tmp_path, body=body), out).errors == []
+    views = [s for s in _payload(out / "one.html")["slides"] if s["kind"] == "view"]
+    # the card is set as MathML at build time and stays with its topic, not beyond it
+    assert all(
+        'class="concept-name">Exponential decline' in s["html"] and "<math" in s["html"] for s in views[:2]
+    )
+    assert "concept" not in views[2]["html"]
+    assert views[0]["html"].count("<math") == 3  # one formula and two symbols
+
+
+def test_a_concept_card_is_checked(tmp_path):
+    for bad, said in (
+        ("```concept\nname: X\nequation: 'a = b'\n```\n", "a concept block takes"),
+        ("```concept\nname: a: b\n```\n", "concept: YAML error"),
+    ):
+        body = (
+            "Lead.\n\n## One\n\n::: step\n### T\n\n"
+            + bad
+            + "\n"
+            + CHART
+            + ":::\n\n## Two\n\n::: step\n### U\n\n```chart\nuse: finds\n```\n:::\n"
+        )
+        report = build(_deck(tmp_path / said[:4].strip(), body=body), tmp_path / "o")
+        assert any(said in e for e in report.errors), report.errors

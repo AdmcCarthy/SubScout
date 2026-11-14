@@ -87,14 +87,16 @@ function facts(F) {
 }
 
 // Text that does not fit its box steps down in size, to a floor; the build check lists what still overflows.
+// Text set in columns spills sideways into a further column, not downwards, so both directions are tested.
+const spills = () => proseEl.scrollHeight > proseEl.clientHeight + 1 || proseEl.scrollWidth > proseEl.clientWidth + 1;
 function fit() {
   proseEl.style.removeProperty("--fs");
   let fs = 1;
-  while (proseEl.scrollHeight > proseEl.clientHeight + 1 && fs > 0.8) {
+  while (spills() && fs > 0.8) {
     fs -= 0.04;
     proseEl.style.setProperty("--fs", fs.toFixed(2));
   }
-  slideEl.dataset.overflow = proseEl.scrollHeight > proseEl.clientHeight + 1 ? "1" : "0";
+  slideEl.dataset.overflow = spills() ? "1" : "0";
 }
 
 function go(n, { animate = true } = {}) {

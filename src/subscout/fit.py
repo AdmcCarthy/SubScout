@@ -27,7 +27,7 @@ PROBE = """() => {
   const chart = on && on.querySelector('.ss-chart').getBoundingClientRect();
   return {
     layout: slide.dataset.layout,
-    overflow: prose.scrollHeight > prose.clientHeight + 1,
+    overflow: prose.scrollHeight > prose.clientHeight + 1 || prose.scrollWidth > prose.clientWidth + 1,
     fs: prose.style.getPropertyValue('--fs') || '1',
     page: document.documentElement.scrollHeight > window.innerHeight + 1,
     fig: on ? (box ? [Math.round(box.width), Math.round(box.height)] : null) : 'none',
