@@ -1,6 +1,6 @@
 """SubScout: themed data narratives in two modes, a journalistic story and a deck for teaching."""
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 
 
 def metric(*args, **kwargs):

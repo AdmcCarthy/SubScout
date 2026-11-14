@@ -124,14 +124,6 @@ Prose of the slide.
 
 A fenced `concept` block is read in deck mode only.
 
-## Drawing style
-
-Every deck page carries a control with two settings. **Ink** is the figure as its module draws it. **Pencil**
-redraws every figure as graphite on paper, after the older practice of technical drawing in pencil: a firm
-outline with a slight unevenness of the hand, tone laid in fine strokes, and muted pastel where colour carries
-meaning. It is a filter and a palette, so it applies to graphs and diagrams alike and no figure module changes.
-Pencil holds the page in the light scheme, since paper is light. The hub has the same control.
-
 ## Text must fit
 
 Nothing on a slide scrolls. Text that does not fit its box steps down in size, to a floor of 0.8 of its size, and
@@ -220,6 +212,9 @@ sources:                              # the measured data, as modules
     - { chip: WELL, title: A well, text: What it holds, num: "4,641 m drilled" }
 footer: Credits and terms.
 ```
+
+The figure that draws a diagram in a deck is `runtime/js/diagram.js`; a deck's own module re-exports it
+(`export { default } from "../runtime/js/diagram.js";`), so decks and the hub draw a diagram by one set of rules.
 
 Nothing on the page is computed. Categories, slide counts, the number of named relations and every link into a
 deck are read from the built pages. A **diagram** is any dataset of a deck that is a mapping with

@@ -159,9 +159,6 @@ CSS = """
 --d1:#ff8a63;--d2:#6fb1e6;--d3:#ef6a8a;--d4:#a990d6;--d5:#4fc0b4;--dc:#6c737d;--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 18px 40px -22px #000,0 2px 6px -2px #000}}
 :root[data-theme=dark]{--bg:#121418;--panel:#181b20;--module:#22262c;--ink:#e9ecef;--muted:#8b929c;--line:#343941;--accent:#ff7a52;--accent-soft:#5a2e22;--glow:rgba(255,122,82,.2);
 --d1:#ff8a63;--d2:#6fb1e6;--d3:#ef6a8a;--d4:#a990d6;--d5:#4fc0b4;--dc:#6c737d;--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 18px 40px -22px #000,0 2px 6px -2px #000}
-:root[data-drawing=pencil]{--bg:#e9e4d8;--panel:#f1ebdc;--module:#f7f2e6;--ink:#34312d;--muted:#6f695f;--line:#cfc7b4;--accent:#a8674a;--accent-soft:#e4cdb9;--glow:rgba(168,103,74,.16);
---d1:#b07a52;--d2:#6f8fa6;--d3:#a8605e;--d4:#8a789c;--d5:#74906e;--dc:#a39d90}
-:root[data-drawing=pencil] .tile svg,:root[data-drawing=pencil] .screen svg,:root[data-drawing=pencil] .map svg{filter:url(#ss-pencil)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;
 background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;background-position:-1px -1px;background-attachment:fixed}
@@ -256,9 +253,6 @@ document.querySelectorAll('.map').forEach(m=>{const E=[...m.querySelectorAll('.e
 function walk(id,from,to,seen){E.forEach(e=>{if(e.dataset[from]===id){e.classList.add('on');const nx=e.dataset[to];if(!seen.has(nx)){seen.add(nx);walk(nx,from,to,seen)}}})}
 function light(id){const seen=new Set([id]);E.forEach(e=>e.classList.remove('on'));walk(id,'b','a',seen);walk(id,'a','b',seen);N.forEach(n=>{n.classList.toggle('on',seen.has(n.dataset.id));n.classList.toggle('me',n.dataset.id===id)});m.classList.add('lit')}
 N.forEach(n=>{n.addEventListener('mouseenter',()=>light(n.dataset.id));n.addEventListener('focus',()=>light(n.dataset.id));n.addEventListener('mouseleave',()=>m.classList.remove('lit'));n.addEventListener('blur',()=>m.classList.remove('lit'))})});
-const pen=document.getElementById('pencil');function draw(on){if(on){root.dataset.drawing='pencil';root.dataset.theme='light'}else{delete root.dataset.drawing}}
-pen.onclick=()=>{const on=root.dataset.drawing!=='pencil';draw(on);try{localStorage.setItem('ss:drawing',on?'pencil':'system')}catch(e){}};
-try{draw(localStorage.getItem('ss:drawing')==='pencil')}catch(e){}
 """
 
 
@@ -591,7 +585,7 @@ def build_hub(config: Path, out: Path) -> dict:
     panel = f'<div class="screen">{"".join(f for _, f in screen)}</div>' if screen else ""
     page = f"""<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
 <title>{esc(hub["title"])}</title><style>{CSS}.col{{grid-template-rows:repeat({rows},1fr)}}</style></head><body><div class="wrap">
-<header><a class="brand" href="#top"><i></i>{esc(hub.get("brand") or hub["title"])}</a><nav>{nav}<button class="theme" id="pencil" type="button">INK / PENCIL</button><button class="theme" id="theme" type="button">LIGHT / DARK</button></nav></header>
+<header><a class="brand" href="#top"><i></i>{esc(hub.get("brand") or hub["title"])}</a><nav>{nav}<button class="theme" id="theme" type="button">LIGHT / DARK</button></nav></header>
 <main id="top">
 <div class="board"><div class="grid">{traces(left_n, right_n)}
 <div class="col l"><span class="colhead" style="left:4%">{esc(left_head)}</span>{left_html}</div>
@@ -600,7 +594,7 @@ def build_hub(config: Path, out: Path) -> dict:
 <div class="col r"><span class="colhead" style="left:70%">{esc(right_head)}</span>{right_html}</div>
 </div></div>
 {"".join(sections)}
-</main><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="ss-pencil" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="4" result="slow"/><feDisplacementMap in="SourceGraphic" in2="slow" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="wob"/><feTurbulence type="fractalNoise" baseFrequency="0.55 0.045" numOctaves="2" seed="11" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.6 0 0 0 -0.62" result="strokes"/><feComposite in="wob" in2="strokes" operator="in" result="drawn"/><feComponentTransfer in="wob" result="wash"><feFuncA type="linear" slope="0.5"/></feComponentTransfer><feMerge><feMergeNode in="wash"/><feMergeNode in="drawn"/></feMerge></filter></svg><footer>{esc(hub.get("footer", ""))}</footer></div><script>{JS}</script></body></html>"""
+</main><footer>{esc(hub.get("footer", ""))}</footer></div><script>{JS}</script></body></html>"""
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     for old in out.iterdir():  # emptied, not removed: a web server may be serving the folder

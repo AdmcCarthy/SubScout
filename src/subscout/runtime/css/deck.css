@@ -211,18 +211,4 @@ body.deck { display: grid; grid-template-rows: 56px minmax(0, 1fr) 60px; height:
 .table-slide tr.is-hl td:first-child { box-shadow: inset 3px 0 0 var(--ss-data-highlight); padding-left: 10px; }
 .table-slide .ss-tbar { display: none; }
 
-/* ------------------------------------------------------------ pencil: figures as graphite on paper
-   A classical drawing style as an option: firm outline, soft tone, muted pastel where colour carries meaning.
-   The colours below replace the data palette; the filter #ss-pencil (deck-shell.js) gives the line its hand. */
-:root[data-drawing="pencil"] {
-  color-scheme: light;
-  --ss-bg: #e9e4d8; --ss-surface: #f7f2e6; --ss-surface-raised: #f1ebdc; --ss-accent-surface: #efe8d8;
-  --ss-text: #34312d; --ss-text-subtle: #4b4741; --ss-text-muted: #6f695f; --ss-border-subtle: #cfc7b4;
-  --ss-data-context: #a39d90; --ss-data-highlight: #a8674a;
-  --ss-data-cat-1: #b07a52; --ss-data-cat-2: #6f8fa6; --ss-data-cat-3: #a8605e; --ss-data-cat-4: #8a789c; --ss-data-cat-5: #74906e;
-  --ss-data-seq-2: #c9d6d2;
-}
-:root[data-drawing="pencil"] body { background-image: radial-gradient(rgb(90 80 60 / 0.07) 1px, transparent 1.2px); background-size: 5px 5px; }
-:root[data-drawing="pencil"] .fig-layer svg, :root[data-drawing="pencil"] .card-thumb svg { filter: url(#ss-pencil); }
-:root[data-drawing="pencil"] .stage { background: #f7f2e6; border-radius: 6px; }
 .controls { display: flex; gap: 10px; align-items: center; }
