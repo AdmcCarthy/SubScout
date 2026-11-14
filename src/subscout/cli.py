@@ -73,6 +73,18 @@ def cmd_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_hub(args: argparse.Namespace) -> int:
+    from . import hub
+
+    try:
+        res = hub.build_hub(Path(args.config), Path(args.out))
+    except (ValueError, FileNotFoundError, KeyError) as e:
+        print(f"error: {e}")
+        return 2
+    print(f"hub -> {args.out}: {res['decks']} deck(s), {res['slides']} slides, {res['diagrams']} diagram(s)")
+    return 0
+
+
 def cmd_fit(args: argparse.Namespace) -> int:
     from . import fit
 
@@ -150,6 +162,10 @@ def main(argv: list[str] | None = None) -> int:
         "--channel", help="browser channel, e.g. chrome (default: Playwright's Chromium, else Chrome)"
     )
     f.set_defaults(func=cmd_fit)
+    h = sub.add_parser("hub", help="one landing page over several built decks")
+    h.add_argument("config", help="hub.yaml: the decks and the text of the page")
+    h.add_argument("--out", default="_hub")
+    h.set_defaults(func=cmd_hub)
     e = sub.add_parser("export", help="moved to Plate (prints where)")
     e.add_argument("site", nargs="?", default="_site")
     e.set_defaults(func=cmd_export)

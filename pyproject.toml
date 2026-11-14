@@ -1,6 +1,6 @@
 [project]
 name = "subscout"
-version = "0.10.0"
+version = "0.11.0"
 description = "Themed data narratives in two modes: a journalistic story, and a deck for presentation and teaching"
 readme = "README.md"
 authors = [
@@ -47,6 +47,7 @@ ignore = ["E741"]
 "src/subscout/build.py" = ["E501"]  # HTML fragments
 "src/subscout/modes/*.py" = ["E501"]  # HTML fragments and messages
 "src/subscout/fit.py" = ["E501"]  # embedded JavaScript and messages
+"src/subscout/hub.py" = ["E501"]  # HTML fragments, embedded CSS and JavaScript
 "src/subscout/advice.py" = ["E501"]  # advice messages
 "scripts/perf.py" = ["E501"]  # embedded JavaScript
 "tests/test_build.py" = ["E501"]  # inline story fixtures
