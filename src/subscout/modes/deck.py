@@ -50,7 +50,7 @@ MASTERS = ("side", "full")  # a figure beside its text, or across the slide with
 STATE_KEYS = ("focus", "note", "highlight", "sort", "view", "filter", "frame")
 TOPIC = re.compile(r"(?m)^### (.+)\n")
 CONCEPT = re.compile(r"^```concept\s*\n(.*?)\n```\s*$", re.S | re.M)
-CONCEPT_KEYS = {"name", "formula", "where"}
+CONCEPT_KEYS = {"name", "formula", "where", "reading", "analogue"}
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 RESERVED = {"index", "basis"}
 CONFIG_KEYS = {"brand", "categories", "full", "labels", "start", "footer", "noindex"}
@@ -159,6 +159,14 @@ class Deck:
                 self.report.error(f"{where}: concept: symbol not understood ({e})")
                 text = ""
             out.append(f'<p class="concept-where">{text}</p>')
+        if spec.get("analogue"):
+            out.append(
+                f'<p class="concept-reading">Elsewhere in science: {self.md.renderInline(str(spec["analogue"]))}</p>'
+            )
+        if spec.get("reading"):
+            out.append(
+                f'<p class="concept-reading">Further reading: {self.md.renderInline(str(spec["reading"]))}</p>'
+            )
         self.concepts.append({"name": str(spec.get("name", "")), "where": where})
         return f'<div class="concept">{"".join(out)}</div>' if out else ""
 

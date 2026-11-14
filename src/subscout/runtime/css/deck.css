@@ -80,6 +80,7 @@ body.deck { display: grid; grid-template-rows: 56px minmax(0, 1fr) 60px; height:
 .concept-formula { margin: 0.55em 0; overflow: hidden; }
 .concept-formula math { font-size: 1.08em; font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", math; }
 .concept-formula math[display="block"] { display: block math; width: fit-content; margin: 0; }
+.prose .concept-reading { font-size: 0.74em; line-height: 1.4; color: var(--ss-text-subtle); margin: 0.45em 0 0; font-style: italic; }
 .prose .concept-where { font-size: 0.8em; line-height: 1.4; color: var(--ss-text-subtle); margin: 0.5em 0 0; }
 .slide[data-layout="side"] .prose { border-left: 1px solid var(--ss-border-subtle); padding-left: 36px; font-size: calc(1.16rem * var(--fs)); }
 .slide[data-layout="full"] .prose { height: 8.4rem; columns: 2; column-gap: 56px; max-width: 86rem; }
@@ -89,7 +90,7 @@ body.deck { display: grid; grid-template-rows: 56px minmax(0, 1fr) 60px; height:
 .slide[data-layout="full"] .concept { column-span: all; display: flex; flex-wrap: wrap; align-items: center; gap: 0 2.4em; margin: 0 0 0.55em; padding: 0 0 0.4em; }
 .slide[data-layout="full"] .concept-name { margin: 0; }
 .slide[data-layout="full"] .concept-formula { margin: 0; }
-.slide[data-layout="full"] .concept-where { display: none; }
+.slide[data-layout="full"] .concept-where, .slide[data-layout="full"] .concept-reading { display: none; }
 /* a built-in chart keeps its own proportions and is scaled into the box; a custom figure is given the height and fills it */
 .fig-layer:not([data-type="custom"], [data-type="map"]) .ss-chart svg { width: auto; height: auto; max-width: 100%; max-height: 100%; }
 
@@ -209,3 +210,19 @@ body.deck { display: grid; grid-template-rows: 56px minmax(0, 1fr) 60px; height:
 .table-slide tr.is-hl td { background: color-mix(in oklab, var(--ss-data-highlight) 10%, transparent); }
 .table-slide tr.is-hl td:first-child { box-shadow: inset 3px 0 0 var(--ss-data-highlight); padding-left: 10px; }
 .table-slide .ss-tbar { display: none; }
+
+/* ------------------------------------------------------------ pencil: figures as graphite on paper
+   A classical drawing style as an option: firm outline, soft tone, muted pastel where colour carries meaning.
+   The colours below replace the data palette; the filter #ss-pencil (deck-shell.js) gives the line its hand. */
+:root[data-drawing="pencil"] {
+  color-scheme: light;
+  --ss-bg: #e9e4d8; --ss-surface: #f7f2e6; --ss-surface-raised: #f1ebdc; --ss-accent-surface: #efe8d8;
+  --ss-text: #34312d; --ss-text-subtle: #4b4741; --ss-text-muted: #6f695f; --ss-border-subtle: #cfc7b4;
+  --ss-data-context: #a39d90; --ss-data-highlight: #a8674a;
+  --ss-data-cat-1: #b07a52; --ss-data-cat-2: #6f8fa6; --ss-data-cat-3: #a8605e; --ss-data-cat-4: #8a789c; --ss-data-cat-5: #74906e;
+  --ss-data-seq-2: #c9d6d2;
+}
+:root[data-drawing="pencil"] body { background-image: radial-gradient(rgb(90 80 60 / 0.07) 1px, transparent 1.2px); background-size: 5px 5px; }
+:root[data-drawing="pencil"] .fig-layer svg, :root[data-drawing="pencil"] .card-thumb svg { filter: url(#ss-pencil); }
+:root[data-drawing="pencil"] .stage { background: #f7f2e6; border-radius: 6px; }
+.controls { display: flex; gap: 10px; align-items: center; }

@@ -5,6 +5,8 @@ import re
 import shutil
 from pathlib import Path
 
+import pytest
+
 from subscout.build import build
 from subscout.cli import main
 from subscout.modes import MODES
@@ -166,7 +168,7 @@ CHART = "```chart\nid: finds\ntype: bars\ndata: decades\nlabel: decade\nvalue: a
 
 
 def test_a_concept_card_heads_the_text_of_its_topic(tmp_path):
-    card = "```concept\nname: Exponential decline\nformula: 'q = q_0\\,e^{-Dt}'\nwhere: '$q$ rate, $D$ decline'\n```\n"
+    card = "```concept\nname: Exponential decline\nformula: 'q = q_0\\,e^{-Dt}'\nwhere: '$q$ rate, $D$ decline'\nreading: Arps decline curves\n```\n"
     body = (
         "Lead.\n\n## One\n\n::: step\n### First topic\n\n" + card + "\nText.\n\n" + CHART + ":::\n\n"
         "::: step\nSecond view.\n\n```chart\nuse: finds\n```\n:::\n\n"
@@ -182,6 +184,7 @@ def test_a_concept_card_heads_the_text_of_its_topic(tmp_path):
     )
     assert "concept" not in views[2]["html"]
     assert views[0]["html"].count("<math") == 3  # one formula and two symbols
+    assert "Further reading: Arps decline curves" in views[0]["html"]
 
 
 def test_a_concept_card_is_checked(tmp_path):
@@ -208,7 +211,8 @@ def test_a_hub_stands_over_built_decks_and_replaces_their_landing_pages(tmp_path
     cfg = tmp_path / "hub.yaml"
     cfg.write_text(
         "title: T\nheadline: H\ndecks:\n  - { key: one, site: site, name: One deck, line: A line }\n"
-        "data:\n  - { chip: D, title: Data, text: measured, num: '3' }\n",
+        "learn: { title: What to learn }\nverified:\n  title: V\n  items:\n    - { grade: reproduced, big: one, text: first }\n"
+        "followup:\n  title: F\n  items:\n    - { grade: disagrees, big: two, text: second }\n",
         encoding="utf-8",
     )
     res = build_hub(cfg, tmp_path / "hub")
@@ -221,8 +225,10 @@ def test_a_hub_stands_over_built_decks_and_replaces_their_landing_pages(tmp_path
         "Exponential decline" not in page and "1 relations named" in page
     )  # the one concept card of the example is counted
     # the deck's own landing page gives way to the hub
-    assert "url=../index.html#decks" in (tmp_path / "hub" / "one" / "index.html").read_text(encoding="utf-8")
+    assert "url=../index.html#learn" in (tmp_path / "hub" / "one" / "index.html").read_text(encoding="utf-8")
     assert 'id="diagrams"' not in page  # no diagrams, so no wall
+    # the reader who comes to learn is served first; what was verified comes before what is to be followed up
+    assert page.index('id="learn"') < page.index('id="verified"') < page.index('id="followup"')
 
 
 def test_a_hub_draws_the_diagrams_of_its_decks(tmp_path):
@@ -260,3 +266,83 @@ def test_hub_config_is_checked(tmp_path, capsys):
     assert "no built deck" in capsys.readouterr().out
     cfg.write_text("title: T\n", encoding="utf-8")
     assert main(["hub", str(cfg), "--out", str(tmp_path / "o")]) == 2
+
+
+def test_hub_examples_change_both_columns_with_the_diagram(tmp_path):
+    """A deck with one diagram dataset, and a hub whose board revolves through examples of it."""
+    from subscout.hub import build_hub
+
+    d = _deck(tmp_path)
+    (d / "figures").mkdir()
+    (d / "figures" / "dia.js").write_text(
+        "export default function(el){return {draw(){}}}\n", encoding="utf-8"
+    )
+    (d / "story.py").write_text(
+        "from subscout import metric\ndef metrics(d):\n    return {'n': metric(len(d['decades']), 'count', 's', 'observed')}\n"
+        "def datasets(d):\n    return {'d_one': {'box': [0, 0, 4, 2], 'shapes': [{'id': 'a', 'kind': 'line', 'group': 'g', 'pts': [[0, 0], [4, 2]]}]}}\n",
+        encoding="utf-8",
+    )
+    story = (d / "story.md").read_text(encoding="utf-8")
+    block = "::: step\n### Diagram topic\n\nText.\n\n```chart\nid: dia\ntype: custom\nmodule: figures/dia.js\ndata: d_one\ntitle: A diagram\nsource: s\nconfidence: derived\n```\n:::\n\n"
+    (d / "story.md").write_text(story.replace("## Two\n\n", "## Two\n\n" + block), encoding="utf-8")
+    site = tmp_path / "site"
+    assert build(d, site).errors == []
+    mod = "{ chip: C, title: T%s, text: x, num: y }"
+    cfg = tmp_path / "hub.yaml"
+    cfg.write_text(
+        "title: T\nheadline: H\ndecks:\n  - { key: one, site: site, name: One }\n"
+        "subtitles: { one: { two: An academic line } }\nexamples:\n"
+        + "".join(
+            f"  - deck: one\n    diagram: d_one\n    name: Case {k}\n    in: [{mod % ('in' + str(k))}]\n    out: [{mod % ('out' + str(k))}]\n"
+            for k in (1, 2)
+        ),
+        encoding="utf-8",
+    )
+    res = build_hub(cfg, tmp_path / "hub")
+    page = (tmp_path / "hub" / "index.html").read_text(encoding="utf-8")
+    assert (
+        res["diagrams"] == 1
+        and page.count('class="set"') == 4
+        and page.count('class="set" data-i="1" hidden') == 2
+    )
+    assert page.count("<figure data-name=") == 2 and "Tin1" in page and "Tout2" in page
+    assert "<small>An academic line</small>" in page
+    cfg.write_text(
+        cfg.read_text(encoding="utf-8").replace("d_one\n    name: Case 2", "d_none\n    name: Case 2"),
+        encoding="utf-8",
+    )
+    assert main(["hub", str(cfg), "--out", str(tmp_path / "o")]) == 2
+
+
+def test_a_hub_draws_a_map_of_dependencies(tmp_path):
+    from subscout.hub import build_hub
+
+    site = tmp_path / "site"
+    assert build(DECK, site).errors == []
+    cfg = tmp_path / "hub.yaml"
+    cfg.write_text(
+        "title: T\nheadline: H\ndecks:\n  - { key: one, site: site, name: One deck }\nmap: { file: map.yaml, title: Map }\n",
+        encoding="utf-8",
+    )
+    spec = (
+        "stages: [Measured, Derived]\nnodes:\n"
+        "  - { id: a, label: A log, stage: 0, deck: one, href: one/production.html }\n"
+        "  - { id: b, label: A property, stage: 1, deck: one, href: one/finds.html }\n"
+        "  - { id: c, label: Another, stage: 1, deck: one, href: one/finds.html }\n"
+        "relations:\n  - { from: [a], to: b, by: First step }\n  - { from: [b], to: c, by: Second step }\n"
+    )
+    (tmp_path / "map.yaml").write_text(spec, encoding="utf-8")
+    res = build_hub(cfg, tmp_path / "hub")
+    assert res["map"] == {"nodes": 3, "relations": 2, "links": 2}
+    page = (tmp_path / "hub" / "index.html").read_text(encoding="utf-8")
+    assert page.index('id="learn"') < page.index('id="map"')
+    assert page.count('class="edge"') == 2 and page.count('class="node"') == 3
+    assert 'data-a="a" data-b="b"' in page and "<title>First step</title>" in page
+    assert 'href="one/finds.html"' in page and "A property: First step" in page and "A log: measured" in page
+    # a relation that runs from a later stage to an earlier one is refused, and so is an unknown node
+    (tmp_path / "map.yaml").write_text(spec.replace("from: [a], to: b", "from: [b], to: a"), encoding="utf-8")
+    with pytest.raises(ValueError, match="runs backwards"):
+        build_hub(cfg, tmp_path / "hub")
+    (tmp_path / "map.yaml").write_text(spec.replace("from: [a], to: b", "from: [z], to: b"), encoding="utf-8")
+    with pytest.raises(ValueError, match="unknown node"):
+        build_hub(cfg, tmp_path / "hub")
