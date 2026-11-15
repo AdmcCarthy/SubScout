@@ -22,6 +22,9 @@ exception. Precedence among rules: Law, then Defaults in this file, then `house/
 - **[Law]** (truth gate) Observed (measured or published, cited) / Derived (our calculation, method stated) / Interpreted (model or
   judgement; give range or assumption). Never hide uncertainty. Every figure: title, units, source with date,
   confidence.
+- **[Default]** Rigour on the test, optimism on the supply. A page says exactly what failed and by how much, then gives the next
+  idea or step. A dropped option is followed by the one taken, never by a lesson about caution. A failed test is the method
+  working, not a reason to soften the next claim or the next attempt.
 
 ## Reuse and licence
 - **[Default]** Reuse before you build: the maintainer keeps a directory of existing repos and what each is for (Idiom `DIRECTORY.md`). Style
