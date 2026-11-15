@@ -122,7 +122,7 @@ def cmd_fit(args: argparse.Namespace) -> int:
 def cmd_export(args: argparse.Namespace) -> int:
     print(
         "`subscout export` has moved to Plate (print-grade PDF and PNG at A4 to A0).\n"
-        f"  uv run plate render {args.site}   (github.com/AdmcCarthy/Plate)\n"
+        f"  uv run plate render {args.site}   (github.com/AdmcCarthy/kit-plate)\n"
         "SubScout still writes export/<id>/ pages and payload.json (the export contract) "
         "for figures with `export:`."
     )

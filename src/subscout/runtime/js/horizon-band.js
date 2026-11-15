@@ -9,7 +9,7 @@
 //   shale  the house setting: a detuned wash of the shale ladder, never past half opacity
 //   fjord  each reflector (each positive lobe down a trace) takes the next ink in turn
 //          from the fjord and cobalt steps, so the layers alternate in colour
-// Origin: seismic_art (github.com/AdmcCarthy/seismic_art), kept in step by hand.
+// Origin: seismic_art (github.com/AdmcCarthy/kit-seismic-art), kept in step by hand.
 const decode = (b64) => new Int8Array(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)).buffer);
 
 // `saturation` blends each ink towards the canvas colour (1 = the token as is);
