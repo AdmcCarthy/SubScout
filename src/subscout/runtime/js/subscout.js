@@ -32,7 +32,7 @@ export const isShown = (el) => !el.closest(".ss-layer") || el.closest(".ss-layer
 export const token = (name) => getComputedStyle(root).getPropertyValue(`--ss-${name}`).trim();
 
 // ---------------------------------------------------------------- simple observable prefs
-function pref(key, attr, fallback, onApply) {
+export function pref(key, attr, fallback, onApply) {
   const subs = new Set();
   let value = store(key) ?? fallback;
   const apply = () => {
