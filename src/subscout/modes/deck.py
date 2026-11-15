@@ -46,7 +46,7 @@ from ..build import (
 from ..layouts import ALWAYS_FULL, WIDE_ASPECT
 
 CONF = {"observed": "Observed", "derived": "Derived", "interpreted": "Interpreted", "parameter": "Parameter"}
-MASTERS = ("side", "full")  # a figure beside its text, or across the slide with the text beneath
+MASTERS = ("side", "full", "plate")  # a figure beside its text; across the slide with the text beneath; or the plate, the figure given the slide with one line of text beneath
 STATE_KEYS = ("focus", "note", "highlight", "sort", "view", "filter", "frame")
 TOPIC = re.compile(r"(?m)^### (.+)\n")
 CONCEPT = re.compile(r"^```concept\s*\n(.*?)\n```\s*$", re.S | re.M)
@@ -176,7 +176,9 @@ class Deck:
 
         The side master is tall and the full master wide, so only a figure that is wider than it is high goes
         across the slide: a map, a network, a heatmap, or one that declares a wide `aspect`. A chart of many rows
-        stays beside its text, unlike in a story, where the side column is narrow.
+        stays beside its text, unlike in a story, where the side column is narrow. The plate master is chosen only
+        by name: a picture, a scene or a section that should breathe takes the slide, and the text beneath it is a
+        line or two.
         """
         named = spec.get("master")
         if named:

@@ -76,11 +76,14 @@ A slide has one of three masters.
 |---|---|---|
 | `side` | a figure that is as tall as it is wide: curves, columns, bars | beside the figure, in a column at the right |
 | `full` | a figure wider than it is high: a section, a map, a heatmap, a chart on a long axis | beneath the figure, in two columns |
+| `plate` | a figure that should breathe: a satellite scene, a photograph, a section read at full size | a line or two beneath the figure, in a wide measure; the card as one strip |
 | text | the opening of a section, a table | alone |
 
-A figure's master is, in order: `master: side | full` on its block; `full` if its module is listed under `full` in
+A figure's master is, in order: `master: side | full | plate` on its block; `full` if its module is listed under `full` in
 deck.yaml; `full` for a map, a network, a heatmap or a declared `aspect` of 1.6 or more; otherwise `side`. A
-chart of many rows stays `side`: the side master is the tall one.
+chart of many rows stays `side`: the side master is the tall one. The plate is never chosen for a figure; it is
+asked for by name, because it costs the slide its prose: what is said beneath a plate is a caption's worth, and
+the argument belongs on the slides around it.
 
 **Custom figures** receive `opts.layout` (`side` or `full`) and `opts.vhShare`, the share of the screen's height
 the slide gives them, read on every draw, and should fill it. `opts.states` lists every state the deck will ask

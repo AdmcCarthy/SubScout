@@ -148,6 +148,21 @@ def test_master_can_be_named_on_a_block_or_in_the_config(tmp_path):
     assert any("master 'tall'" in e for e in rep.errors)
 
 
+def test_plate_master_is_named_never_chosen(tmp_path):
+    """The plate gives a figure the slide; it is asked for by name and never picked from a figure's form."""
+    body = (
+        "## One\n\n::: step\n{{ n }}\n\n```chart\nid: a\ntype: bars\ndata: decades\nlabel: decade\nvalue: discoveries\n"
+        "master: plate\ntitle: T\nsource: s\nconfidence: observed\n```\n:::\n\n## Two\n\nText.\n"
+    )
+    out = tmp_path / "o"
+    assert build(_deck(tmp_path, body=body), out).errors == []
+    assert _payload(out / "one.html")["figures"]["a"]["master"] == "plate"
+    wide = body.replace("master: plate\n", "aspect: 2.0\n")
+    out2 = tmp_path / "o2"
+    assert build(_deck(tmp_path / "b", body=wide), out2).errors == []
+    assert _payload(out2 / "one.html")["figures"]["a"]["master"] == "full"
+
+
 def test_a_category_that_goes_takes_its_page_with_it(tmp_path):
     d, out = _deck(tmp_path), tmp_path / "o"
     assert build(d, out).errors == [] and (out / "two.html").exists()
