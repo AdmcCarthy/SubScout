@@ -35,6 +35,9 @@ exception. Precedence among rules: Law, then Defaults in this file, then `house/
   visibly, and never implies endorsement. Third-party data and vendored code keep their own terms.
 - **[Law]** A public repo's README opens with a badge row (workflow status, Python version, licence) under the title.
 
+- **[Default]** Pictures on cards and tiles that have none of their own are open-licence geology photographs, credited and detuned
+  into the fjord scale (`house/imagery.md`), never a generated placeholder.
+
 ## Working rules
 - **[Preference]** Act on the plan; stop at agreed gates and report outcomes plainly, including failures and skipped steps.
 - **[Law]** Never make anything public, delete data, force-push or commit someone's uncommitted work unasked.
