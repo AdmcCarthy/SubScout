@@ -89,6 +89,22 @@ the argument belongs on the slides around it.
 the slide gives them, read on every draw, and should fill it. `opts.states` lists every state the deck will ask
 for. **Built-in chart forms** keep their own proportions and are scaled into the box.
 
+## Figure options
+
+A custom figure may declare state keys the reader sets from the page, instead of a run of `use:` steps that show
+each state in turn: the view of a satellite scene, the frame of a section, a unit. The top bar shows one switch
+per option while the slide's figure declares it; the choice is remembered like the colour scheme and passed, over
+the state the slide gives, to every figure that declares the same option, so one setting holds across a deck.
+
+```yaml
+options:
+  view: [composite, desaturated, colour]                # labels are the values
+  frame: { values: [plan, section], labels: [Plan view, Section], label: Frame }
+```
+
+The values are passed as strings in the figure's `state`; the figure's own `state` value for the key, if any, must
+be one of them, and the first value is the default. Options are read on custom figures only, in deck mode only.
+
 ## The concept card
 
 A topic that teaches a named process can carry a card: the name the literature gives the process, its governing

@@ -1,7 +1,7 @@
 // Deck mode, a category page: one slide the size of the screen at a time. Reads the build payload, keeps one live
 // figure per figure id, and moves it between states as the slides change.
 import "./deck-shell.js";
-import { onSchemeChange, units, UNITS } from "./subscout.js";
+import { onSchemeChange, units, UNITS, pref, bindSeg } from "./subscout.js";
 
 const P = JSON.parse(document.getElementById("deck-data").textContent);
 const S = P.slides;
@@ -44,7 +44,7 @@ function ensure(id) {
   layer.innerHTML = '<div class="ss-legend"></div><div class="ss-chart"></div>';
   layersEl.append(layer);
   const chartEl = layer.querySelector(".ss-chart"), legendEl = layer.querySelector(".ss-legend");
-  const rec = { layer, chartEl, impl: null, state: {}, drawn: "", pending: null };
+  const rec = { id, layer, chartEl, impl: null, state: {}, drawn: "", pending: null };
   const opts = {
     label: (F.title ?? "").replace(/<[^>]+>/g, ""), legendEl, spec: F.spec ?? {}, layout: F.master, states: statesOf(id), units: U,
     // the figure fills the box the slide gives it: its height as a share of the screen, read on every draw
@@ -62,13 +62,52 @@ function ensure(id) {
   return rec;
 }
 
+// ------------------------------------------------------------------ figure options
+// A figure may declare `options`: state keys the reader sets from the top bar (a view of a scene, a frame of a
+// section). One switch per option shows while the slide's figure declares it; the choice is kept like the colour
+// scheme and passed to every figure that declares the same option, over the state the slide gives.
+const optionPrefs = new Map(); // key -> { pref, el }
+const controls = document.querySelector(".controls");
+
+function option(key, o) {
+  if (optionPrefs.has(key)) return optionPrefs.get(key);
+  const p = pref(`opt:${key}`, null, o.values[0]);
+  if (!o.values.includes(p.get())) p.set(o.values[0]);
+  const el = document.createElement("div");
+  el.className = "ss-seg";
+  el.setAttribute("role", "group");
+  el.setAttribute("aria-label", o.label);
+  el.dataset.option = key;
+  el.innerHTML = o.values.map((v, i) => `<button type="button" data-value="${v}">${o.labels[i]}</button>`).join("");
+  el.hidden = true;
+  controls.prepend(el);
+  bindSeg(el, p);
+  p.subscribe(() => { const s = S[at]; if (s?.fig && P.figures[s.fig].options?.[key]) { const rec = figs.get(s.fig); if (rec) draw(rec, true, true); } });
+  const rec = { pref: p, el };
+  optionPrefs.set(key, rec);
+  return rec;
+}
+
+function withOptions(F, state) {
+  if (!F?.options) return state;
+  const out = { ...state };
+  for (const [key, o] of Object.entries(F.options)) out[key] = option(key, o).pref.get();
+  return out;
+}
+
+function showOptions(F) {
+  const keys = new Set(Object.keys(F?.options ?? {}));
+  for (const [key, o] of Object.entries(F?.options ?? {})) option(key, o);
+  optionPrefs.forEach((r, key) => { r.el.hidden = !keys.has(key); });
+}
+
 function draw(rec, animate, force = false) {
   const w = Math.round(rec.chartEl.clientWidth), h = Math.round(rec.chartEl.clientHeight);
   if (!w || !h) return;
   const key = `${w}×${h}`;
   if (!force && key === rec.drawn) return; // the resize observer after a draw at the same size
   rec.drawn = key;
-  const args = [w, rec.state, { animate }];
+  const args = [w, withOptions(P.figures[rec.id], rec.state), { animate }];
   if (rec.impl) rec.impl.draw(...args);
   else rec.pending = args;
 }
@@ -125,6 +164,7 @@ function go(n, { animate = true } = {}) {
   if (!F) showFacts(false);
 
   figs.forEach((r, id) => r.layer.classList.toggle("on", chart && id === s.fig));
+  showOptions(chart ? F : null);
   if (chart) {
     const rec = ensure(s.fig);
     rec.layer.classList.add("on");

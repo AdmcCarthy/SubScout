@@ -52,6 +52,7 @@ MASTERS = (
     "plate",
 )  # a figure beside its text; across the slide with the text beneath; or the plate, the figure given the slide with one line of text beneath
 STATE_KEYS = ("focus", "note", "highlight", "sort", "view", "filter", "frame")
+OPTION_KEYS = {"values", "labels", "label"}
 TOPIC = re.compile(r"(?m)^### (.+)\n")
 CONCEPT = re.compile(r"^```concept\s*\n(.*?)\n```\s*$", re.S | re.M)
 CONCEPT_KEYS = {"name", "formula", "where", "reading", "analogue"}
@@ -192,6 +193,46 @@ class Deck:
         wide = spec.get("type") in ALWAYS_FULL or float(spec.get("aspect") or 0) >= WIDE_ASPECT
         return "full" if wide or spec.get("module") in self.full else "side"
 
+    def options(self, spec: dict, where: str) -> dict:
+        """A figure's `options`: state keys the reader may set from the page, each with the values it may take.
+
+        `options: {view: [composite, desaturated, colour]}`, or with labels `{view: {values: [...], labels: [...],
+        label: View}}`. The deck's top bar shows one switch per option the current slide's figure declares, and
+        the chosen value is passed to every figure that declares that option, remembered like the colour scheme.
+        The figure's own `state` value for the key, if any, must be one of the values.
+        """
+        raw = spec.get("options")
+        if raw is None:
+            return {}
+        if not isinstance(raw, dict) or not raw:
+            self.report.error(f"{where}: options must map a state key to its values")
+            return {}
+        out = {}
+        for key, o in raw.items():
+            if isinstance(o, list):
+                o = {"values": o}
+            if not isinstance(o, dict) or set(o) - OPTION_KEYS or not isinstance(o.get("values"), list):
+                self.report.error(f"{where}: option '{key}' takes a list of values, or {sorted(OPTION_KEYS)}")
+                continue
+            values = [str(v) if not isinstance(v, bool) else str(v).lower() for v in o["values"]]
+            if len(values) < 2 or len(set(values)) != len(values):
+                self.report.error(f"{where}: option '{key}' needs at least two distinct values")
+                continue
+            labels = [str(v) for v in (o.get("labels") or values)]
+            if len(labels) != len(values):
+                self.report.error(
+                    f"{where}: option '{key}' has {len(labels)} labels for {len(values)} values"
+                )
+                continue
+            own = (spec.get("state") or {}).get(key)
+            if own is not None and str(own) not in values:
+                self.report.error(
+                    f"{where}: option '{key}': the figure's own state '{own}' is not one of {values}"
+                )
+                continue
+            out[str(key)] = {"values": values, "labels": labels, "label": str(o.get("label") or key)}
+        return out
+
     def figure(self, kind: str, spec: dict, where: str) -> dict | None:
         """Register a chart or table block, or resolve a `use:` block against its base. Returns the view it gives."""
         for key in ("title", "subtitle", "notes"):
@@ -245,9 +286,14 @@ class Deck:
             if spec["type"] == "custom":
                 names = custom_data_names(spec)
                 fig.update(module=spec.get("module"), state=dict(spec.get("state") or {}))
+                opts = self.options(spec, where)
+                if opts:
+                    fig["options"] = opts
             else:
                 names = [ly["data"] for ly in spec.get("layers", [])] if spec["type"] == "map" else []
                 fig.update(spec=spec, payload=payload, state={k: spec[k] for k in STATE_KEYS if k in spec})
+                if "options" in spec:
+                    self.report.error(f"{where}: options are read on custom figures only")
             fig.update(data=names, master=self.master(spec, where))
             self.figures.append(Figure(fid, spec, "chart"))
         self.figs[fid] = fig
@@ -467,7 +513,19 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
         figs, names = {}, set()
         for fid in fig_ids:
             f = deck.figs[fid]
-            keys = ("kind", "type", "title", "module", "data", "master", "spec", "payload", "html", "facts")
+            keys = (
+                "kind",
+                "type",
+                "title",
+                "module",
+                "data",
+                "master",
+                "spec",
+                "payload",
+                "html",
+                "facts",
+                "options",
+            )
             figs[fid] = {k: f[k] for k in keys if k in f}
             names |= set(f.get("data") or [])
         payload = {

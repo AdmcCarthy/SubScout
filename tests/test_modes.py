@@ -163,6 +163,39 @@ def test_plate_master_is_named_never_chosen(tmp_path):
     assert _payload(out2 / "one.html")["figures"]["a"]["master"] == "full"
 
 
+def test_figure_options_are_declared_checked_and_carried_to_the_page(tmp_path):
+    """A custom figure's `options` reach the page payload normalised; a bad option or one on a built-in form is an error."""
+    (tmp_path / "d" / "figures").mkdir(parents=True)
+    body = (
+        "## One\n\n::: step\n{{ n }}\n\n```chart\nid: a\ntype: custom\nmodule: figures/f.js\ndata: decades\n"
+        "state: { view: composite }\noptions:\n  view: [composite, desaturated, colour]\n  frame: { values: [plan, section], labels: [Plan view, Section], label: Frame }\n"
+        "title: T\nsource: s\nconfidence: observed\nnotes: n\n```\n:::\n\n## Two\n\nText.\n"
+    )
+    d = _deck(tmp_path, body=body)
+    (d / "figures" / "f.js").write_text("export default () => ({ draw() {} });\n", encoding="utf-8")
+    out = tmp_path / "o"
+    assert build(d, out).errors == []
+    o = _payload(out / "one.html")["figures"]["a"]["options"]
+    assert o["view"] == {
+        "values": ["composite", "desaturated", "colour"],
+        "labels": ["composite", "desaturated", "colour"],
+        "label": "view",
+    }
+    assert o["frame"] == {"values": ["plan", "section"], "labels": ["Plan view", "Section"], "label": "Frame"}
+    bad = body.replace("state: { view: composite }", "state: { view: nir }")
+    rep = build(_deck(tmp_path / "b", body=bad), tmp_path / "o2")
+    assert any("own state 'nir'" in e for e in rep.errors)
+    one = body.replace("[composite, desaturated, colour]", "[composite]")
+    rep = build(_deck(tmp_path / "c", body=one), tmp_path / "o3")
+    assert any("at least two" in e for e in rep.errors)
+    builtin = (
+        "## One\n\n::: step\n{{ n }}\n\n```chart\nid: a\ntype: bars\ndata: decades\nlabel: decade\nvalue: discoveries\n"
+        "options: { view: [a, b] }\ntitle: T\nsource: s\nconfidence: observed\n```\n:::\n\n## Two\n\nText.\n"
+    )
+    rep = build(_deck(tmp_path / "e", body=builtin), tmp_path / "o4")
+    assert any("custom figures only" in e for e in rep.errors)
+
+
 def test_a_category_that_goes_takes_its_page_with_it(tmp_path):
     d, out = _deck(tmp_path), tmp_path / "o"
     assert build(d, out).errors == [] and (out / "two.html").exists()
