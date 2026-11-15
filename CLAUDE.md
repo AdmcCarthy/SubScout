@@ -30,6 +30,10 @@ Write for an informed reader.
 - `uv run subscout hub hub.yaml --out _hub` (`src/subscout/hub.py`) writes one landing page over several built decks and
   replaces their own; it reads only built pages. Its format is in `styleguide/deck-format.md`.
 - Keep one small example of each mode in `examples/` (`demo` is the story, `deck` the deck, on the same data).
+- **EDA notebooks are a third format**, documented in `styleguide/eda-notebooks.md` and chosen by purpose like the other two: an
+  exploratory notebook on one kind of data (order of steps, transforms, validity gates, the data map, the validity ledger, language).
+  SubScout holds the guide, not a build: the notebooks, their statistics and their figures live with the data they read, and the
+  guide makes no reference to any of them. The thresholds are fixed for every topic, and a new notebook has a hand-written ladder.
 
 ## Scope
 - SubScout does theming, layout, charts, maps, the state engine and the build. It does **not** do heavy
@@ -44,7 +48,7 @@ Write for an informed reader.
 - Every figure carries: title, units, source (with date), confidence level, notes where needed.
 - Confidence levels: **Observed** (measured or published, cited), **Derived** (calculated from observed data, method
   stated), **Interpreted** (depends on a model or judgement; give the range or assumption). Balance beauty
-  and communication with key information; this is not a full EDA report, but never hide uncertainty.
+  and communication with key information; a story or a deck is not a full EDA report (that is the third format, `styleguide/eda-notebooks.md`), but never hide uncertainty.
 
 ## Colour (see `src/subscout/tokens/colour.toml`)
 - Method ported from the Equinor Design System palette generator (MIT, credited). SubScout is **not**

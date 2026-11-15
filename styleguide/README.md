@@ -14,6 +14,7 @@ and Norwegian design. Where a rule can be checked by the build, the file says so
 | [arcs.md](arcs.md) | Narrative arcs, general and geology-native |
 | [story-format.md](story-format.md) | Story mode: the folder, front matter, steps, chart and table blocks |
 | [deck-format.md](deck-format.md) | Deck mode: categories, slides, masters, the fit rule; when a story is a deck |
+| [eda-notebooks.md](eda-notebooks.md) | The third format, exploratory notebooks: the ladder, transforms, validity gates, the data map, language (draft) |
 | [tables.md](tables.md) | Tables as a narrative element |
 | [maps.md](maps.md) | Choropleths and alternatives, map storytelling, map technology |
 | [wellbores.md](wellbores.md) | Well, wellbore and installation symbols after the Sodir Geostandard: composition, codes, scale, what is not covered |
