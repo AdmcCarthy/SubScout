@@ -46,7 +46,11 @@ from ..build import (
 from ..layouts import ALWAYS_FULL, WIDE_ASPECT
 
 CONF = {"observed": "Observed", "derived": "Derived", "interpreted": "Interpreted", "parameter": "Parameter"}
-MASTERS = ("side", "full", "plate")  # a figure beside its text; across the slide with the text beneath; or the plate, the figure given the slide with one line of text beneath
+MASTERS = (
+    "side",
+    "full",
+    "plate",
+)  # a figure beside its text; across the slide with the text beneath; or the plate, the figure given the slide with one line of text beneath
 STATE_KEYS = ("focus", "note", "highlight", "sort", "view", "filter", "frame")
 TOPIC = re.compile(r"(?m)^### (.+)\n")
 CONCEPT = re.compile(r"^```concept\s*\n(.*?)\n```\s*$", re.S | re.M)
