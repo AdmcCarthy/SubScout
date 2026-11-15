@@ -10,7 +10,8 @@ The build writes, for each such figure, `export/<figure id>/`:
                  footer facts and credit. Schema in docs/export-contract.md.
 
 High-resolution output (PDF, PNG at physical paper sizes, A4 to A0) is rendered by **Plate**
-(github.com/AdmcCarthy/kit-plate: `plate render <site>`), which reads `payload.json`. SubScout no longer renders.
+(github.com/AdmcCarthy/kit-plate: `plate render <site>`), which reads `payload.json`.
+SubScout no longer renders.
 """
 
 from __future__ import annotations
