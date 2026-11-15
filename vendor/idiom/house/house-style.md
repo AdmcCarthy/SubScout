@@ -1,7 +1,7 @@
 # House style (public-safe)
 
 The authority for published pages is the SubScout style guide
-(https://github.com/AdmcCarthy/kit-subscout/tree/main/styleguide). This file records only the decisions that
+(https://github.com/AdmcCarthy/core-subscout/tree/main/styleguide). This file records only the decisions that
 are shared by every output repo (SubScout, Plate, Sheet).
 
 - **Voice:** the interpreter's voice. Confident about the mechanism, explicit about the uncertainty. Impersonal (no "we" or
