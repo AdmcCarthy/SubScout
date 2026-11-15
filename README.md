@@ -1,5 +1,10 @@
 # SubScout
 
+[![CI](https://github.com/AdmcCarthy/core-subscout/actions/workflows/ci.yml/badge.svg)](https://github.com/AdmcCarthy/core-subscout/actions/workflows/ci.yml)
+[![Pages](https://github.com/AdmcCarthy/core-subscout/actions/workflows/pages.yml/badge.svg)](https://github.com/AdmcCarthy/core-subscout/actions/workflows/pages.yml)
+![Python](https://img.shields.io/badge/python-%E2%89%A53.12-lightgrey)
+[![Licence](https://img.shields.io/badge/licence-MIT%20with%20acknowledgement-lightgrey)](LICENSE)
+
 A framework for consistent, themed data narratives. One Markdown story and its data are built in one
 of two modes:
 
