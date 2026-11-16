@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 OUT = Path(__file__).parent / "data"
-rng = random.Random(42)
+rng = random.Random(42)  # nosec B311: demo data, not security
 
 
 def profile(peak, start, plateau, decline, years):

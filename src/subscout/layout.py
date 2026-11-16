@@ -17,7 +17,7 @@ import numpy as np
 
 
 def _angle(key: str) -> float:
-    h = int(hashlib.md5(key.encode()).hexdigest()[:8], 16)
+    h = int(hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()[:8], 16)
     return (h / 0xFFFFFFFF) * 2 * math.pi
 
 
