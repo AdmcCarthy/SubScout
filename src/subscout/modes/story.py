@@ -262,7 +262,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
         if f.kind in ("chart", "table")
     ]
 
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(PKG / "templates"), autoescape=False)
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(PKG / "templates"), autoescape=False)  # nosec B701: static pages from the author's own templates and data; the fragments are HTML already
     tpl = env.get_template("story.html.j2")
     ctx = dict(
         fm=fm,

@@ -456,7 +456,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
     if report.errors:
         return report
 
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(PKG / "templates" / "deck"), autoescape=False)
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(PKG / "templates" / "deck"), autoescape=False)  # nosec B701: static pages from the author's own templates and data; the fragments are HTML already
     labels = cfg.get("labels") or {}
     shell = {
         "fm": fm,

@@ -142,7 +142,7 @@ def write_export_page(
     }
     import jinja2
 
-    env = jinja2.Environment(
+    env = jinja2.Environment(  # nosec B701: static pages from the author's own templates and data; the fragments are HTML already
         loader=jinja2.FileSystemLoader(Path(__file__).parent / "templates"), autoescape=False
     )
     page = env.get_template("export.html.j2").render(
