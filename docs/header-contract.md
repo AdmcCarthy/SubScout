@@ -47,7 +47,7 @@ must not smooth or infill them.
 ## Producers
 
 `seismic_art.header.header_payload` (github.com/AdmcCarthy/kit-seismic-art) writes this contract
-from any `seismic_lib` section and horizons; `examples/demo/make_data.py` writes a small
+from any seismic section and horizons; `examples/demo/make_data.py` writes a small
 synthetic one for the demo. A story keeps its producer in its own `scripts/`, as it keeps
 every other extract.
 
