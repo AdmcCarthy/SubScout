@@ -1,7 +1,7 @@
 # Licence and acknowledgement
 
 Every repo of Adam McCarthy's carries a licence from the day it is created, public or private (decided 2026-11-15; before that a
-private repo waited until it, or anything built from it, went public). There are two:
+private repo waited until it, or anything built from it, went public). There are two, and one exception:
 
 - **Code repos: MIT License with Acknowledgement** (SPDX identifier `LicenseRef-MIT-Acknowledgement`). It is the MIT licence plus
   one condition: anything built with the work must say so, visibly and in plain words, and must not imply endorsement. It is
@@ -11,6 +11,9 @@ private repo waited until it, or anything built from it, went public). There are
   content takes the MIT licence if the code is the product, and CC BY if the content is. Register a CC BY repo in `repos.toml`
   with `licence = "cc-by"`; the audit then checks for the CC text instead of the MIT text.
 
+- **Exception: Idiom itself** is all rights reserved, with no licence granted (`LICENSE` in the repository): it holds the
+  private voice, working notes and rules, and only the manifest files leave it, inside published repositories under their licences.
+  Register it as `licence = "restricted"`.
 - **Templates:** `templates/LICENSE.tmpl` (MIT) and `templates/LICENSE-CC-BY.tmpl` (CC BY). Replace `{{YEAR}}` (year of first commit), `{{NAME}}` (the repo's name) and `{{URL}}`
   (its GitHub address). Do not reword the conditions.
 - **README:** every repo ends with a "Licence and acknowledgement" section (plain heading, a few lines): the licence name, the

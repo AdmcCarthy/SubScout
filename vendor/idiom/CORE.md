@@ -32,7 +32,7 @@ exception. Precedence among rules: Law, then Defaults in this file, then `house/
 - **[Law]** Datasets: look up terms and the attribution line in Idiom `DATASETS.md`, show the line wherever the data are used, and never write a licence from memory.
 - **[Law]** Every repo, public or private, carries a licence from the day it is created (`house/licence.md`): the MIT License with
   Acknowledgement for code, Creative Commons Attribution 4.0 where the repo is not just code. Anything built with the work says so,
-  visibly, and never implies endorsement. Third-party data and vendored code keep their own terms.
+  visibly, and never implies endorsement. Third-party data and vendored code keep their own terms. The one exception is Idiom itself: all rights reserved, no licence granted.
 - **[Law]** A public repo's README opens with a badge row (workflow status, Python version, licence) under the title.
 
 - **[Default]** Pictures on cards and tiles that have none of their own are open-licence geology photographs, credited and detuned
