@@ -51,7 +51,7 @@ ARCS = {
     "sparkline": ["what-is", "what-could-be", "call-to-action", "new-bliss"],
     "martini": ["stem", "open"],
     "drill-down": ["overview", "instance"],
-    "zoom": ["moment", "context"],
+    "zoom": ["moment", "context", "moment"],
     "reveal": ["claim", "evidence", "twist"],
     "petroleum-system": ["source", "migration", "reservoir", "trap", "seal", "timing", "therefore"],
     "pre-post-drill": ["prediction", "result", "lessons"],
@@ -59,6 +59,23 @@ ARCS = {
     "creaming-curve": ["early-giants", "long-tail", "whats-left"],
     "lifecycle": ["prospect", "discovery", "development", "plateau", "decline", "decommissioning"],
 }
+
+
+def beats_in_order(beats: list[str], expected: list[str]) -> bool:
+    """True when the story's beats follow the arc: each beat repeats the current position or moves forward to the next
+    position with that name. A beat may appear twice in an arc (zoom returns to its moment), so positions are matched
+    in turn rather than by the first index of each name."""
+    pos = 0
+    for b in beats:
+        if b not in expected:
+            continue
+        if expected[pos] == b:
+            continue
+        nxt = next((j for j in range(pos + 1, len(expected)) if expected[j] == b), None)
+        if nxt is None:
+            return False
+        pos = nxt
+    return True
 
 
 # ------------------------------------------------------------------ metrics

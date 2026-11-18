@@ -83,6 +83,24 @@ def test_arc_beats_are_checked(tmp_path):
     assert any("missing beat" in w for w in rep.warnings)
 
 
+def test_arc_order_allows_a_returning_beat():
+    from subscout.build import ARCS, beats_in_order
+
+    zoom = ARCS["zoom"]
+    assert beats_in_order(["moment", "moment", "context", "context", "moment", "moment"], zoom)
+    assert not beats_in_order(["moment", "context", "moment", "context"], zoom)
+    assert beats_in_order(["and", "and", "but", "therefore"], ARCS["abt"])
+    assert not beats_in_order(["but", "and"], ARCS["abt"])
+
+
+def test_zoom_story_that_returns_to_its_moment_builds_cleanly(tmp_path):
+    body = "".join(
+        f"::: step {{beat={b}}}\n{{{{ n }}}}\n:::\n" for b in ("moment", "context", "context", "moment")
+    )
+    rep = build(_story(tmp_path, body, front="arc: zoom\n"), tmp_path / "o")
+    assert not any("arc" in w for w in rep.warnings)
+
+
 def test_about_rounds_to_two_significant_figures():
     assert about(1_834_500_000) == "about 1.8 billion"
     assert about(15_000_000) == "about 15 million"

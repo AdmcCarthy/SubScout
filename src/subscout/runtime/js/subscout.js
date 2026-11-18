@@ -111,22 +111,35 @@ export function bindSeg(el, p) {
 
 // ---------------------------------------------------------------- the story engine
 /**
- * story(el, {render}) wires one .ss-story: .ss-steps > .ss-step (one state each) and .ss-graphic.
+ * story(el, {render, onEdge, numbering}) wires one .ss-story: .ss-steps > .ss-step (one state each) and .ss-graphic.
  * render(index, {animate, mode}) is called on every state change, in either mode.
+ * A page holds one .ss-story per scrolly sequence; present mode runs them as one deck. onEdge(dir) is called when the
+ * reader steps past the last step (dir 1) or before the first (dir -1), so the page can hand over to the next or
+ * previous sequence; numbering() returns { offset, total } so the counter numbers the whole story.
  */
-export function story(el, { render }) {
+export function story(el, { render, onEdge = null, numbering = null }) {
   const steps = [...el.querySelectorAll(".ss-step")];
   let current = -1;
   let mode = "read";
 
+  const label = (i) => {
+    const n = numbering?.() ?? { offset: 0, total: steps.length };
+    return `${n.offset + i + 1} / ${n.total}`;
+  };
   const go = (i, animate = true) => {
     i = Math.max(0, Math.min(steps.length - 1, i));
     if (i === current) return;
     current = i;
     steps.forEach((s, k) => s.classList.toggle("is-active", k === i));
     dots.forEach((d, k) => d.setAttribute("aria-current", String(k === i)));
-    if (counter) counter.textContent = `${i + 1} / ${steps.length}`;
+    if (counter) counter.textContent = label(i);
     render(i, { animate: animate && !reducedMotion(), mode });
+  };
+  // present-mode stepping: past either end, hand over to the neighbouring sequence when there is one
+  const step = (delta) => {
+    const t = current + delta;
+    if ((t < 0 || t >= steps.length) && onEdge) onEdge(delta < 0 ? -1 : 1);
+    else go(t);
   };
 
   // Read mode: the step whose card crosses the trigger line is active. The line sits where the reader's
@@ -171,18 +184,24 @@ export function story(el, { render }) {
   const counter = bar.querySelector(".ss-num");
   bar.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]")?.dataset.act;
-    if (act === "prev") go(current - 1);
-    if (act === "next") go(current + 1);
+    if (act === "prev") step(-1);
+    if (act === "next") step(1);
     if (act === "exit") setMode("read");
   });
 
+  // Only the sequence being presented listens: the others are in read mode.
+  // A handled key stops here, so a sequence that has just been handed present mode does not act on the same key press.
   const onKey = (e) => {
     if (mode !== "present") return;
-    if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); go(current + 1); }
-    if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); go(current - 1); }
-    if (e.key === "Home") go(0);
-    if (e.key === "End") go(steps.length - 1);
-    if (e.key === "Escape") setMode("read");
+    const keys = { next: ["ArrowRight", "PageDown", " ", "Enter"], prev: ["ArrowLeft", "PageUp", "Backspace"] };
+    if (keys.next.includes(e.key)) step(1);
+    else if (keys.prev.includes(e.key)) step(-1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(steps.length - 1);
+    else if (e.key === "Escape") setMode("read");
+    else return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
   };
   document.addEventListener("keydown", onKey);
 
@@ -192,17 +211,20 @@ export function story(el, { render }) {
   el.addEventListener("touchend", (e) => {
     if (mode !== "present" || x0 === null) return;
     const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
     x0 = null;
   });
 
-  function setMode(m) {
-    const at = current;
+  // setMode(m, {at, handoff}): `at` is the step to open on (-1 for the last); `handoff` passes present mode to another
+  // sequence without leaving it (the page stays in present mode and full screen, nothing scrolls).
+  function setMode(m, { at = current, handoff = false } = {}) {
+    if (at === -1) at = steps.length - 1;
     mode = m;
+    el.classList.toggle("is-presenting", m === "present");
     if (m === "present") {
       root.setAttribute("data-mode", "present");
-      el.requestFullscreen?.().catch(() => {});
-    } else {
+      if (!document.fullscreenElement) root.requestFullscreen?.().catch(() => {});
+    } else if (!handoff) {
       root.removeAttribute("data-mode");
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       steps[Math.max(at, 0)].scrollIntoView({ block: "center" });
@@ -220,6 +242,8 @@ export function story(el, { render }) {
   return {
     go,
     setMode,
+    el,
+    get length() { return steps.length; },
     get mode() { return mode; },
     get index() { return current; },
     onMode: (f) => modeSubs.add(f),
