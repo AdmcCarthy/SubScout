@@ -1,6 +1,6 @@
 [project]
 name = "subscout"
-version = "0.15.0"
+version = "0.16.0"
 description = "Themed data narratives in two modes: a journalistic story, and a deck for presentation and teaching"
 readme = "README.md"
 authors = [
