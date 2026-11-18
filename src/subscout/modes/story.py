@@ -31,6 +31,7 @@ from ..build import (
     Report,
     _py,
     _records,
+    beats_in_order,
     check_block,
     check_header,
     copy_custom_modules,
@@ -182,8 +183,7 @@ def build(root: Path, out: Path, runtime_href: str = "runtime") -> Report:
                 report.warn(f"arc '{arc}': missing beat(s) {missing}")
             if unknown:
                 report.warn(f"arc '{arc}': beat(s) {unknown} are not part of this arc")
-            order = [expected.index(b) for b in beats if b in expected]
-            if order != sorted(order):
+            if not beats_in_order(beats, expected):
                 report.warn(f"arc '{arc}': beats out of order: {beats}")
 
     appendix_html = (

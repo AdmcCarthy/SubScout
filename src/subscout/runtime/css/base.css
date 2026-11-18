@@ -301,6 +301,8 @@ details.ss-table th:first-child, details.ss-table td:first-child { text-align: l
 /* ------------------------------------------------------------ story: Present mode (deck) */
 .ss-deck-bar { display: none; }
 :root[data-mode="present"] body { overflow: hidden; }
+/* one deck over the page: only the sequence being presented is on screen */
+:root[data-mode="present"] .ss-story:not(.is-presenting) { display: none; }
 :root[data-mode="present"] .ss-story {
   position: fixed; inset: 0; z-index: 50; margin: 0;
   background: var(--ss-canvas);

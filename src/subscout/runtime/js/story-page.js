@@ -141,6 +141,16 @@ document.querySelectorAll(".ss-scrolly--full .ss-story").forEach((storyEl) => {
     else storyEl.style.removeProperty("--ss-gfx"); // phones keep the fixed panel
   }).observe(gfx);
 });
+// One deck over the whole page: every scrolly sequence is an engine, numbered from the first step of the story, and
+// present mode hands over from one sequence to the next at its ends.
+const engines = [];
+const totalSteps = () => engines.reduce((n, e) => n + e.length, 0);
+const handOver = (k, dir) => {
+  const to = engines[k + dir];
+  if (!to) return;
+  engines[k].setMode("read", { handoff: true });
+  to.setMode("present", { at: dir > 0 ? 0 : -1 });
+};
 document.querySelectorAll(".ss-story").forEach((storyEl) => {
   const stepEls = [...storyEl.querySelectorAll(".ss-step")];
   const layers = [...storyEl.querySelectorAll(".ss-layer")];
@@ -169,8 +179,20 @@ document.querySelectorAll(".ss-story").forEach((storyEl) => {
       if (rec.width) rec.chart.draw(rec.width, rec.state, { animate });
     }
   }
-  const engine = story(storyEl, { render });
-  document.getElementById("present-btn")?.addEventListener("click", () => engine.setMode("present"));
+  const k = engines.length;
+  const engine = story(storyEl, {
+    render,
+    onEdge: (dir) => handOver(k, dir),
+    numbering: () => ({ offset: engines.slice(0, k).reduce((n, e) => n + e.length, 0), total: totalSteps() }),
+  });
+  engines.push(engine);
+});
+// Present opens on the sequence the reader is in (the last one whose top has scrolled above mid-screen), at its step.
+document.getElementById("present-btn")?.addEventListener("click", () => {
+  if (!engines.length) return;
+  const mid = innerHeight / 2;
+  const k = engines.reduce((best, e, i) => (e.el.getBoundingClientRect().top < mid ? i : best), 0);
+  engines[k].setMode("present");
 });
 
 // ---------------------------------------------------------------- tables: sort and fold

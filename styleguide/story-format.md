@@ -101,7 +101,10 @@ each section's layout and the reason as advice. On a phone every section pins th
 the figure over the text, so only wide screens differ. A custom figure in a `full` section gets `opts.layout` (`"full"`)
 and `opts.vhShare` (the share of the screen's height it may take: the screen less 470 px for the figure's title, subtitle
 and source line and the step card beneath, between 0.42 and 0.62, so an 800 px screen gets 0.42 and a 1080 px one 0.56) and should size its
-height from that. Each step may
+height from that. Present mode runs the whole page as one deck: the counter numbers every step of the story, and stepping past the end
+of one sequence opens the next (and back again), so a story split into chapters still plays as one arc. An `arc:` is
+checked over all steps in order, and a beat may return where the arc names it twice (zoom: moment, context, moment).
+Each step may
 contain one chart block; a block with `use: <id>` changes the state of an earlier chart, so it
 transitions instead of being replaced.
 
