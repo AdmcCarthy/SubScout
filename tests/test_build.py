@@ -1,6 +1,7 @@
 """Story build: the demo builds cleanly, and the checks catch what they should."""
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -99,6 +100,14 @@ def test_zoom_story_that_returns_to_its_moment_builds_cleanly(tmp_path):
     )
     rep = build(_story(tmp_path, body, front="arc: zoom\n"), tmp_path / "o")
     assert not any("arc" in w for w in rep.warnings)
+
+
+def test_year_filter_drops_the_thousands_separator(tmp_path):
+    py = "def _m(d):\n    return {'y': metric(2002, 'a year', 's', 'observed')}\n_old = metrics\nmetrics = lambda d: {**_old(d), **_m(d)}\n"
+    rep = build(_story(tmp_path, "It peaked in {{ y | year }}; {{ n }}.", py=py), tmp_path / "o")
+    html = (tmp_path / "o" / "index.html").read_text(encoding="utf-8")
+    span = re.search(r'data-ledger="y"[^>]*>([^<]*)<', html)
+    assert rep.errors == [] and span and span.group(1) == "2002"
 
 
 def test_about_rounds_to_two_significant_figures():

@@ -93,7 +93,8 @@ function customChart(el, fig, o, id) {
 const charts = new Map(); // fig id -> {chart, el, width, state}
 const initialState = (spec) => {
   if (spec.type === "custom") return { ...(spec.state ?? {}) };
-  const keys = ["focus", "note", "highlight", "sort", "view", "filter", "frame"];
+  // A network's `frame` key names the frame column of its data, not a frame to show; its opening frame is frame_default.
+  const keys = ["focus", "note", "highlight", "sort", "view", "filter", ...(spec.type === "network" ? [] : ["frame"])];
   return Object.fromEntries(keys.filter((k) => spec[k] !== undefined).map((k) => [k, spec[k]]));
 };
 document.querySelectorAll(".ss-figure[data-fig]").forEach((figEl) => {

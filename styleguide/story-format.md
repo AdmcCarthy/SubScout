@@ -51,6 +51,7 @@ used appears in the appendix numbers ledger with its value, method, source and c
 | `round:1` | 12.3 |
 | `pct` | 0.63 â†’ 63% (a share in 0â€“1) |
 | `about` | rounds to two significant figures and prefixes "about" |
+| `year` | 2002, never 2,002 (a year held as a number) |
 | `signed` | +3.4 / âˆ’2.1 |
 | `volume` | SmÂ³ value, shown in the reader's unit (SmÂ³ â‡„ boe toggle) |
 | `km`, `km2` | appends the unit |
