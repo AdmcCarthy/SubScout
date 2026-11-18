@@ -77,6 +77,10 @@ CARD_TOP = (
     "(i) => document.querySelectorAll('.ss-step')[i]"
     ".querySelector('.ss-step-card').getBoundingClientRect().top"
 )
+CARD_BOTTOM = (
+    "(i) => document.querySelectorAll('.ss-step')[i]"
+    ".querySelector('.ss-step-card').getBoundingClientRect().bottom"
+)
 TITLE = "(i) => (document.querySelectorAll('.ss-step')[i].querySelector('h3') || {}).textContent || ''"
 
 
@@ -105,21 +109,25 @@ def check(site: Path | str, path: str = "") -> list[dict]:
             lim = {**LIMITS, "size": PHONE_SIZE} if w < 761 else LIMITS
             for i in range(n):
                 act = f"document.querySelectorAll('.ss-step')[{i}].classList.contains('is-active')"
-                # scroll down until this step is active and its card has come on screen
+                # scroll down until this step's card has come on screen
                 for _ in range(200):
-                    if pg.evaluate(act) and pg.evaluate(CARD_TOP, i) < pg.evaluate("innerHeight"):
+                    if pg.evaluate(CARD_TOP, i) < pg.evaluate("innerHeight"):
                         break
                     pg.mouse.wheel(0, 50)
                     pg.wait_for_timeout(25)
+                # then keep scrolling while the card is on screen, measuring whenever the step is active.
+                # Stopping when the card leaves the top matters: every sequence keeps its last step
+                # active, so a failing last step would otherwise carry the scroll past the steps after it.
                 best, window = None, 0
-                while pg.evaluate(act) and window < 60:
+                while window < 60 and pg.evaluate(CARD_BOTTOM, i) > 0:
                     pg.wait_for_timeout(120)
-                    m = pg.evaluate(MEASURE, i)
-                    score = sum(min(m.get(k, 1) / v, 1) for k, v in lim.items())
-                    if best is None or score > best[0]:
-                        best = (score, m)
-                    if all(m.get(k, 1) >= v for k, v in lim.items()):
-                        break
+                    if pg.evaluate(act):
+                        m = pg.evaluate(MEASURE, i)
+                        score = sum(min(m.get(k, 1) / v, 1) for k, v in lim.items())
+                        if best is None or score > best[0]:
+                            best = (score, m)
+                        if all(m.get(k, 1) >= v for k, v in lim.items()):
+                            break
                     pg.mouse.wheel(0, 40)
                     window += 1
                 m = best[1] if best else pg.evaluate(MEASURE, i)

@@ -24,6 +24,21 @@ function yAxis(svg, y, m, W, animate, format = d3.format(",")) {
     .call(d3.axisLeft(y).ticks(5).tickSize(0).tickPadding(6).tickFormat(format));
 }
 const catCount = (el) => parseInt(getComputedStyle(el).getPropertyValue("--ss-data-cat-count")) || 5;
+// The tallest a figure may draw, in px. A phone pins every figure in a compact panel above the text (about a third of the
+// screen); a full-width section passes its share of the screen (opts.vhShare, read on every call so a resize follows);
+// otherwise `fallback`. Charts whose height follows their width (maps, networks) take the smaller of this and their own.
+const heightCap = (opts, fallback) => {
+  const vh = window.innerHeight || 800;
+  if (window.matchMedia("(max-width: 760px)").matches) return Math.round(vh * 0.3);
+  return opts?.vhShare ? Math.round(vh * opts.vhShare) : fallback;
+};
+// Bar height and gap for one row: the chart's own sizes, scaled down in proportion when `room` (px per row) is less,
+// never below a 12 px bar.
+const rowPitch = (bh, gap, room) => {
+  if (!(room < bh + gap)) return { bh, gap };
+  const k = Math.max(12 / bh, room / (bh + gap));
+  return { bh: Math.round(bh * k), gap: Math.max(2, Math.round(gap * k)) };
+};
 const unitF = () => UNITS[units.get()].factor;
 
 /** Rounded data-end bar path (r at the value end, square at the baseline). */
@@ -42,12 +57,14 @@ function hbar(x0, x1, y, h, r = 4) {
 
 // ------------------------------------------------------------------ line
 /** data: {x: number[], series: [{name, vals}]}, state: {focus: [name], note?: {name, x, text}} */
-export function lineChart(el, data, { label = "Line chart", unitLabel = () => "", yFormat = null, unitScaled = true } = {}) {
+export function lineChart(el, data, opts = {}) {
+  const { label = "Line chart", unitLabel = () => "", yFormat = null, unitScaled = true } = opts;
   const yf = yFormat === "pct" ? (d) => `${fmt(d * (Math.abs(d) <= 1 ? 100 : 1))}%` : d3.format(",");
   function draw(W, state = {}, { animate = false } = {}) {
     const f = unitScaled ? unitF() : 1;
     const focus = state.focus ?? [];
-    const H = Math.round(Math.max(220, Math.min(360, W * 0.6)));
+    const cap = heightCap(opts, 360);
+    const H = Math.round(Math.max(Math.min(220, cap), Math.min(360, W * 0.6, cap)));
     const m = { t: 30, r: W < 420 ? 58 : 70, b: 24, l: 34 };
     const x = d3.scaleLinear(d3.extent(data.x), [m.l, W - m.r]);
     const y = d3.scaleLinear([0, d3.max(data.series, (d) => d3.max(d.vals)) * f], [H - m.b, m.t]).nice();
@@ -106,7 +123,8 @@ export function lineChart(el, data, { label = "Line chart", unitLabel = () => ""
 
 // ------------------------------------------------------------------ stacked bars
 /** data: {x: [label], series: [{name, vals}]} ordered largest first; overflow folds into "Other". */
-export function stackedBars(el, data, { label = "Stacked bar chart", legendEl = null, unitLabel = () => "", colours = null, unitScaled = true } = {}) {
+export function stackedBars(el, data, opts = {}) {
+  const { label = "Stacked bar chart", legendEl = null, unitLabel = () => "", colours = null, unitScaled = true } = opts;
   function draw(W, state = {}, { animate = false } = {}) {
     const f = unitScaled ? unitF() : 1;
     const n = colours ? colours.length : catCount(el);
@@ -117,7 +135,8 @@ export function stackedBars(el, data, { label = "Stacked bar chart", legendEl = 
       : keep;
     const col = (s, i) => (s.other ? v("data-context") : colours ? v(colours[i]) : v(`data-cat-${i + 1}`));
     if (legendEl) legendEl.innerHTML = series.map((s, i) => `<span><i style="background:${col(s, i)}"></i>${s.name}</span>`).join("");
-    const H = Math.round(Math.max(220, Math.min(340, W * 0.58)));
+    const cap = heightCap(opts, 340);
+    const H = Math.round(Math.max(Math.min(220, cap), Math.min(340, W * 0.58, cap)));
     const m = { t: 10, r: 6, b: 24, l: 38 };
     const x = d3.scaleBand(data.x, [m.l, W - m.r]).padding(data.x.length > 16 ? 0.15 : 0.25);
     const totals = data.x.map((_, i) => d3.sum(series, (s) => s.vals[i]) * f);
@@ -152,13 +171,15 @@ export function stackedBars(el, data, { label = "Stacked bar chart", legendEl = 
 
 // ------------------------------------------------------------------ bubble timeline
 /** data: [{name, year, size, group}], groups: [name] in categorical order. state: {highlight: [name]} */
-export function bubbles(el, data, groups, { label = "Bubble timeline", legendEl = null, unitLabel = () => "" } = {}) {
+export function bubbles(el, data, groups, opts = {}) {
+  const { label = "Bubble timeline", legendEl = null, unitLabel = () => "" } = opts;
   function draw(W, state = {}, { animate = false } = {}) {
     const f = unitF();
     const n = catCount(el);
     const col = (g) => { const i = groups.indexOf(g); return i < n ? v(`data-cat-${i + 1}`) : v("data-context"); };
     if (legendEl) legendEl.innerHTML = groups.map((g) => `<span><i style="background:${col(g)};border-radius:50%"></i>${g}</span>`).join("");
-    const H = Math.round(Math.max(240, Math.min(360, W * 0.6)));
+    const cap = heightCap(opts, 360);
+    const H = Math.round(Math.max(Math.min(240, cap), Math.min(360, W * 0.6, cap)));
     const m = { t: 16, r: 12, b: 24, l: 96 };
     const yb = d3.scaleBand(groups, [m.t, H - m.b]).padding(0.1);
     const rMax = Math.min(26, yb.bandwidth() / 2.2);
@@ -194,13 +215,18 @@ export function bubbles(el, data, groups, { label = "Bubble timeline", legendEl 
 
 // ------------------------------------------------------------------ heatmap (sequential)
 /** data: {cols: [label], rows: [label], vals: number[row][col]} */
-export function heatmap(el, data, { label = "Heatmap", legendEl = null, valueLabel = "" } = {}) {
+export function heatmap(el, data, opts = {}) {
+  const { label = "Heatmap", legendEl = null, valueLabel = "" } = opts;
   function draw(W, state = {}, { animate = false } = {}) {
     // left margin fits the longest row label (capped), so long names stay inside the chart
     const longest = d3.max(data.rows, (r) => String(r).length) || 0;
     const m = { t: 6, r: 6, b: 24, l: Math.round(Math.min(W * 0.42, Math.max(34, longest * 6.2 + 12))) };
     const cw = (W - m.l - m.r) / data.cols.length;
-    const ch = Math.max(14, Math.min(34, cw * 1.6));
+    // rows shrink (to 11 px, the smallest that still carries a label) to fit the height the layout allows
+    const fitRow = (heightCap(opts, Infinity) - m.t - m.b) / data.rows.length;
+    // few rows grow (to 56 px) so the heatmap fills about a fifth of the screen, the readability gate's floor
+    const floorRow = ((window.innerHeight || 800) * 0.22 - m.t - m.b) / data.rows.length;
+    const ch = Math.max(11, Math.min(Math.max(14, Math.min(34, cw * 1.6), Math.min(56, floorRow)), fitRow));
     const H = Math.round(m.t + m.b + ch * data.rows.length);
     const max = d3.max(data.vals.flat());
     const q = d3.scaleQuantize([0, max], d3.range(1, 8));
@@ -227,10 +253,12 @@ export function heatmap(el, data, { label = "Heatmap", legendEl = null, valueLab
 
 // ------------------------------------------------------------------ diverging bars
 /** data: [{name, val}] (percent change). */
-export function divergingBars(el, data, { label = "Diverging bar chart", legendEl = null } = {}) {
+export function divergingBars(el, data, opts = {}) {
+  const { label = "Diverging bar chart", legendEl = null } = opts;
   function draw(W, state = {}, { animate = false } = {}) {
     const rows = state.sort ? [...data].sort((a, b) => b.val - a.val) : data;
-    const bh = 22, gap = 8, m = { t: 4, r: 44, b: 22, l: W < 420 ? 112 : 128 };
+    const m = { t: 4, r: 44, b: 22, l: W < 420 ? 112 : 128 };
+    const { bh, gap } = rowPitch(22, 8, (heightCap(opts, Infinity) - m.t - m.b) / rows.length);
     const H = m.t + m.b + rows.length * (bh + gap);
     const ext = d3.max(data, (d) => Math.abs(d.val));
     const pad = 44; // room for value labels beyond the longest bar
@@ -307,7 +335,8 @@ export function groupColour(el, groups) {
 
 // ------------------------------------------------------------------ horizontal bars
 /** data: [{label, value, parts?: {a, b}, group?}] (sorted). spec: parts, parts_labels, groups. state: {highlight} */
-export function barChart(el, data, { label = "Bar chart", legendEl = null, spec = {}, groups = null } = {}) {
+export function barChart(el, data, opts = {}) {
+  const { label = "Bar chart", legendEl = null, spec = {}, groups = null } = opts;
   function draw(W, state = {}, { animate = false } = {}) {
     const col = spec.colour_by ? groupColour(el, spec.groups || groups) : () => v("data-story-1");
     const parts = spec.part || null;
@@ -318,7 +347,12 @@ export function barChart(el, data, { label = "Bar chart", legendEl = null, spec 
     }
     const hl = new Set(state.highlight ?? []);
     const rows = state.sort === "label" ? [...data].sort((a, b) => String(a.label).localeCompare(b.label)) : data;
-    const bh = 20, gap = 7, m = { t: 4, r: 40, b: 8, l: W < 420 ? 96 : 124 };
+    const m = { t: 4, r: 40, b: 8, l: W < 420 ? 96 : 124 };
+    // like the dot strip: a chart with few rows grows (bars up to 34 px) to fill about a fifth of the screen, the readability
+    // gate's floor; one with many rows shrinks to the height the layout allows
+    const floorRow = ((window.innerHeight || 800) * 0.22 - m.t - m.b) / rows.length;
+    const grow = Math.min(34 / 20, Math.max(1, floorRow / 27));
+    const { bh, gap } = rowPitch(Math.round(20 * grow), Math.round(7 * grow), (heightCap(opts, Infinity) - m.t - m.b) / rows.length);
     const H = m.t + m.b + rows.length * (bh + gap);
     const max = d3.max(rows, (d) => d.value) || 1;
     const x = d3.scaleLinear([0, max], [m.l, W - m.r]);
@@ -355,7 +389,8 @@ export function barChart(el, data, { label = "Bar chart", legendEl = null, spec 
 
 // ------------------------------------------------------------------ dot strip
 /** data: [{row, value, label?, flag?, group?}]. spec: rows (order), scale, value_label, flag_label, groups. */
-export function dotStrip(el, data, { label = "Dot strip", legendEl = null, spec = {}, groups = null } = {}) {
+export function dotStrip(el, data, opts = {}) {
+  const { label = "Dot strip", legendEl = null, spec = {}, groups = null } = opts;
   function draw(W, state = {}, { animate = false } = {}) {
     const col = groupColour(el, spec.groups || groups);
     const rows = spec.rows || [...d3.rollup(data, (v) => v.length, (d) => d.row)].sort((a, b) => b[1] - a[1]).map((d) => d[0]);
@@ -367,7 +402,9 @@ export function dotStrip(el, data, { label = "Dot strip", legendEl = null, spec 
     // rows are at least 28 px, and grow so a strip with few rows still fills about a fifth of the
     // screen (the readability gate's floor); capped so one row does not become a void
     const minH = Math.round((window.innerHeight || 800) * 0.22);
-    const rh = Math.min(96, Math.max(28, Math.floor((minH - m.t - m.b) / rows.length)));
+    // and shrink (to 14 px) when the layout allows less height than that
+    const fit = Math.floor((heightCap(opts, Infinity) - m.t - m.b) / rows.length);
+    const rh = Math.max(14, Math.min(fit, Math.min(96, Math.max(28, Math.floor((minH - m.t - m.b) / rows.length)))));
     const H = m.t + m.b + rows.length * rh;
     const max = d3.max(data, (d) => d.value) || 1;
     const x = (spec.scale === "symlog" ? d3.scaleSymlog().constant(1) : spec.scale === "sqrt" ? d3.scaleSqrt() : d3.scaleLinear())
@@ -403,7 +440,8 @@ export function dotStrip(el, data, { label = "Dot strip", legendEl = null, spec 
  * layers: [{data, role: land|area|context|grid|lines|focus|points, colour_by?, groups?, label?, tooltip?}]
  * state: {view: [w, s, e, n], filter: {prop: value | [values]}}
  */
-export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, groups = null } = {}) {
+export function geoMap(el, spec, datasets, opts = {}) {
+  const { label = "Map", legendEl = null, groups = null } = opts;
   const host = d3.select(el).classed("ss-map", true);
   const canvas = host.selectAll("canvas").data([0]).join("canvas").attr("role", "img").attr("aria-label", label).node();
   const ctx = canvas.getContext("2d");
@@ -568,7 +606,7 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
 
   function resize(nw) {
     W = nw;
-    H = Math.round(Math.min(nw * (spec.aspect ?? 0.95), (window.innerHeight || 800) * 0.7));
+    H = Math.round(Math.min(nw * (spec.aspect ?? 0.95), heightCap(opts, (window.innerHeight || 800) * 0.7)));
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     canvas.style.height = `${H}px`;
@@ -620,7 +658,8 @@ export function geoMap(el, spec, datasets, { label = "Map", legendEl = null, gro
  * spec: colour_by, size_label, weight_label, frame_label ("APA {frame}"), label_top, tooltip, tooltip_labels, aspect
  * state: {frame, highlight: [ids]}
  */
-export function networkChart(el, data, { label = "Network", legendEl = null, spec = {}, groups = null } = {}) {
+export function networkChart(el, data, opts = {}) {
+  const { label = "Network", legendEl = null, spec = {}, groups = null } = opts;
   const gs = spec.groups || groups;
   const aspect = +(spec.aspect ?? 1.5);
   const allNodes = Object.values(data.nodes).flat();
@@ -646,7 +685,8 @@ export function networkChart(el, data, { label = "Network", legendEl = null, spe
     const fr = String(state.frame ?? spec.frame_default ?? data.frames.at(-1));
     const nodes = data.nodes[fr] ?? [];
     const edges = data.edges[fr] ?? [];
-    const H = Math.round(Math.max(260, Math.min(560, W / aspect)));
+    const cap = heightCap(opts, 560);
+    const H = Math.round(Math.max(Math.min(260, cap), Math.min(560, W / aspect, cap)));
     const Wb = Math.min(W, H * aspect);
     const ox = (W - Wb) / 2, oy = (H - Wb / aspect) / 2;
     const px = (d) => ox + d.x * Wb, py = (d) => oy + d.y * Wb;

@@ -294,6 +294,8 @@ def apply_filters(
             text = f"{fmt_num(pv, int(arg or 0))}%"
         elif f == "about":
             text = about(v)
+        elif f == "year":
+            text = str(int(v))  # a year, never with a thousands separator
         elif f == "signed":
             text = ("+" if v > 0 else "") + fmt_num(v, int(arg or 1))
         elif f == "km":
