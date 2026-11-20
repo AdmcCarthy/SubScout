@@ -56,9 +56,12 @@ function hbar(x0, x1, y, h, r = 4) {
 }
 
 // ------------------------------------------------------------------ line
-/** data: {x: number[], series: [{name, vals}]}, state: {focus: [name], note?: {name, x, text}} */
+/** data: {x: number[], series: [{name, vals, lo?, hi?}]}, state: {focus: [name], note?: {name, x, text}}.
+ *  A series with `lo` and `hi` (arrays as long as `vals`, e.g. P10 and P90 or a bootstrap interval) is drawn with a band behind its line, so the
+ *  line shows the typical value and the band the spread. `opts.logY` puts the y axis on a log scale (a skewed positive quantity: its middle is lost on a
+ *  linear axis); the baseline is then the smallest positive value instead of zero. */
 export function lineChart(el, data, opts = {}) {
-  const { label = "Line chart", unitLabel = () => "", yFormat = null, unitScaled = true } = opts;
+  const { label = "Line chart", unitLabel = () => "", yFormat = null, unitScaled = true, logY = false } = opts;
   const yf = yFormat === "pct" ? (d) => `${fmt(d * (Math.abs(d) <= 1 ? 100 : 1))}%` : d3.format(",");
   function draw(W, state = {}, { animate = false } = {}) {
     const f = unitScaled ? unitF() : 1;
@@ -67,7 +70,10 @@ export function lineChart(el, data, opts = {}) {
     const H = Math.round(Math.max(Math.min(220, cap), Math.min(360, W * 0.6, cap)));
     const m = { t: 30, r: W < 420 ? 58 : 70, b: 24, l: 34 };
     const x = d3.scaleLinear(d3.extent(data.x), [m.l, W - m.r]);
-    const y = d3.scaleLinear([0, d3.max(data.series, (d) => d3.max(d.vals)) * f], [H - m.b, m.t]).nice();
+    const top = d3.max(data.series, (d) => d3.max([...d.vals, ...(d.hi ?? [])])) * f;
+    const y = logY
+      ? d3.scaleLog([Math.max(1e-9, d3.min(data.series, (d) => d3.min([...d.vals, ...(d.lo ?? [])].filter((q) => q > 0))) * f), top], [H - m.b, m.t]).nice()
+      : d3.scaleLinear([0, top], [H - m.b, m.t]).nice();
     const svg = frame(el, W, H, label);
     yAxis(svg, y, m, W, animate, yf);
     svg.selectAll("g.ss-x").data([0]).join("g").attr("class", "ss-axis ss-x").attr("transform", `translate(0,${H - m.b})`)
@@ -75,6 +81,12 @@ export function lineChart(el, data, opts = {}) {
     const line = d3.line().defined((d) => d > 0).x((_, i) => x(data.x[i])).y((d) => y(d * f)).curve(d3.curveMonotoneX);
     const rank = (d) => focus.indexOf(d.name);
     const ordered = [...data.series].sort((a, b) => rank(a) - rank(b));
+    // interval bands, behind the lines; the colour follows the series
+    const banded = ordered.filter((d) => d.lo && d.hi);
+    const area = (d) => d3.area().defined((_, i) => d.lo[i] > 0 && d.hi[i] > 0).x((_, i) => x(data.x[i])).y0((_, i) => y(d.lo[i] * f)).y1((_, i) => y(d.hi[i] * f)).curve(d3.curveMonotoneX)(d.vals);
+    svg.selectAll("path.band").data(banded, (d) => d.name).join("path").attr("class", "band").attr("stroke", "none")
+      .style("fill", (d) => (rank(d) >= 0 ? v(`data-story-${rank(d) + 1}`) : v("data-context"))).style("fill-opacity", (d) => (rank(d) >= 0 ? 0.18 : 0.1))
+      .attr("d", area);
     const paths = svg.selectAll("path.series").data(ordered, (d) => d.name).join("path").attr("class", "series")
       .attr("fill", "none").attr("stroke-linejoin", "round").attr("stroke-linecap", "round").attr("d", (d) => line(d.vals));
     paths.order();
@@ -113,7 +125,7 @@ export function lineChart(el, data, opts = {}) {
         if (i < 0) return;
         cross.attr("x1", x(xv)).attr("x2", x(xv)).attr("opacity", 1);
         const rows = [...data.series].sort((a, b) => b.vals[i] - a.vals[i]).map((d) =>
-          `<tr><td>${focus.includes(d.name) ? `<b>${d.name}</b>` : d.name}</td><td class="ss-num" style="text-align:right;padding-left:12px">${d.vals[i] ? (yFormat === "pct" ? yf(d.vals[i]) : fmt(d.vals[i] * f, 1)) : "–"}</td></tr>`).join("");
+          `<tr><td>${focus.includes(d.name) ? `<b>${d.name}</b>` : d.name}</td><td class="ss-num" style="text-align:right;padding-left:12px">${d.vals[i] ? (yFormat === "pct" ? yf(d.vals[i]) : fmt(d.vals[i] * f, 1)) : "–"}${d.lo && d.hi && d.vals[i] ? ` <span class="ss-k">(${fmt(d.lo[i] * f, 1)} to ${fmt(d.hi[i] * f, 1)})</span>` : ""}</td></tr>`).join("");
         getTip().show(`<b>${xv}</b> <span class="ss-k">${unitLabel()}</span><table>${rows}</table>`, e.clientX, e.clientY);
       })
       .on("pointerleave", () => { cross.attr("opacity", 0); getTip().hide(); });
@@ -347,14 +359,14 @@ export function barChart(el, data, opts = {}) {
     }
     const hl = new Set(state.highlight ?? []);
     const rows = state.sort === "label" ? [...data].sort((a, b) => String(a.label).localeCompare(b.label)) : data;
-    const m = { t: 4, r: 40, b: 8, l: W < 420 ? 96 : 124 };
+    const m = { t: 4, r: rows.some((d) => d.n != null) ? 92 : 40, b: 8, l: W < 420 ? 96 : 124 };   // room for the "(n=…)" after the value
     // like the dot strip: a chart with few rows grows (bars up to 34 px) to fill about a fifth of the screen, the readability
     // gate's floor; one with many rows shrinks to the height the layout allows
     const floorRow = ((window.innerHeight || 800) * 0.22 - m.t - m.b) / rows.length;
     const grow = Math.min(34 / 20, Math.max(1, floorRow / 27));
     const { bh, gap } = rowPitch(Math.round(20 * grow), Math.round(7 * grow), (heightCap(opts, Infinity) - m.t - m.b) / rows.length);
     const H = m.t + m.b + rows.length * (bh + gap);
-    const max = d3.max(rows, (d) => d.value) || 1;
+    const max = d3.max(rows, (d) => Math.max(d.value, d.hi ?? 0)) || 1;     // a row may carry `lo` and `hi` (an interval) and `n` (the count it rests on)
     const x = d3.scaleLinear([0, max], [m.l, W - m.r]);
     const svg = frame(el, W, H, label);
     const g = svg.selectAll("g.row").data(rows, (d) => d.label)
@@ -379,8 +391,11 @@ export function barChart(el, data, opts = {}) {
     });
     g.selectAll("text.n").data((d) => [d]).join("text").attr("class", "n ss-label").attr("x", m.l - 8).attr("y", bh / 2 + 4)
       .attr("text-anchor", "end").text((d) => d.label);
+    g.selectAll("path.whisker").data((d) => (d.lo != null && d.hi != null ? [d] : [])).join("path").attr("class", "whisker").attr("fill", "none")
+      .style("stroke", v("text")).attr("stroke-width", 1.5)
+      .attr("d", (d) => `M${x(d.lo)},${bh / 2}H${x(d.hi)}M${x(d.lo)},${bh / 2 - 4}V${bh / 2 + 4}M${x(d.hi)},${bh / 2 - 4}V${bh / 2 + 4}`);
     g.selectAll("text.v").data((d) => [d]).join("text").attr("class", "v ss-value").attr("y", bh / 2 + 4)
-      .attr("x", (d) => x(d.value) + 6).text((d) => fmt(d.value));
+      .attr("x", (d) => x(Math.max(d.value, d.hi ?? 0)) + 6).text((d) => fmt(d.value) + (d.n != null ? ` (n=${d.n})` : ""));
     svg.selectAll("line.base").data([0]).join("line").attr("class", "base").attr("x1", x(0)).attr("x2", x(0))
       .attr("y1", 0).attr("y2", H - m.b).style("stroke", v("axis"));
   }
